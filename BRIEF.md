@@ -193,3 +193,9 @@ Append dated entries here. Keep each one to a few lines.
   and 3.58 MB per 30 m monthly tile, parallel throughput unmeasured. For a 48 hour budget:
   tier 1 at 30 m monthly (3,536 tiles, 84,864 requests, needs about 19 in flight), all
   Brazil at 30 m monthly only with about 48 in flight and reduce-then-delete; see pipeline/PROBE.md.
+- 2026-11-12 site: the tile attribute contract is fixed in `docs/config.js` (`ATTR`,
+  `SUMMARY_ATTR`) and written out in `docs/DATA_CONTRACT.md`. Fields layer: fid, area_ha,
+  crop_2020, crop_2024, prod_2020, prod_2024, change, change_class, vigor_2020, vigor_2024,
+  decision, n_obs_2020, n_obs_2024, muni_code. Tile names on S3: fields.pmtiles (layer
+  `fields`, zoom 9 to 14), summary.pmtiles (layer `summary`, zoom 3 to 9), stats.json. The
+  site is live on placeholder data; flip `USE_PLACEHOLDER` to false when the real tiles exist.
