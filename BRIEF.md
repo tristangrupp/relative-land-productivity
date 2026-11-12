@@ -231,3 +231,13 @@ Append dated entries here. Keep each one to a few lines.
   after make_valid, no empties): 21,632,817 for 2020 and 24,554,482 for 2024. The agricultural
   column in the table above overstates both years by about 2.0 million; the per-class counts of
   the seamfix files give these lower numbers and no excluded class accounts for the gap.
+- 2026-11-12 orchestrator: the machine's internet link is shared with two other projects'
+  downloads until at least tomorrow night (a 4.6 MB/s AguaTrack pull until about 18:40 today
+  and a Planetary Computer Sentinel-2 fetch with three workers for another day), and the probe
+  measured 0.37 tiles per minute on it. Tier 1 at 30 m is therefore 38 to 80 times a 48 hour
+  budget. Decision: run the national product on MODIS MOD13Q1 (Planetary Computer collection
+  `modis-13Q1-061`, 250 m, 16-day NDVI with VI quality), reduced to every field with coverage
+  weights and a confidence flag by field area (fields under one MODIS pixel, 6.25 ha, are low
+  confidence). Sentinel-2 at 30 m stays as a later upgrade for Mato Grosso and then tier 1,
+  with scene thinning, once the link is free. The methods apply unchanged except that the
+  cadence is 16 days (23 composites per agricultural year) instead of monthly.
