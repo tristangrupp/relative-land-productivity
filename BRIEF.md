@@ -259,3 +259,19 @@ Append dated entries here. Keep each one to a few lines.
   that rate). Running since 14:35 as a detached process (pid 36992), tier 1 then tier 2,
   progress in `F:\relative-land-productivity-data\extracted\s2\progress.log`; peak memory
   0.65 GB for the whole process.
+- 2026-11-12 extract: the MODIS run is `s03c_modis_fetch.py` (Terra MOD13Q1 only, 23 composites
+  per agricultural year from day 241 of the year before to day 225, 18 sinusoidal tiles that
+  touch fields, three files in flight on the shared link), `s03d_modis_weights.py` (exactextract
+  coverage weights per tile and year on the native 231.656 m grid, CSR under `weights\modis`),
+  `s03e_modis_reduce.py` (coverage-weighted mean per field, pixel_reliability 2 and 3 and
+  MODLAND QA 2 and 3 masked, a composite is missing for a field when under half its covered
+  area is valid, 23 raw columns plus 23 linearly interpolated columns and `n_valid`, under
+  `extracted\modis`) and `s03f_mapbiomas_fields.py` (modal MapBiomas class per field from the
+  2020 and 2024 coverage rasters by pixel-center rasterization, under `extracted\mapbiomas`).
+  Facts the analyze agent must plan around: 78 percent of fields are under 6.25 ha, so most read
+  one or two shared cells (`small_field`, `n_cells`, `dominant_share` are in the tables); Terra
+  composite A2024225 does not exist on the Planetary Computer and is interpolated; Pará
+  wet-season composites are valid for 31 to 45 percent of fields, so `n_valid` must gate the
+  classes; pasture vigor is null because no public GeoTIFF was found (the MapBiomas platform
+  offers a Collection 11 "Vigor condition" custom GeoTIFF per year without a login, untested).
+  Details and numbers in `pipeline/EXTRACT.md`.
