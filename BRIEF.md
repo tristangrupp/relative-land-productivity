@@ -193,6 +193,19 @@ Append dated entries here. Keep each one to a few lines.
   and 3.58 MB per 30 m monthly tile, parallel throughput unmeasured. For a 48 hour budget:
   tier 1 at 30 m monthly (3,536 tiles, 84,864 requests, needs about 19 in flight), all
   Brazil at 30 m monthly only with about 48 in flight and reduce-then-delete; see pipeline/PROBE.md.
+- 2026-11-12 methods: agricultural year runs 1 September to 31 August ("2020" is 2019-09-01
+  to 2020-08-31), so September soybean sowing in MT, MS, PR, SC, SP and the August end of
+  second-season maize both fall inside.
+- 2026-11-12 methods: cadence is monthly, 12 per-pixel maximum NDVI composites per year from
+  SCL-masked Sentinel-2 L2A (drop SCL 0, 1, 3, 8, 9, 10, 11), with a clear-scene count band;
+  gaps filled by linear interpolation and a per-field valid-month count kept as the flag.
+- 2026-11-12 methods: peer region is the H3 resolution 5 cell (about 253 km²) of the field
+  centroid, per class and year, minimum 30 fields, falling back to resolution 4 then 3.
+- 2026-11-12 methods: headline metric is the seasonal NDVI integral above the field's own
+  annual minimum, summed over the state x class calendar window from
+  `data/calendars/class_window_lookup.csv`; peak NDVI, peak timing and the full-year integral
+  are kept as diagnostics. Temperature: TerraClimate yearly netCDF from the Idaho server (the
+  Planetary Computer copies end in 2021 and 2020), else NASA POWER monthly.
 - 2026-11-12 site: the tile attribute contract is fixed in `docs/config.js` (`ATTR`,
   `SUMMARY_ATTR`) and written out in `docs/DATA_CONTRACT.md`. Fields layer: fid, area_ha,
   crop_2020, crop_2024, prod_2020, prod_2024, change, change_class, vigor_2020, vigor_2024,
