@@ -90,16 +90,18 @@ const NEUTRAL = '#e8e3da';
 const GREEN1 = '#7db77a';
 const GREEN2 = '#1e6b3a';
 
-/** change_class values the tiles may hold, with legend text and color. */
+/** change_class values the tiles may hold, with legend text and color. An `opacity` on a
+   class overrides the fields layer's default fill opacity for that class; the three classes
+   that are not a comparison of two years draw at half strength so they recede. */
 export const CHANGE_CLASSES = [
 	{ key: 'large_decline', label: 'Large decline', color: BROWN2, note: 'relative productivity fell by more than 0.25' },
 	{ key: 'decline', label: 'Decline', color: BROWN1, note: 'fell by 0.08 to 0.25' },
 	{ key: 'stable', label: 'Stable', color: NEUTRAL, note: 'moved less than 0.08 either way' },
 	{ key: 'gain', label: 'Gain', color: GREEN1, note: 'rose by 0.08 to 0.25' },
 	{ key: 'large_gain', label: 'Large gain', color: GREEN2, note: 'rose by more than 0.25' },
-	{ key: 'crop_switched', label: 'Crop switched', color: '#6250d6', note: 'a different crop class in 2024 than in 2020, so the two years are not compared' },
-	{ key: 'newly_cropped', label: 'Newly cropped', color: '#2a78d6', note: 'not a crop or pasture class in 2020' },
-	{ key: 'abandoned', label: 'Abandoned', color: '#898781', note: 'a crop or pasture class in 2020, not in 2024' }
+	{ key: 'crop_switched', label: 'Crop switched', color: '#6250d6', opacity: 0.5, note: 'a different crop class in 2024 than in 2020, so the two years are not compared' },
+	{ key: 'newly_cropped', label: 'Newly cropped', color: '#2a78d6', opacity: 0.5, note: 'not a crop or pasture class in 2020' },
+	{ key: 'abandoned', label: 'Abandoned', color: '#898781', opacity: 0.5, note: 'a crop or pasture class in 2020, not in 2024' }
 ];
 
 /** Relative productivity: the field's weather-adjusted seasonal greenness divided by the

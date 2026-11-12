@@ -56,6 +56,19 @@ function classFill(attrName, classes) {
 	return ['case', ['has', attrName], m, NODATA_COLOR];
 }
 
+const FIELD_OPACITY = 0.82;
+
+/** Per-class fill opacity: a class with its own `opacity` draws at that value, every other
+    feature at FIELD_OPACITY. */
+function fieldOpacity(view) {
+	if (view.kind !== 'class' || !view.classes.some((c) => c.opacity != null)) return FIELD_OPACITY;
+	const attrName = ATTR[view.attr];
+	const m = ['match', ['get', attrName]];
+	for (const c of view.classes) if (c.opacity != null) m.push(c.key, c.opacity);
+	m.push(FIELD_OPACITY);
+	return ['case', ['has', attrName], m, FIELD_OPACITY];
+}
+
 function stepFill(attrName, steps) {
 	const s = ['step', ['get', attrName], steps.colors[0]];
 	steps.breaks.forEach((b, i) => s.push(b, steps.colors[i + 1]));
@@ -135,7 +148,7 @@ async function initMap() {
 		map.addLayer({
 			id: 'fields-fill', type: 'fill', source: 'fields', 'source-layer': CONFIG.FIELDS_LAYER,
 			minzoom: CONFIG.FIELDS_MIN_ZOOM,
-			paint: { 'fill-color': fieldFill(state.view), 'fill-opacity': 0.82 }
+			paint: { 'fill-color': fieldFill(state.view), 'fill-opacity': fieldOpacity(state.view) }
 		}, before);
 		map.addLayer({
 			id: 'fields-line', type: 'line', source: 'fields', 'source-layer': CONFIG.FIELDS_LAYER,
@@ -179,6 +192,7 @@ function absolute(u) {
 function applyView() {
 	if (!state.mapReady) return;
 	map.setPaintProperty('fields-fill', 'fill-color', fieldFill(state.view));
+	map.setPaintProperty('fields-fill', 'fill-opacity', fieldOpacity(state.view));
 	map.setPaintProperty('summary-fill', 'fill-color', summaryFill(state.view));
 }
 
@@ -278,7 +292,7 @@ function renderLegend() {
 		$('legendTitle').textContent = '2024 class minus 2020 class';
 	} else if (v.kind === 'class') {
 		items = v.classes.map((c) => ({
-			color: c.color, label: c.label, note: c.note,
+			color: c.color, label: c.label, note: c.note, opacity: c.opacity,
 			n: counts ? counts[String(c.key)] : undefined
 		}));
 		$('legendTitle').textContent = 'Classes';
@@ -288,7 +302,7 @@ function renderLegend() {
 	}
 	items.push({ color: NODATA_COLOR, label: 'No value' });
 	$('legend').innerHTML = items.map((it) => `
-		<li><span class="sw" style="background:${it.color}"></span><span>${esc(it.label)}</span>
+		<li><span class="sw" style="background:${it.color}${it.opacity != null ? `;opacity:${it.opacity}` : ''}"></span><span>${esc(it.label)}</span>
 		<span class="n">${it.n != null ? fmtInt(it.n) : ''}</span>
 		${it.note ? `<span class="sub">${esc(it.note)}</span>` : ''}</li>`).join('');
 	$('legendCaveat').textContent = v.caveat;
