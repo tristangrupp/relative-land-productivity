@@ -1,0 +1,21 @@
+# bulk data never enters the repository; see BRIEF.md
+*.parquet
+*.tif
+*.tiff
+*.nc
+*.zip
+*.gpkg
+*.shp
+*.dbf
+*.shx
+*.prj
+*.geojsonl
+__pycache__/
+.pytest_cache/
+.venv/
+*.log
+.DS_Store
+Thumbs.db
+# tiles are allowed only in docs/data (the placeholder)
+*.pmtiles
+!docs/data/*.pmtiles
