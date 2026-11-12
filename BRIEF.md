@@ -60,8 +60,8 @@ Brazil counts in the seamfix copy (all classes / agricultural classes 39,15,19,4
 
 | year | fields | agricultural |
 |---|---|---|
-| 2020 | 26,298,376 | 23,636,217 |
-| 2024 | 29,176,172 | 26,554,283 |
+| 2020 | 26,297,376 | 21,632,817 |
+| 2024 | 29,176,172 | 24,554,482 |
 
 Tier 1 2024: Mato Grosso 1,299,476; Pará 1,553,660; Amazonas 279,435; Acre 194,242; Rondônia
 643,631; Roraima 112,815; Amapá 54,372.
@@ -71,8 +71,7 @@ Tier 1 2024: Mato Grosso 1,299,476; Pará 1,553,660; Amazonas 279,435; Acre 194,
 whatever the boundary), and compute the 2020 metrics on the 2020 polygons as well for the 2020
 map and for fields that disappeared. The 2020 crop type of a 2024 polygon comes from the
 MapBiomas 2020 coverage raster
-(`s3://wri-datalab-sandbox/trazofields/mapbiomas/brazil_coverage_2020.tif`, 785 MB, public
-read), modal class inside the polygon, so crop switching is visible per field.
+(`s3://wri-datalab-sandbox/trazofields/brazil_coverage_2020.tif`, 785 MB, public read), modal class inside the polygon, so crop switching is visible per field.
 
 ## Other inputs
 
@@ -84,8 +83,9 @@ read), modal class inside the polygon, so crop switching is visible per field.
   coverage per year from the MapBiomas public bucket
   (`https://storage.googleapis.com/mapbiomas-public/initiatives/brasil/collection_10/lclu/coverage/brasil_coverage_<YYYY>.tif`,
   check the exact path on the MapBiomas download page) or the copies already on
-  `s3://wri-datalab-sandbox/trazofields/mapbiomas/brazil_coverage_<YYYY>.tif` (public read, 2019
-  to 2024, about 790 MB each; confirm which collection they are from the file metadata);
+  `s3://wri-datalab-sandbox/trazofields/brazil_coverage_<YYYY>.tif` (directly under trazofields,
+  public read, 2019 to 2024, about 790 MB each, EPSG:4326, 154470 x 146483 px, pixel
+  0.0002694945852358564, origin -74.02099974839176 / 5.435705784207225, uint8, no overviews);
   pasture vigor, biomass and age from the MapBiomas pasture quality downloads. The Pará pipeline
   stages `s03_zonal.py` and `s05_tiles.py` under
   `D:\generative restoration\restoration-explorer-para\pipeline\` remain useful patterns for
@@ -189,10 +189,14 @@ Append dated entries here. Keep each one to a few lines.
 - 2026-11-12 orchestrator: time windows are two 12-month agricultural years, the same months in
   both, chosen by the methods agent so that first and second season crops both fall inside.
   Composite cadence is set by the methods agent (monthly or 16-day) and costed by the probe.
-- 2026-11-12 probe: stopped after 4 tiles (project forbidden); one cold measurement, 39 s
-  and 3.58 MB per 30 m monthly tile, parallel throughput unmeasured. For a 48 hour budget:
-  tier 1 at 30 m monthly (3,536 tiles, 84,864 requests, needs about 19 in flight), all
-  Brazil at 30 m monthly only with about 48 in flight and reduce-then-delete; see pipeline/PROBE.md.
+- 2026-11-12 probe (Planetary Computer, no Earth Engine): a 30 m monthly 1024-px tile
+  takes 60 to 220 s and about 50 MB of COG reads on this machine's shared link, and 4 or 8
+  tiles in flight give the same 0.35 to 0.37 tiles per minute, so tier 1 at 30 m monthly
+  (84,864 tile loads) is 1,800 to 3,800 hours, 38 to 80 times a 48 hour budget; 20 m and
+  16-day double it. Recommendation: 30 m monthly only, tier 1 only, Mato Grosso first,
+  with scene thinning and a dedicated link measured before committing; all Brazil is out
+  of reach on this path. Subtract the 1000 reflectance offset on baseline 04.00 scenes
+  (2022 onward) or NDVI is compressed. Details and tables in pipeline/PROBE.md.
 - 2026-11-12 methods: agricultural year runs 1 September to 31 August ("2020" is 2019-09-01
   to 2020-08-31), so September soybean sowing in MT, MS, PR, SC, SP and the August end of
   second-season maize both fall inside.
@@ -212,3 +216,18 @@ Append dated entries here. Keep each one to a few lines.
   decision, n_obs_2020, n_obs_2024, muni_code. Tile names on S3: fields.pmtiles (layer
   `fields`, zoom 9 to 14), summary.pmtiles (layer `summary`, zoom 3 to 9), stats.json. The
   site is live on placeholder data; flip `USE_PLACEHOLDER` to false when the real tiles exist.
+- 2026-11-12 orchestrator: the extraction grid is the grid of the S3 coverage GeoTIFFs
+  `trazofields/brazil_coverage_<YYYY>.tif`, read from their headers with rasterio, not the Earth
+  Engine asset grid (which differs by about 1 pixel in longitude and 110 pixels in latitude).
+- 2026-11-12 fields: the extraction grid is the pixel grid of the MapBiomas Collection 10
+  coverage GeoTIFFs `s3://wri-datalab-sandbox/trazofields/brazil_coverage_<YYYY>.tif` (public
+  read; 2020 and 2024 share it): EPSG:4326, 154,470 x 146,483 pixels of 0.0002694945852358564
+  degrees, upper left origin (-74.02099974839176, 5.435705784207225), read from the file header
+  with rasterio. Tiles are 1024 x 1024 pixels anchored at that origin, named r<row>_c<col>, row
+  0 north and col 0 west, 151 x 144 tiles over the raster. `pipeline/s02_grid.py` writes
+  `F:\relative-land-productivity-data\grid\grid.json`, `tiles.parquet` and `field_tiles\`.
+  Tiles that touch a prepared 2020 or 2024 field: 8,007 in total, 3,406 in tier 1, 1,475 in
+  tier 2, 3,126 in tier 3; 47,014,021 field-tile pairs. Prepared fields (agricultural classes,
+  after make_valid, no empties): 21,632,817 for 2020 and 24,554,482 for 2024. The agricultural
+  column in the table above overstates both years by about 2.0 million; the per-class counts of
+  the seamfix files give these lower numbers and no excluded class accounts for the gap.
