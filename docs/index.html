@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Relative Land Productivity</title>
+<meta name="description" content="Field by field across Brazil, where crop and pasture productivity rose or fell between 2020 and 2024, and which land use decision the evidence points to.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css">
+<link rel="stylesheet" href="./style.css?v=1">
+</head>
+<body class="app">
+
+<header class="header">
+  <div class="crumbs">
+    <span class="crumb-leaf">RELATIVE LAND PRODUCTIVITY</span>
+    <span class="crumb-sep">/</span>
+    <span class="crumb-mode" id="crumbMode"></span>
+  </div>
+  <div class="header-right">
+    <span class="badge">BRAZIL 2020 TO 2024</span>
+    <a class="ghost" href="./methods.html"><span>Methods</span></a>
+    <a class="ghost" href="./about.html"><span>About</span></a>
+    <a class="ghost" href="https://github.com/tristangrupp/relative-land-productivity"><span>GitHub</span></a>
+  </div>
+</header>
+
+<div class="banner" id="banner" hidden>
+  <b>Placeholder data</b>
+  <span>Real Trazo4 field outlines near Sorriso, Mato Grosso, with random attribute values. Nothing on this map is a result yet.</span>
+  <button type="button" id="bannerGo">Go to the placeholder window</button>
+</div>
+
+<div class="shell">
+  <nav class="sidebar" id="sidebar" aria-label="Views"></nav>
+
+  <main class="main">
+    <div id="map"></div>
+    <div id="log" class="log" aria-live="polite"></div>
+  </main>
+
+  <aside class="context" id="context">
+    <section class="objective" aria-live="polite">
+      <p class="objMode" id="objMode"></p>
+      <p class="objQ" id="objQ"></p>
+      <p class="objScale" id="objScale"></p>
+    </section>
+
+    <section class="card">
+      <h2>Where</h2>
+      <label class="group" for="stateSel">State</label>
+      <select id="stateSel"></select>
+      <div id="scopeStats" style="margin-top:12px"></div>
+    </section>
+
+    <section class="card">
+      <h2 id="legendTitle">Legend</h2>
+      <ul class="legend" id="legend"></ul>
+      <p class="ctxNote" id="legendCountNote" hidden></p>
+      <p class="ctxNote" id="legendCaveat"></p>
+      <details class="fold">
+        <summary>How this is measured</summary>
+        <p id="legendMethod"></p>
+        <p>The full method is on the <a href="./methods.html">methods page</a>.</p>
+      </details>
+    </section>
+
+    <section class="card" id="pickBox" hidden>
+      <h2 id="pickTitle">Field</h2>
+      <ul class="rows" id="pickRows"></ul>
+      <div id="pickChart"></div>
+      <p class="ctxNote" id="pickNote"></p>
+      <button class="linkBtn" id="pickClose" type="button">Close</button>
+    </section>
+  </aside>
+</div>
+
+<div id="tip" class="tip"></div>
+
+<script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
+<script src="https://unpkg.com/pmtiles@3.2.1/dist/pmtiles.js"></script>
+<script type="module" src="./app.js?v=1"></script>
+</body>
+</html>
