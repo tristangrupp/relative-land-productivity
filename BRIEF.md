@@ -241,3 +241,21 @@ Append dated entries here. Keep each one to a few lines.
   confidence). Sentinel-2 at 30 m stays as a later upgrade for Mato Grosso and then tier 1,
   with scene thinning, once the link is free. The methods apply unchanged except that the
   cadence is 16 days (23 composites per agricultural year) instead of monthly.
+- 2026-11-12 extract-s2: Sentinel-2 30 m monthly maximum NDVI per field runs as
+  `pipeline/s03g_s2_fetch_reduce.py` (fetch, mask, composite, sparse reduction, no raster
+  kept) with weights from `s03g_weights.py` and assembly in `s03h_s2_assemble.py`; details
+  in `pipeline/EXTRACT_S2.md`. Measured on 20 Mato Grosso tiles for January 2024 with 4
+  tiles in flight: 9.05 tile-months per minute, 44 MB per tile-month, 6.6 MB/s, after
+  dropping the MGRS granules that only repeat another granule's pixels (135 items read fell
+  to 81). Eight tiles in flight gave no more. The read volume is three times the 15 MB
+  expected: one granule-day of B04, B08 and SCL at the 20 m overview costs 10 to 15 MB with
+  block over-read. Day rule in production: the three least cloudy days (four when all three
+  exceed 60 percent cloud), and `--min-days 2` stops at two days once the chance a pixel was
+  clear on a kept day reaches 0.98; thinning to three days lowered the soybean January
+  median by 0.025 on the Sorriso tile against all seven days. Projection at the measured
+  rate: Mato Grosso (24,312 tile-months) 45 h and 1.07 TB, tier 1 (81,744) 151 h and 3.6 TB,
+  tier 2 (35,400) 65 h and 1.56 TB; the first two minutes of the production run with
+  `--min-days 2` ran at 13.9 tile-months per minute and 33.7 MB each (Mato Grosso 29 h at
+  that rate). Running since 14:35 as a detached process (pid 36992), tier 1 then tier 2,
+  progress in `F:\relative-land-productivity-data\extracted\s2\progress.log`; peak memory
+  0.65 GB for the whole process.
