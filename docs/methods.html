@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Methods</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="./style.css?v=1">
+</head>
+<body>
+<header class="header">
+  <div class="crumbs">
+    <a class="crumb-leaf" href="./" style="text-decoration:none">RELATIVE LAND PRODUCTIVITY</a>
+    <span class="crumb-sep">/</span>
+    <span class="crumb-mode">METHODS</span>
+  </div>
+  <div class="header-right">
+    <a class="ghost" href="./"><span>Map</span></a>
+    <a class="ghost" href="./about.html"><span>About</span></a>
+  </div>
+</header>
+
+<main class="page">
+  <h1>Methods</h1>
+  <p class="lead">How field productivity is measured from satellite greenness, how weather is corrected for, and how the suggested decisions are derived.</p>
+
+  <div class="note">
+    <p>The methods text is being written. The methods agent is writing it as
+    <a href="https://github.com/tristangrupp/relative-land-productivity/blob/main/methods/METHODS.md">methods/METHODS.md</a>
+    in the repository, and this page will hold the same text once it is settled.</p>
+  </div>
+
+  <h2>What the page will cover</h2>
+  <ul>
+    <li>The greenness record: Sentinel-2 surface reflectance with Cloud Score+ masking, composited on Earth Engine and read at 30 m.</li>
+    <li>The growing season per crop and state, taken from the CONAB planting and harvest calendars.</li>
+    <li>The weather adjustment: how precipitation (CHIRPS) and temperature (ERA5-Land) changes that move greenness without moving yield are removed.</li>
+    <li>Relative productivity: a field against the median of its peers in the same crop and region, in 2020 and in 2024.</li>
+    <li>The change classes and their thresholds, and the handling of fields whose crop class changed.</li>
+    <li>Pasture vigor from MapBiomas Collection 10.</li>
+    <li>The decision rules that map the evidence to restore, switch crop, change land use pattern, abandon, intensify, improve yields or keep.</li>
+    <li>What the measure can and cannot say.</li>
+  </ul>
+</main>
+</body>
+</html>

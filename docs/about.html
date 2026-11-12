@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>About</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="./style.css?v=1">
+</head>
+<body>
+<header class="header">
+  <div class="crumbs">
+    <a class="crumb-leaf" href="./" style="text-decoration:none">RELATIVE LAND PRODUCTIVITY</a>
+    <span class="crumb-sep">/</span>
+    <span class="crumb-mode">ABOUT</span>
+  </div>
+  <div class="header-right">
+    <a class="ghost" href="./"><span>Map</span></a>
+    <a class="ghost" href="./methods.html"><span>Methods</span></a>
+  </div>
+</header>
+
+<main class="page">
+  <h1>About this map</h1>
+  <p class="lead">A public web map that shows, field by field across Brazil, where crop and pasture productivity rose or fell between 2020 and 2024, broken out by crop type.</p>
+
+  <h2>Purpose</h2>
+  <p>The map is meant to say, at the field level, which land use decision could be improved: restore the land, switch the crop, change the land use pattern, abandon the field, intensify, or improve yields on the same crop.</p>
+  <p>Productivity is measured from the greenness record over the growing season, with the growing season taken from CONAB crop calendars per crop and state. The measure corrects for precipitation and temperature changes that move greenness without moving yield. The quantity of interest is relative productivity: a field against its peers in the same crop and region, compared between 2020 and 2024.</p>
+  <p>Pasture fields additionally use the MapBiomas Collection 10 pasture vigor product, which classifies each pasture pixel as low, medium or high vigor, already normalized by biome.</p>
+
+  <div class="note">
+    <p>The suggested decisions are screening results from satellite greenness. They are not agronomic advice. The method does not know prices, soils, tenure, inputs or the farmer's plans, and a field flagged here deserves a visit before any decision is taken on it.</p>
+  </div>
+
+  <h2>Data sources</h2>
+  <table>
+    <tr><th>Input</th><th>Source</th><th>Use</th></tr>
+    <tr><td>Field boundaries</td><td>Trazo4 field delineation (WRI), Brazil, 2020 and 2024</td><td>The polygons on the map. The change map is drawn on the 2024 outlines.</td></tr>
+    <tr><td>Greenness</td><td>Sentinel-2 surface reflectance (harmonized) with Cloud Score+ masking, on Google Earth Engine</td><td>NDVI over the growing season, at 30 m.</td></tr>
+    <tr><td>Crop calendars</td><td>CONAB, Calendário de Plantio e Colheita, per crop and state</td><td>The growing season window per field.</td></tr>
+    <tr><td>Land cover and crop type</td><td>MapBiomas Collection 10 coverage, 2020 and 2024</td><td>Crop class per field in each year.</td></tr>
+    <tr><td>Pasture vigor</td><td>MapBiomas Collection 10 pasture vigor</td><td>Low, medium, high class per pasture field in each year.</td></tr>
+    <tr><td>Precipitation</td><td>CHIRPS</td><td>The weather adjustment.</td></tr>
+    <tr><td>Temperature</td><td>ERA5-Land</td><td>The weather adjustment.</td></tr>
+    <tr><td>Basemap</td><td>OpenFreeMap (OpenStreetMap data), Carto as fallback</td><td>Context under the fields.</td></tr>
+  </table>
+
+  <h2>Geography</h2>
+  <p>The target is all of Brazil. If compute does not allow it, the first tier is Mato Grosso, Pará, Amazonas, Acre, Rondônia, Roraima and Amapá; the second is Mato Grosso do Sul, Goiás, Tocantins and Maranhão. The state selector on the map lists every state; states without tiles yet show nothing.</p>
+
+  <h2>Code and data</h2>
+  <p>The site, the pipeline and the methods text are in the repository at
+  <a href="https://github.com/tristangrupp/relative-land-productivity">github.com/tristangrupp/relative-land-productivity</a>.
+  The field tiles are served as PMTiles from a public bucket; the file <code>docs/DATA_CONTRACT.md</code> lists every attribute the map reads.</p>
+</main>
+</body>
+</html>
