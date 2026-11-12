@@ -146,8 +146,8 @@ on a dropped day. It is noise against peers in the same tile, which the peer-rel
 absorbs, not a bias between regions.
 
 Memory: all tile workers are threads of one process. The production process (4 tiles in
-flight, 2 threads each) had a working set of 0.59 GB and a peak of 0.65 GB after five minutes
-(Get-Process PeakWorkingSet64 at 14:40), about 0.16 GB per tile in flight; the `RUN_END` line
+flight, 2 threads each) had a working set of 0.65 GB and a peak of 0.71 GB after 3.5 minutes
+(Get-Process PeakWorkingSet64 at 14:39), about 0.18 GB per tile in flight; the `RUN_END` line
 records the peak over the run. The user's limit is 2 GB per worker and at most 4 tiles in
 flight until free memory is checked. The
 weights subprocess (wci_tools, geopandas on one state-year file) is about 1 GB for a few
