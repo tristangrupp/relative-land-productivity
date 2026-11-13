@@ -10,7 +10,7 @@ describes the tiles released on 13 November 2026, read back from the PMTiles met
 | config key | URL | what it is |
 |---|---|---|
 | `FIELDS_PMTILES` | `https://wri-datalab-sandbox.s3.amazonaws.com/trazofields/trazo4/relative-land-productivity/tiles/fields.pmtiles` | one polygon per 2024 Trazo4 field plus the abandoned 2020 fields, layer name `fields`, zoom 9 to 13, 6.36 GB |
-| `SUMMARY_PMTILES` | `.../tiles/summary.pmtiles` | one polygon per H3 resolution 6 cell, 144,909 cells, layer name `summary`, zoom 3 to 9, 53 MB |
+| `SUMMARY_PMTILES` | `.../tiles/summary.pmtiles` | one polygon per H3 cell at four resolutions by zoom band (3, 4, 5, 6; 697, 4,041, 23,878 and 144,909 cells), layer name `summary`, zoom 3 to 9, 26 MB |
 | `STATS_URL` | `.../tiles/stats.json` | class counts for Brazil and per state, read by the legend and the Where card |
 
 The bucket is public read with CORS (`Access-Control-Allow-Origin: *`, GET and HEAD), so
@@ -48,8 +48,11 @@ analysis GeoParquet but not in the tiles.
 
 The five compared change classes are thresholds on `D = r_adj_2024 - r_adj_2020` in peer
 standard deviations: large decline below -2, decline -2 to -1, stable -1 to 1, gain 1 to 2,
-large gain above 2. The 0.08 and 0.25 steps in `CHANGE_STEPS` color the summary cells'
-mean `change` on the ratio scale and are not class boundaries.
+large gain above 2. The 0.08 and 0.25 steps in `CHANGE_STEPS` describe the summary cells'
+mean `change` on the ratio scale (tooltip and card) and are not class boundaries. The
+zoomed-out change map colors each cell by `share_decline - share_gain`, the share of its
+fields that declined minus the share that gained, with the `NET_STEPS` breaks at 5 and 15
+percentage points; cells within 5 points, or with fewer than 10 fields, draw at low opacity.
 
 MapBiomas classes the site names are listed in `CROPS` in `config.js` (the agricultural
 classes 39, 19, 41, 20, 40, 62, 46, 47, 48, 35, 15, 21, 9, 18 and the natural and other
@@ -61,11 +64,17 @@ rather than comparing against null.
 
 ## Summary layer attributes
 
-One feature per H3 resolution 6 cell (about 36 km²), over the scored 2024 fields.
+One feature per H3 cell, over the scored 2024 fields. The layer holds four resolutions in
+zoom bands that do not overlap, so the zoomed-out map shows regions rather than sub-pixel
+cells: resolution 3 (about 100 km across) at zoom 3, resolution 4 (about 40 km) at zooms 4
+to 5, resolution 5 (about 15 km) at zooms 6 to 7, resolution 6 (about 6 km, 36 km²) at zooms
+8 to 9. Every level aggregates the fields directly, so a share is the share of the fields in
+that cell. The `res` property names the level.
 
 | property | type | meaning |
 |---|---|---|
 | `h3` | string | H3 cell index |
+| `res` | integer | H3 resolution of the cell: 3, 4, 5 or 6 |
 | `n_fields` | int | fields with a centroid in the cell |
 | `area_ha` | float | their total area |
 | `mean_change` | float | mean `change` (ratio scale) over fields that have one |

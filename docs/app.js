@@ -88,9 +88,39 @@ function fieldFilter() {
 }
 
 function stepFill(attrName, steps) {
-	const s = ['step', ['get', attrName], steps.colors[0]];
+	return stepFillExpr(['get', attrName], ['has', attrName], steps);
+}
+
+/** A stepped fill over any numeric expression; `hasExpr` says when the value exists. */
+function stepFillExpr(valueExpr, hasExpr, steps) {
+	const s = ['step', valueExpr, steps.colors[0]];
 	steps.breaks.forEach((b, i) => s.push(b, steps.colors[i + 1]));
-	return ['case', ['has', attrName], s, NODATA_COLOR];
+	return ['case', hasExpr, s, NODATA_COLOR];
+}
+
+/** The net share of a summary cell: one share attribute minus another, for example the
+    share of fields that declined minus the share that gained. */
+function netExpr(s) {
+	return ['-', ['get', SUMMARY_ATTR[s.minuend]], ['get', SUMMARY_ATTR[s.subtrahend]]];
+}
+function netHasExpr(s) {
+	return ['all', ['has', SUMMARY_ATTR[s.minuend]], ['has', SUMMARY_ATTR[s.subtrahend]]];
+}
+
+const SUMMARY_OPACITY = 0.78;
+
+/** Cell opacity. A net view fades the cells where the two shares balance, and the cells with
+    too few fields for a share to mean much, so the cells where one side dominates stand out. */
+function summaryOpacity(view) {
+	const s = view.summary;
+	if (s.kind !== 'net') return SUMMARY_OPACITY;
+	const st = s.steps;
+	const neutralLo = st.breaks[Math.floor(st.breaks.length / 2) - 1];
+	const neutralHi = st.breaks[Math.floor(st.breaks.length / 2)];
+	const net = netExpr(s);
+	const balanced = ['all', ['>=', net, neutralLo], ['<', net, neutralHi]];
+	const few = ['<', ['coalesce', ['get', SUMMARY_ATTR.n_fields], 0], st.minFields];
+	return ['case', netHasExpr(s), ['case', ['any', balanced, few], st.neutralOpacity, st.fullOpacity], st.neutralOpacity];
 }
 
 function vigorFill() {
@@ -111,6 +141,7 @@ function fieldFill(view) {
 function summaryFill(view) {
 	const s = view.summary;
 	if (s.kind === 'class') return classFill(SUMMARY_ATTR[s.attr], s.classes);
+	if (s.kind === 'net') return stepFillExpr(netExpr(s), netHasExpr(s), s.steps);
 	return stepFill(SUMMARY_ATTR[s.attr], s.steps);
 }
 
@@ -158,12 +189,18 @@ async function initMap() {
 		map.addLayer({
 			id: 'summary-fill', type: 'fill', source: 'summary', 'source-layer': CONFIG.SUMMARY_LAYER,
 			maxzoom: CONFIG.FIELDS_MIN_ZOOM,
-			paint: { 'fill-color': summaryFill(state.view), 'fill-opacity': 0.78 }
+			paint: { 'fill-color': summaryFill(state.view), 'fill-opacity': summaryOpacity(state.view) }
 		}, before);
+		/* The cell outlines appear only when zoomed in enough for a cell to be more than a few
+		   pixels wide; at the national zooms the hex grid would hide the color pattern. */
 		map.addLayer({
 			id: 'summary-line', type: 'line', source: 'summary', 'source-layer': CONFIG.SUMMARY_LAYER,
 			maxzoom: CONFIG.FIELDS_MIN_ZOOM,
-			paint: { 'line-color': '#2c2a28', 'line-opacity': 0.25, 'line-width': 0.5 }
+			paint: {
+				'line-color': '#2c2a28',
+				'line-opacity': ['interpolate', ['linear'], ['zoom'], 5, 0, 7, 0.1, 9, 0.25],
+				'line-width': 0.5
+			}
 		}, before);
 		map.addLayer({
 			id: 'fields-fill', type: 'fill', source: 'fields', 'source-layer': CONFIG.FIELDS_LAYER,
@@ -215,6 +252,7 @@ function applyView() {
 	map.setPaintProperty('fields-fill', 'fill-color', fieldFill(state.view));
 	map.setPaintProperty('fields-fill', 'fill-opacity', fieldOpacity(state.view));
 	map.setPaintProperty('summary-fill', 'fill-color', summaryFill(state.view));
+	map.setPaintProperty('summary-fill', 'fill-opacity', summaryOpacity(state.view));
 }
 
 function applyConfidence() {
@@ -250,11 +288,23 @@ function showTip(e, layerId) {
 	let rows;
 	if (layerId === 'fields-fill') {
 		title = `Field ${p[ATTR.fid]}`;
-		rows = [[v.title, fieldValueText(v, p)], ['Area', `${fmt(p[ATTR.area_ha], 1)} ha`]];
+		rows = [[v.title, fieldValueText(v, p)]];
+		/* The crop of each year is named in every view, from the MapBiomas mode class. */
+		const c20 = p[ATTR.crop_2020];
+		const c24 = p[ATTR.crop_2024];
+		if (v.id !== 'crop_2020') rows.push(['Crop 2020', cropName(c20)]);
+		if (v.id !== 'crop_2024') rows.push(['Crop 2024', cropName(c24) + (c20 != null && c24 != null && c20 !== c24 ? ' (switched)' : '')]);
+		rows.push(['Area', `${fmt(p[ATTR.area_ha], 1)} ha`]);
 		if (p[ATTR.confidence] != null) rows.push(['Confidence', confidenceName(p[ATTR.confidence])]);
 	} else {
 		title = 'Summary cell';
 		rows = [[v.summary.label, summaryValueText(v, p)], ['Fields', fmtInt(p[SUMMARY_ATTR.n_fields])]];
+		if (v.id === 'change') {
+			rows.push(['Declining / gaining', `${pct(p[SUMMARY_ATTR.share_decline])} / ${pct(p[SUMMARY_ATTR.share_gain])}`]);
+			rows.push(['Mean change (ratio scale)', fmt(p[SUMMARY_ATTR.mean_change])]);
+		}
+		if (v.id !== 'crop_2020') rows.push(['Main crop 2020', cropName(p[SUMMARY_ATTR.dominant_crop_2020])]);
+		if (v.id !== 'crop_2024') rows.push(['Main crop 2024', cropName(p[SUMMARY_ATTR.dominant_crop_2024])]);
 	}
 	const el = $('tip');
 	el.innerHTML = `<b>${esc(title)}</b>` + rows.map(([k, val]) => `<div class="r"><span>${esc(k)}</span><span>${esc(val)}</span></div>`).join('');
@@ -292,12 +342,23 @@ function fieldValueText(v, p) {
 
 function summaryValueText(v, p) {
 	const s = v.summary;
+	if (s.kind === 'net') return netText(s, p);
 	const val = p[SUMMARY_ATTR[s.attr]];
 	if (s.kind === 'class') {
 		const c = s.classes.find((x) => x.key == val);
 		return c ? c.label : (val == null ? NA : String(val));
 	}
 	return fmt(val);
+}
+
+/** The net share of a cell as signed percentage points, for example "+12 points declining". */
+function netText(s, p) {
+	const a = p[SUMMARY_ATTR[s.minuend]];
+	const b = p[SUMMARY_ATTR[s.subtrahend]];
+	if (a == null || b == null) return NA;
+	const pts = Math.round((a - b) * 100);
+	if (pts === 0) return 'balanced';
+	return pts > 0 ? `${pts} points more declining` : `${-pts} points more gaining`;
 }
 
 /* ------------------------------------------------------------------ legend and context */
@@ -462,6 +523,7 @@ function renderPick() {
 			['H3 cell', p[SUMMARY_ATTR.h3]],
 			['Fields', fmtInt(p[SUMMARY_ATTR.n_fields])],
 			['Area', `${fmtInt(Math.round(p[SUMMARY_ATTR.area_ha] || 0))} ha`],
+			['Declining minus gaining', netText(VIEWS[0].summary, p)],
 			['Mean change (ratio scale)', fmt(p[SUMMARY_ATTR.mean_change])],
 			['Share declining', pct(p[SUMMARY_ATTR.share_decline])],
 			['Share gaining', pct(p[SUMMARY_ATTR.share_gain])],

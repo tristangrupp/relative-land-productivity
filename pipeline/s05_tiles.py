@@ -26,7 +26,8 @@ fields simplify to the same edge, `-P` reads the newline-delimited input in para
 per-state PMTiles are joined with tile-join -pk into tiles\\fields.pmtiles. Sizes and times are
 written to tiles\\tiles_log.jsonl.
 
-summary.pmtiles, layer `summary`, zoom 3 to 9: one hexagon per H3 resolution 6 cell (about
+summary.pmtiles, layer `summary`, zoom 3 to 9: one hexagon per H3 cell, resolution 3 at zoom 3,
+4 at zooms 4 to 5, 5 at zooms 6 to 7 and 6 at zooms 8 to 9 (property `res`); resolution 6 is (about
 36 km²) with the SUMMARY_ATTR means and counts over the scored 2024 fields whose centroid is
 in the cell (h3_6 from the metrics tables); mean_vigor_change is null. share_no_data is added.
 
@@ -225,8 +226,59 @@ def build_summary(states, source="modis"):
         df[c] = df[c].astype("float64")
     df["change_class"] = df["change_class"].astype(str)
     df["decision"] = df["decision"].astype(str)
-    g = df.groupby("h3_6")
-    out = pd.DataFrame({
+    # One summary level per zoom band, so the zoomed-out map shows regions rather than a
+    # sub-pixel salt and pepper of resolution 6 cells (145k cells at zoom 4 are under one pixel
+    # each). Each level aggregates the fields directly, not the finer cells, so a share is the
+    # share of fields in that cell. The levels share one tile layer and never overlap in zoom.
+    base = df["h3_6"].astype("int64")
+    uniq = pd.Index(base.unique())
+    recs = []
+    pm_inputs = []
+    os.makedirs(GEOJSON, exist_ok=True)
+    os.makedirs(TMP, exist_ok=True)
+    total_cells = 0
+    for res, zmin, zmax in SUMMARY_LEVELS:
+        if res == 6:
+            key = base
+        else:
+            parent = {int(c): h3.str_to_int(h3.cell_to_parent(h3.int_to_str(int(c)), res)) for c in uniq}
+            key = base.map(parent)
+        out = summarize_cells(df, key)
+        total_cells += len(out)
+        src = os.path.join(GEOJSON, f"summary_r{res}.geojsonl")
+        write_cells(out, src, res, h3)
+        outp = os.path.join(TMP, f"summary_r{res}.pmtiles")
+        cmd = WSL + ["tippecanoe", "-o", wsl_out(outp), "-f", "-l", "summary", "-n", "summary", f"-Z{zmin}", f"-z{zmax}",
+                     "-pk", "-pf", "-ab", "-q", "-t", TMP_WSL, wsl_path(src)]
+        r = wsl_run(cmd, outp)
+        recs.append({"res": res, "cells": int(len(out)), "zooms": [zmin, zmax], "returncode": r.returncode,
+                     "bytes": os.path.getsize(outp) if os.path.exists(outp) else None})
+        if r.returncode != 0:
+            rec = {"step": "summary", "returncode": r.returncode, "levels": recs, "stderr_tail": r.stderr[-400:],
+                   "seconds": round(time.time() - t0, 1)}
+            log(rec)
+            return rec
+        pm_inputs.append(wsl_path(outp))
+    outp = os.path.join(C.TILES, "summary.pmtiles")
+    cmd = WSL + ["tile-join", "-o", wsl_out(outp), "-f", "-pk", "-n", "summary",
+                 "-N", "Relative land productivity, Brazil 2020 to 2024, H3 summary cells"] + pm_inputs
+    r = wsl_run(cmd, outp)
+    rec = {"step": "summary", "cells": total_cells, "levels": recs, "returncode": r.returncode,
+           "bytes": os.path.getsize(outp) if os.path.exists(outp) else None, "seconds": round(time.time() - t0, 1),
+           "stderr_tail": r.stderr[-400:]}
+    log(rec)
+    return rec
+
+
+# H3 resolution per zoom band of the summary tiles. Cell widths: res 3 about 100 km, res 4 about
+# 40 km, res 5 about 15 km, res 6 about 6 km, so a cell is 10 to 30 pixels wide in its band.
+SUMMARY_LEVELS = [(3, 3, 3), (4, 4, 5), (5, 6, 7), (6, 8, 9)]
+
+
+def summarize_cells(df, key):
+    """Per-cell summary of the scored fields grouped by `key` (an H3 index per row)."""
+    g = df.groupby(key.values)
+    return pd.DataFrame({
         "n_fields": g.size(),
         "area_ha": g["area_ha"].sum().round(1),
         "mean_change": g["change"].mean().round(4),
@@ -240,29 +292,21 @@ def build_summary(states, source="modis"):
         "share_pasture": g["crop_2024"].apply(lambda s: (s == 15).mean()).round(4),
         "dominant_decision": g["decision"].agg(lambda s: s.mode().iloc[0]),
     })
-    os.makedirs(GEOJSON, exist_ok=True)
-    src = os.path.join(GEOJSON, "summary.geojsonl")
+
+
+def write_cells(out, src, res, h3):
     with open(src, "w", encoding="utf-8", newline="\n") as fh:
         for cell, row in out.iterrows():
             hx = h3.int_to_str(int(cell))
             ring = [[round(lng, 6), round(lat, 6)] for lat, lng in h3.cell_to_boundary(hx)]
             ring.append(ring[0])
-            props = {"h3": hx}
+            props = {"h3": hx, "res": res}
             for k, v in row.items():
                 if v is None or (isinstance(v, float) and v != v):
                     continue
                 props[k] = int(v) if k in ("n_fields", "dominant_crop_2020", "dominant_crop_2024") else (float(v) if isinstance(v, (float, np.floating)) else v)
             fh.write(json.dumps({"type": "Feature", "properties": props, "geometry": {"type": "Polygon", "coordinates": [ring]}},
                                 separators=(",", ":")) + "\n")
-    outp = os.path.join(C.TILES, "summary.pmtiles")
-    cmd = WSL + ["tippecanoe", "-o", wsl_out(outp), "-f", "-l", "summary", "-n", "summary", "-Z3", "-z9", "-pk", "-pf",
-                 "-ab", "-q", "-t", TMP_WSL, wsl_path(src)]
-    r = wsl_run(cmd, outp)
-    rec = {"step": "summary", "cells": int(len(out)), "returncode": r.returncode,
-           "bytes": os.path.getsize(outp) if os.path.exists(outp) else None, "seconds": round(time.time() - t0, 1),
-           "stderr_tail": r.stderr[-400:]}
-    log(rec)
-    return rec
 
 
 # ---------------------------------------------------------------- stats

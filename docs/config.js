@@ -146,7 +146,7 @@ export const PROD_CLASSES = {
 
 /** Change in relative productivity for the summary cells, on the ratio scale (2024 ratio
     minus 2020 ratio, where 1.0 is the peer median). These steps are not the field class
-    thresholds, which are in peer standard deviations. */
+    thresholds, which are in peer standard deviations. Shown in the cell tooltip and card. */
 export const CHANGE_STEPS = {
 	breaks: [-0.25, -0.08, 0.08, 0.25],
 	colors: [BROWN2, BROWN1, NEUTRAL, GREEN1, GREEN2],
@@ -154,41 +154,71 @@ export const CHANGE_STEPS = {
 		'rose by 0.08 to 0.25', 'rose by more than 0.25']
 };
 
-/** MapBiomas Collection 10 classes the site names, with the MapBiomas legend colors. The
-    legend colors are the published MapBiomas ones and are kept as is, so a reader who knows
-    MapBiomas maps reads these the same way. They are not CVD-separated. The non-agricultural
-    classes occur in crop_2020 (newly cropped fields) and in crop_2024 of abandoned fields. */
+/** The zoomed-out change map colors each cell by the share of its fields that declined minus
+    the share that gained (decline and large decline against gain and large gain), in
+    percentage points of the cell's fields. The mean change on the ratio scale sits within
+    0.08 of zero in 82 percent of cells, so a map of it is flat; the net share shows where
+    decline outnumbers gain. Breaks sit near the 10th, 25th, 75th and 90th percentiles of the
+    cells (net share quartiles are at -0.04 and 0.06, deciles at -0.13 and 0.14). Cells where
+    decline and gain balance draw at low opacity so the frontiers stand out. */
+export const NET_STEPS = {
+	breaks: [-0.15, -0.05, 0.05, 0.15],
+	colors: [GREEN2, GREEN1, NEUTRAL, BROWN1, BROWN2],
+	labels: ['gaining fields outnumber declining by 15 points or more', 'gaining outnumber declining by 5 to 15 points',
+		'balanced, within 5 points', 'declining outnumber gaining by 5 to 15 points',
+		'declining fields outnumber gaining by 15 points or more'],
+	neutralOpacity: 0.42,
+	fullOpacity: 0.9,
+	/* a cell with fewer fields than this draws at the neutral opacity, since its share is noisy */
+	minFields: 10
+};
+
+/** MapBiomas Collection 10 classes, code to name, with the MapBiomas legend colors. Names
+    and colors follow the classification:classes list of the MapBiomas Brazil collection on
+    source.coop (https://source.coop/tristangruppwri/mapbiomas/, mapbiomas-brazil/collection.json),
+    which is the legend the crop_2020 and crop_2024 codes were read from. The legend colors are
+    the published MapBiomas ones and are kept as is, so a reader who knows MapBiomas maps reads
+    these the same way. They are not CVD-separated. The non-agricultural classes occur in
+    crop_2020 (newly cropped fields) and in crop_2024 of abandoned fields. */
 export const CROPS = [
 	{ key: 39, label: 'Soybean', color: '#f5b3c8' },
 	{ key: 19, label: 'Temporary crop', color: '#c27ba0' },
-	{ key: 41, label: 'Other temporary crop', color: '#f54ca9' },
-	{ key: 20, label: 'Sugarcane', color: '#db7093' },
+	{ key: 41, label: 'Other temporary crops', color: '#f54ca9' },
+	{ key: 20, label: 'Sugar cane', color: '#db7093' },
 	{ key: 40, label: 'Rice', color: '#c71585' },
-	{ key: 62, label: 'Cotton', color: '#ff69b4' },
+	{ key: 62, label: 'Cotton (beta)', color: '#ff69b4' },
 	{ key: 46, label: 'Coffee', color: '#d68fe2' },
 	{ key: 47, label: 'Citrus', color: '#9932cc' },
-	{ key: 48, label: 'Other perennial', color: '#e6ccff' },
-	{ key: 35, label: 'Oil palm', color: '#9065d0' },
+	{ key: 48, label: 'Other perennial crops', color: '#e6ccff' },
+	{ key: 36, label: 'Perennial crop', color: '#d082de' },
+	{ key: 35, label: 'Palm oil', color: '#9065d0' },
 	{ key: 15, label: 'Pasture', color: '#edde8e' },
 	{ key: 21, label: 'Mosaic of uses', color: '#ffefc3' },
+	{ key: 14, label: 'Farming', color: '#ffefc3' },
 	{ key: 9, label: 'Forest plantation', color: '#7a5900' },
-	{ key: 18, label: 'Agriculture (unspecified)', color: '#e974ed' },
-	{ key: 3, label: 'Forest', color: '#1f8d49' },
-	{ key: 4, label: 'Savanna', color: '#7dc975' },
+	{ key: 18, label: 'Agriculture', color: '#e974ed' },
+	{ key: 1, label: 'Forest', color: '#1f8d49' },
+	{ key: 3, label: 'Forest formation', color: '#1f8d49' },
+	{ key: 4, label: 'Savanna formation', color: '#7dc975' },
 	{ key: 5, label: 'Mangrove', color: '#04381d' },
-	{ key: 6, label: 'Flooded forest', color: '#026975' },
+	{ key: 6, label: 'Floodable forest', color: '#007785' },
 	{ key: 49, label: 'Wooded sandbank vegetation', color: '#02d659' },
+	{ key: 10, label: 'Herbaceous and shrubby vegetation', color: '#d6bc74' },
 	{ key: 11, label: 'Wetland', color: '#519799' },
 	{ key: 12, label: 'Grassland', color: '#d6bc74' },
-	{ key: 32, label: 'Salt flat', color: '#fc8114' },
+	{ key: 32, label: 'Hypersaline tidal flat', color: '#fc8114' },
 	{ key: 29, label: 'Rocky outcrop', color: '#ffaa5f' },
 	{ key: 50, label: 'Herbaceous sandbank vegetation', color: '#ad5100' },
-	{ key: 23, label: 'Beach and dune', color: '#ffa07a' },
-	{ key: 24, label: 'Urban', color: '#d4271e' },
+	{ key: 23, label: 'Beach, dune and sand spot', color: '#ffa07a' },
+	{ key: 22, label: 'Non vegetated area', color: '#d4271e' },
+	{ key: 24, label: 'Urban area', color: '#d4271e' },
 	{ key: 30, label: 'Mining', color: '#9c0027' },
-	{ key: 25, label: 'Other non-vegetated', color: '#db4d4f' },
-	{ key: 33, label: 'Water', color: '#2532e4' },
+	{ key: 75, label: 'Photovoltaic power plant (beta)', color: '#c12100' },
+	{ key: 25, label: 'Other non vegetated areas', color: '#db4d4f' },
+	{ key: 26, label: 'Water', color: '#2532e4' },
+	{ key: 33, label: 'River, lake and ocean', color: '#2532e4' },
 	{ key: 31, label: 'Aquaculture', color: '#091077' },
+	{ key: 27, label: 'Not observed', color: '#ffffff' },
 	{ key: 0, label: 'Not observed', color: '#ffffff' }
 ];
 
@@ -223,10 +253,13 @@ export const DECISIONS = [
     see methods, section 9. */
 export const VIEWS = [
 	{
-		id: 'change', group: 'Productivity', title: 'Productivity change 2020 to 2024',
+		id: 'change', group: 'Productivity', title: 'Productivity change 2020 vs 2024',
 		question: 'Where did a field gain or lose ground against its peers?',
 		kind: 'class', attr: 'change_class', classes: CHANGE_CLASSES, countKey: 'change_class',
-		summary: { kind: 'step', attr: 'mean_change', steps: CHANGE_STEPS, label: 'Mean change in relative productivity per cell (ratio scale)' },
+		summary: {
+			kind: 'net', minuend: 'share_decline', subtrahend: 'share_gain', steps: NET_STEPS,
+			label: 'Fields that declined minus fields that gained, share of each cell'
+		},
 		method: 'Relative productivity is the field\u2019s seasonal greenness (MODIS NDVI integrated over the CONAB growing season, corrected for rainfall and temperature) divided by the median of fields with the same crop in the same region. The class is set on the change in peer standard deviations between the 2024 and the 2020 agricultural year, both measured on the 2024 field outline; the number in the tooltip is the change on the ratio scale, where 1.0 is the peer median. Fields whose crop group differs between the years are shown as switched, newly cropped or abandoned rather than compared.',
 		caveat: 'A change in greenness relative to peers is not a measured yield change. 83 percent of fields are smaller than one MODIS pixel and are marked low confidence.'
 	},
