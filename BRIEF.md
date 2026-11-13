@@ -275,3 +275,15 @@ Append dated entries here. Keep each one to a few lines.
   classes; pasture vigor is null because no public GeoTIFF was found (the MapBiomas platform
   offers a Collection 11 "Vigor condition" custom GeoTIFF per year without a login, untested).
   Details and numbers in `pipeline/EXTRACT.md`.
+- 2026-11-12 analyze: stages `s04_xyear_reduce.py` (2020 composites reduced with the 2024
+  weights, since the extract tables couple polygon year and composite year), `s04_metrics.py`
+  (source flag modis or s2; integrals in NDVI-months; weather baseline is the nine complete
+  agricultural years 2016 to 2024), `s04_relative.py` (peer class pools MapBiomas 19 and 41;
+  layer 2 fitted only with at least 30 groups over both years, evaluated inside the fitted
+  anomaly range, capped at half the intercept), `s04_change.py` (METHODS.md SD thresholds;
+  `no_data` and decision `none` are extra values the site must tolerate; abandoned and newly
+  cropped use the class rule only, no overlay), `s04_validate.py`, `s05_tiles.py` (fields
+  zoom 9 to 13 with overzoom beyond, nothing dropped at 12 and 13, smallest-first
+  coalescing at 9 to 11, tippecanoe output on the WSL disk), `s05_upload.py`. The national
+  run is `s04_run_all.py`, started 22:35 as pid 37580, log
+  `F:\relative-land-productivity-data\analysis\run_all.log`. Details in `pipeline/ANALYZE.md`.
