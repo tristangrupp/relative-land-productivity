@@ -1,0 +1,91 @@
+{
+ "fit": {
+  "state_by_class_anomalies (current)": {
+   "pairs": 134,
+   "r2_median": 0.14957109904324128,
+   "r2_pooled": 0.15384731420923414,
+   "r2_group_weighted": 0.1390989370363209,
+   "r2_above_0.5": 1
+  },
+  "ecoregion_by_class_anomalies": {
+   "pairs": 146,
+   "r2_median": 0.12635456651582982,
+   "r2_pooled": 0.12324896950836628,
+   "r2_group_weighted": 0.1014099916562736,
+   "r2_above_0.5": 7
+  },
+  "ecoregion_by_class_anomalies_plus_mean_precip": {
+   "pairs": 146,
+   "r2_median": 0.18767406950031645,
+   "r2_pooled": 0.18370872405346883,
+   "r2_group_weighted": 0.1535508537739751,
+   "r2_above_0.5": 14
+  }
+ },
+ "apply_2020": {
+  "fields": 24554482,
+  "eco_fit": 22890434,
+  "state_fallback": 1664048,
+  "capped": 182191
+ },
+ "apply_2024": {
+  "fields": 24554482,
+  "eco_fit": 24532788,
+  "state_fallback": 21694,
+  "capped": 318445
+ },
+ "blocks": {
+  "current": {
+   "cells": 19856,
+   "corr_ring1": 0.7906267998814529,
+   "morans_i_ring1": 0.616173783839233,
+   "corr_ring2": 0.6940310024804424,
+   "corr_ring4": 0.5410440646523088,
+   "corr_ring8": 0.2316314786375985,
+   "corr_with_dp_anom": 0.12944121697579586,
+   "sd_change": 0.4208792658007387,
+   "iqr_change": [
+    -0.2413237121838488,
+    0.21984139602256625
+   ],
+   "share_abs_gt_0.5": 0.18639202256244963,
+   "level2024_corr_with_mean_precip": 0.041472504550109375,
+   "level2024_corr_ring4": 0.6119977828489682
+  },
+  "ecoregion_anomalies": {
+   "cells": 19856,
+   "corr_ring1": 0.794592642495872,
+   "morans_i_ring1": 0.6255616070379483,
+   "corr_ring2": 0.7033005026907825,
+   "corr_ring4": 0.5692383839171502,
+   "corr_ring8": 0.3730062308141929,
+   "corr_with_dp_anom": 0.09055852038982945,
+   "sd_change": 0.4348076918977861,
+   "iqr_change": [
+    -0.28189643066113634,
+    0.23058847507209637
+   ],
+   "share_abs_gt_0.5": 0.21600523771152297,
+   "level2024_corr_with_mean_precip": 0.13065944935653254,
+   "level2024_corr_ring4": 0.5264184128754661
+  },
+  "ecoregion_anomalies_plus_mean_precip": {
+   "cells": 19856,
+   "corr_ring1": 0.793917298269191,
+   "morans_i_ring1": 0.626247139528566,
+   "corr_ring2": 0.700837918765886,
+   "corr_ring4": 0.5611823231277506,
+   "corr_ring8": 0.3542807865665828,
+   "corr_with_dp_anom": 0.040725502835633635,
+   "sd_change": 0.4380653996522207,
+   "iqr_change": [
+    -0.27329855194484476,
+    0.23100366436055142
+   ],
+   "share_abs_gt_0.5": 0.2137389202256245,
+   "level2024_corr_with_mean_precip": 0.06700267889168195,
+   "level2024_corr_ring4": 0.5180547369485633
+  }
+ },
+ "seconds": 160
+}

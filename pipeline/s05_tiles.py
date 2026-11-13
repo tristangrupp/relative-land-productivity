@@ -84,8 +84,9 @@ def wsl_run(cmd, out):
 SIMPLIFY_DEG = 0.0001
 LOG = os.path.join(C.TILES, "tiles_log.jsonl")
 ATTRS = ["fid", "area_ha", "crop_2020", "crop_2024", "prod_2020", "prod_2024", "change", "change_class",
-         "vigor_2020", "vigor_2024", "decision", "n_obs_2020", "n_obs_2024", "muni_code", "confidence"]
-INT_ATTRS = {"fid", "crop_2020", "crop_2024", "vigor_2020", "vigor_2024", "n_obs_2020", "n_obs_2024", "muni_code"}
+         "vigor_2020", "vigor_2024", "decision", "area_decision", "eco_id", "n_obs_2020", "n_obs_2024", "muni_code",
+         "confidence"]
+INT_ATTRS = {"fid", "crop_2020", "crop_2024", "vigor_2020", "vigor_2024", "n_obs_2020", "n_obs_2024", "muni_code", "eco_id"}
 WSL = ["wsl", "-d", "Ubuntu-22.04", "--"]
 
 
@@ -217,7 +218,7 @@ def build_summary(states, source="modis"):
         if not (os.path.exists(p) and os.path.exists(m)):
             continue
         df = pq.read_table(p, columns=["fid", "area_ha", "crop_2020", "crop_2024", "prod_2020", "prod_2024", "change",
-                                       "change_class", "decision"]).to_pandas()
+                                       "change_class", "decision", "area_decision"]).to_pandas()
         h6 = pq.read_table(m, columns=["fid", "h3_6"]).to_pandas().set_index("fid")
         df = df.join(h6, on="fid")
         frames.append(df)
@@ -226,6 +227,10 @@ def build_summary(states, source="modis"):
         df[c] = df[c].astype("float64")
     df["change_class"] = df["change_class"].astype(str)
     df["decision"] = df["decision"].astype(str)
+    df["area_decision"] = df["area_decision"].astype(str)
+    # The area call is made per H3 resolution 5 cell (s07_decisions.py); its pooled levels and
+    # changes are attached to every summary cell from the resolution 5 cell that holds it.
+    area = pd.read_parquet(os.path.join(C.ANALYSIS, "decisions", "area_cells.parquet")).set_index("cell")
     # One summary level per zoom band, so the zoomed-out map shows regions rather than a
     # sub-pixel salt and pepper of resolution 6 cells (145k cells at zoom 4 are under one pixel
     # each). Each level aggregates the fields directly, not the finer cells, so a share is the
@@ -244,6 +249,12 @@ def build_summary(states, source="modis"):
             parent = {int(c): h3.str_to_int(h3.cell_to_parent(h3.int_to_str(int(c)), res)) for c in uniq}
             key = base.map(parent)
         out = summarize_cells(df, key)
+        a5 = out.index.map(lambda c: h3.str_to_int(h3.cell_to_parent(h3.int_to_str(int(c)), 5))) if res > 5 else out.index
+        for col, name in (("crops_level", "area_crops_2024"), ("pasture_level", "area_pasture_2024"),
+                          ("crops_change", "area_crops_change"), ("pasture_change", "area_pasture_change"),
+                          ("mosaic_level", "area_mosaic_2024"), ("mosaic_change", "area_mosaic_change")):
+            out[name] = area[col].reindex(a5).round(3).values
+        out["eco_trend"] = area["eco_trend"].reindex(a5).values
         total_cells += len(out)
         src = os.path.join(GEOJSON, f"summary_r{res}.geojsonl")
         write_cells(out, src, res, h3)
@@ -293,7 +304,18 @@ def summarize_cells(df, key):
         "dominant_crop_2024": g["crop_2024"].agg(lambda s: int(s.mode().iloc[0])),
         "share_pasture": g["crop_2024"].apply(lambda s: (s == 15).mean()).round(4),
         "dominant_decision": g["decision"].agg(lambda s: s.mode().iloc[0]),
-    })
+        "dominant_area_decision": g["area_decision"].agg(lambda s: s.mode().iloc[0]),
+    }).join(decision_shares(df, key))
+
+
+def decision_shares(df, key):
+    """Share of each cell's fields per version 2 decision of interest, from indicator means."""
+    d = df["decision"].values
+    ind = pd.DataFrame({"share_restore": d == "restore", "share_improve_yields": d == "improve_yields",
+                        "share_convert_pasture": d == "convert_pasture",
+                        "share_converted": np.isin(d, ["converted_below", "converted_ok"]),
+                        "share_switch_failed": d == "switch_failed"}).astype(np.float32)
+    return ind.groupby(key.values).mean().round(4)
 
 
 def write_cells(out, src, res, h3):
@@ -315,16 +337,21 @@ def write_cells(out, src, res, h3):
 
 def build_stats(states):
     uf = C.state_uf_map(2024)
-    blank = lambda: {"n_fields": 0, "area_ha": 0.0, "change_class": {}, "decision": {}, "crop_2020": {}, "crop_2024": {}}  # noqa: E731
+    blank = lambda: {"n_fields": 0, "area_ha": 0.0, "change_class": {}, "decision": {}, "decision_v1": {}, "area_decision": {},  # noqa: E731
+                     "crop_2020": {}, "crop_2024": {}}
 
     def add(dst, counts, ab_counts):
         dst["n_fields"] += counts["n_fields"]
         dst["area_ha"] += counts["area_ha"]
-        for key in ("change_class", "decision", "crop_2020", "crop_2024"):
-            for k, v in counts[key].items():
+        for key in ("change_class", "decision", "decision_v1", "area_decision", "crop_2020", "crop_2024"):
+            for k, v in counts.get(key, {}).items():
                 dst[key][k] = dst[key].get(k, 0) + v
+        # the abandoned 2020 outlines: their own change class and decision, and the area call of their cell
         dst["change_class"]["abandoned"] = dst["change_class"].get("abandoned", 0) + ab_counts
-        dst["decision"]["restore"] = dst["decision"].get("restore", 0) + ab_counts
+        dst["decision"]["abandoned_outline"] = dst["decision"].get("abandoned_outline", 0) + ab_counts
+        dst["decision_v1"]["restore"] = dst["decision_v1"].get("restore", 0) + ab_counts
+        for k, v in counts.get("area_decision_abandoned", {}).items():
+            dst["area_decision"][k] = dst["area_decision"].get(k, 0) + v
 
     brazil = blank()
     per_state = {}
