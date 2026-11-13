@@ -7,7 +7,8 @@ profile mfr-datalab (SSO). tiles\\fields.pmtiles, summary.pmtiles and stats.json
 .../tiles/, the per-state analysis\\year=2024\\state=<State>\\fields_scored.parquet to
 .../fields/year=2024/state=<State>/fields_scored.parquet and analysis\\abandoned\\<State>.parquet
 to .../fields/abandoned/state=<State>.parquet. Every copy is `aws s3 cp` with
-`--acl public-read`; if the bucket refuses ACLs (BucketOwnerEnforced) the copy is retried
+`--acl public-read`, skipped when S3 already holds an object of the same size, and retried up to
+four times on a dropped connection; if the bucket refuses ACLs (BucketOwnerEnforced) the copy is retried
 without the ACL, since the bucket policy already serves the restoration-works-para prefix
 publicly. S3 is storage only; no AWS compute is started.
 
@@ -54,20 +55,37 @@ def session_ok():
     raise RuntimeError(r.stderr)
 
 
-def cp(local, key, dry_run=False):
+def remote_size(key):
+    """Size of the object on S3, or None when it does not exist."""
+    r = aws("s3api", "head-object", "--bucket", BUCKET, "--key", key, check=False)
+    if r.returncode != 0:
+        return None
+    return int(json.loads(r.stdout)["ContentLength"])
+
+
+def cp(local, key, dry_run=False, attempts=4):
     uri = f"s3://{BUCKET}/{key}"
     size = os.path.getsize(local)
     if dry_run:
         print(json.dumps({"dry_run": True, "local": local, "s3": uri, "bytes": size}))
         return
+    if remote_size(key) == size:
+        print(json.dumps({"s3": uri, "bytes": size, "skipped": "same size on S3"}), flush=True)
+        return
     t0 = time.time()
-    r = aws("s3", "cp", local, uri, "--acl", "public-read", "--only-show-errors", check=False)
     acl = "public-read"
-    if r.returncode != 0 and "AccessControlListNotSupported" in (r.stderr or ""):
-        r = aws("s3", "cp", local, uri, "--only-show-errors", check=False)
-        acl = "bucket-policy"
-    if r.returncode != 0:
-        raise RuntimeError(f"{uri}: {r.stderr.strip()[-600:]}")
+    for attempt in range(1, attempts + 1):
+        r = aws("s3", "cp", local, uri, "--acl", "public-read", "--only-show-errors", check=False)
+        if r.returncode != 0 and "AccessControlListNotSupported" in (r.stderr or ""):
+            r = aws("s3", "cp", local, uri, "--only-show-errors", check=False)
+            acl = "bucket-policy"
+        if r.returncode == 0:
+            break
+        # the shared link drops connections now and then; wait and retry the same object
+        print(json.dumps({"s3": uri, "attempt": attempt, "error": r.stderr.strip()[-300:]}), flush=True)
+        if attempt == attempts:
+            raise RuntimeError(f"{uri}: {r.stderr.strip()[-600:]}")
+        time.sleep(30 * attempt)
     print(json.dumps({"s3": uri, "bytes": size, "seconds": round(time.time() - t0, 1), "acl": acl,
                       "mb_per_s": round(size / 1e6 / max(time.time() - t0, 1e-3), 2)}), flush=True)
 
