@@ -22,8 +22,8 @@ Local clone: `C:\Users\grupp\src\relative-land-productivity`.
 Data root: `F:\relative-land-productivity-data` (fields, grid, weather, raw, extracted,
 analysis, tiles). Never modify `E:\`.
 Published artifacts: `https://wri-datalab-sandbox.s3.amazonaws.com/trazofields/trazo4/relative-land-productivity/`
-with `tiles/fields.pmtiles` (6.36 GB, zoom 9 to 13), `tiles/summary.pmtiles` (39 MB, H3
-cells, zoom 3 to 9), `tiles/stats.json`, and `fields/year=2024/state=<State>/fields_scored.parquet`
+with `tiles/fields.pmtiles` (6.40 GB, zoom 9 to 13), `tiles/summary.pmtiles` (92.4 MB, H3
+resolution 6 cells, zoom 3 to 9), `tiles/stats.json`, and `fields/year=2024/state=<State>/fields_scored.parquet`
 plus `fields/abandoned/state=<State>.parquet` (54 objects, 12.9 GB). AWS profile
 `mfr-datalab` (SSO), S3 is storage only.
 
@@ -97,7 +97,9 @@ DECISIONS_V2.md. Methods: methods/METHODS.md. Site contract: docs/DATA_CONTRACT.
   restore. `decision_v1` keeps the old suggestion. The weather refit per ecoregion was tested
   and not adopted. The site has the national frontier change map (continuous ramp on 6 km
   cells), the Area decision view, the top-action decision summary, short legends with info
-  tooltips, and calm intensify. See the log for whether the tiles and site are published.
+  tooltips, and calm intensify. Published 13 Nov: fields.pmtiles (6.40 GB, 1,422 s at 4.5
+  MB/s), summary.pmtiles (92.4 MB), stats.json and the 54 GeoParquet files on S3, site at
+  commit 8116abb and later on Pages, checked live.
 
 ## Open items
 
@@ -296,3 +298,16 @@ DECISIONS_V2.md. Methods: methods/METHODS.md. Site contract: docs/DATA_CONTRACT.
   cell; every 6 km cell and every field inherits its parent's call, and at field zoom the
   fields draw their area call. Making the call itself at 6 km would need a method change and
   a field tile rebuild; offered to the user, not done.
+- Publication of version 2. Field tiles rebuilt with `decision`, `area_decision` and `eco_id`
+  (s05_tiles.py fields, 3,228 s; tile-join 436 s; fields.pmtiles 6,398,827,894 bytes) and
+  uploaded in 1,422 s; summary.pmtiles (92,404,490 bytes) and stats.json uploaded; all three
+  answer range requests with 206. The 54 GeoParquet files were uploaded; the first pass
+  failed on Amapá after four dropped connections and a rerun completed (the second rerun
+  skipped all 54 as same size). Site pushed as 8116abb; Pages built it. Checked live in
+  Chrome: zoom 4 change view shows the continuous frontier ramp on 6 km cells with the
+  gradient legend; zoom 4 decision view shows the top-action colors (amber, greens, blues,
+  teal) with the gray background, not one color; zoom 4 area view shows teal, violet and
+  orange areas on gray; at zoom 11 near Sorriso the 3,352 rendered fields have the new
+  decision values, area_decision and eco_id, the field card shows the area call and the
+  ecoregion line, and the legend counts are the version 2 ones (restore 91,076). Console:
+  only errors from a browser extension.

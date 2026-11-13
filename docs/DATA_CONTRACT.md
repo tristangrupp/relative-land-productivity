@@ -12,7 +12,7 @@ terms). The site also reads `docs/data/ecoregions.json` from Pages (`CONFIG.ECOR
 
 | config key | URL | what it is |
 |---|---|---|
-| `FIELDS_PMTILES` | `https://wri-datalab-sandbox.s3.amazonaws.com/trazofields/trazo4/relative-land-productivity/tiles/fields.pmtiles` | one polygon per 2024 Trazo4 field plus the abandoned 2020 fields, layer name `fields`, zoom 9 to 13, 6.36 GB |
+| `FIELDS_PMTILES` | `https://wri-datalab-sandbox.s3.amazonaws.com/trazofields/trazo4/relative-land-productivity/tiles/fields.pmtiles` | one polygon per 2024 Trazo4 field plus the abandoned 2020 fields, layer name `fields`, zoom 9 to 13, 6.40 GB (rebuilt 13 November 2026 with the version 2 attributes) |
 | `SUMMARY_PMTILES` | `.../tiles/summary.pmtiles` | one polygon per H3 resolution 6 cell (144,909 cells, about 6 km across) at every zoom, layer name `summary`, zoom 3 to 9, 92.2 MB |
 | `STATS_URL` | `.../tiles/stats.json` | class counts for Brazil and per state, read by the legend and the Where card |
 | `ECOREGIONS_URL` | `./data/ecoregions.json` (on Pages) | RESOLVE 2017 ecoregion names by `eco_id`, with the class-weighted (`c`, `p`) and per peer class (`k`: class to `[Scale C change, plain change percent]`) context written by `s07_decisions.py lookup` |

@@ -69,7 +69,7 @@ Bulk data lives outside the repository in `F:\relative-land-productivity-data` (
 grid, weather, extracted metrics, analysis tables, tiles before upload). Published tiles are
 public read at
 `https://wri-datalab-sandbox.s3.amazonaws.com/trazofields/trazo4/relative-land-productivity/tiles/`:
-`fields.pmtiles` (6.36 GB, zoom 9 to 13), `summary.pmtiles` (H3 resolution 6 at zooms 3
+`fields.pmtiles` (6.40 GB, zoom 9 to 13), `summary.pmtiles` (H3 resolution 6 at zooms 3
 to 9) and `stats.json`.
 
 ## Running the site locally
