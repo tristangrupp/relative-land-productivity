@@ -54,6 +54,32 @@ GEOJSON = os.path.join(C.TILES, "geojson")
 STATE_TILES = os.path.join(C.TILES, "states")
 TMP = os.path.join(C.TILES, "tmp")
 TMP_WSL = "/tmp/tippecanoe"
+OUT_WSL = "/tmp/tippecanoe_out"
+
+
+def wsl_out(out):
+    """Run a tippecanoe or tile-join command with its output on the WSL disk, then copy to F:.
+
+    Writing a PMTiles file through the /mnt/f 9P mount is two orders of magnitude slower than
+    writing it on the WSL ext4 disk (tile-join: 735 s for 578 MB on /mnt/f, 7.5 s for 173 MB on
+    /tmp). `out` is the Windows path; the command is given the WSL path returned here."""
+    return f"{OUT_WSL}/{os.path.basename(out)}"
+
+
+def wsl_run(cmd, out):
+    """Run cmd (a WSL command list writing to wsl_out(out)), copy the result to out, remove the WSL copy."""
+    subprocess.run(WSL + ["mkdir", "-p", TMP_WSL, OUT_WSL], capture_output=True)
+    r = subprocess.run(cmd, capture_output=True, text=True)
+    tmp = wsl_out(out)
+    if r.returncode == 0:
+        c = subprocess.run(WSL + ["cp", "-f", tmp, wsl_path(out)], capture_output=True, text=True)
+        if c.returncode != 0:
+            r.returncode = c.returncode
+            r.stderr += c.stderr
+    subprocess.run(WSL + ["rm", "-f", tmp], capture_output=True)
+    if r.returncode != 0 and os.path.exists(out):
+        os.remove(out)
+    return r
 SIMPLIFY_DEG = 0.0001
 LOG = os.path.join(C.TILES, "tiles_log.jsonl")
 ATTRS = ["fid", "area_ha", "crop_2020", "crop_2024", "prod_2020", "prod_2024", "change", "change_class",
@@ -146,12 +172,9 @@ def run_tippecanoe(state, force=False):
             recs.append({"state": state, "out": os.path.basename(out), "status": "exists"})
             continue
         t1 = time.time()
-        cmd = WSL + ["tippecanoe", "-o", wsl_path(out), "-f", "-l", "fields", "-n", "fields", "-ab", "-P", "-q",
+        cmd = WSL + ["tippecanoe", "-o", wsl_out(out), "-f", "-l", "fields", "-n", "fields", "-ab", "-P", "-q",
                      "-t", TMP_WSL] + args + [wsl_path(src)]
-        subprocess.run(WSL + ["mkdir", "-p", TMP_WSL], capture_output=True)
-        r = subprocess.run(cmd, capture_output=True, text=True)
-        if r.returncode != 0 and os.path.exists(out):
-            os.remove(out)
+        r = wsl_run(cmd, out)
         rec = {"step": "tippecanoe", "state": state, "out": os.path.basename(out), "returncode": r.returncode,
                "bytes": os.path.getsize(out) if os.path.exists(out) else None, "seconds": round(time.time() - t1, 1),
                "stderr_tail": r.stderr[-600:]}
@@ -171,9 +194,9 @@ def tile_join(states):
             p = os.path.join(STATE_TILES, f"{s}{suffix}.pmtiles")
             if os.path.exists(p):
                 inputs.append(wsl_path(p))
-    cmd = WSL + ["tile-join", "-o", wsl_path(out), "-f", "-pk", "-n", "fields",
+    cmd = WSL + ["tile-join", "-o", wsl_out(out), "-f", "-pk", "-n", "fields",
                  "-N", "Relative land productivity, Brazil 2020 to 2024, Trazo4 fields"] + inputs
-    r = subprocess.run(cmd, capture_output=True, text=True)
+    r = wsl_run(cmd, out)
     rec = {"step": "tile-join", "inputs": len(inputs), "returncode": r.returncode,
            "bytes": os.path.getsize(out) if os.path.exists(out) else None, "seconds": round(time.time() - t0, 1),
            "stderr_tail": r.stderr[-600:]}
@@ -198,6 +221,8 @@ def build_summary(states, source="modis"):
         df = df.join(h6, on="fid")
         frames.append(df)
     df = pd.concat(frames, ignore_index=True)
+    for c in ("area_ha", "prod_2020", "prod_2024", "change"):
+        df[c] = df[c].astype("float64")
     df["change_class"] = df["change_class"].astype(str)
     df["decision"] = df["decision"].astype(str)
     g = df.groupby("h3_6")
@@ -230,9 +255,9 @@ def build_summary(states, source="modis"):
             fh.write(json.dumps({"type": "Feature", "properties": props, "geometry": {"type": "Polygon", "coordinates": [ring]}},
                                 separators=(",", ":")) + "\n")
     outp = os.path.join(C.TILES, "summary.pmtiles")
-    cmd = WSL + ["tippecanoe", "-o", wsl_path(outp), "-f", "-l", "summary", "-n", "summary", "-Z3", "-z9", "-pk", "-pf",
+    cmd = WSL + ["tippecanoe", "-o", wsl_out(outp), "-f", "-l", "summary", "-n", "summary", "-Z3", "-z9", "-pk", "-pf",
                  "-ab", "-q", "-t", TMP_WSL, wsl_path(src)]
-    r = subprocess.run(cmd, capture_output=True, text=True)
+    r = wsl_run(cmd, outp)
     rec = {"step": "summary", "cells": int(len(out)), "returncode": r.returncode,
            "bytes": os.path.getsize(outp) if os.path.exists(outp) else None, "seconds": round(time.time() - t0, 1),
            "stderr_tail": r.stderr[-400:]}
