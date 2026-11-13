@@ -3,7 +3,10 @@
 The site reads three files. Their URLs and every attribute name live in `docs/config.js`,
 in `CONFIG`, `ATTR` and `SUMMARY_ATTR`. The analysis stage writes tiles that match this
 file; if a name has to change, change it in `config.js` and here, nowhere else. This version
-describes the tiles released on 13 November 2026, read back from the PMTiles metadata.
+describes the tiles released on 13 November 2026, read back from the PMTiles metadata, with
+the version 2 decision attributes added the same day (`decision` on new values,
+`area_decision`, `eco_id`; summary `dominant_area_decision`, the decision shares and the area
+terms). The site also reads `docs/data/ecoregions.json` from Pages (`CONFIG.ECOREGIONS_URL`).
 
 ## Files
 
@@ -12,6 +15,7 @@ describes the tiles released on 13 November 2026, read back from the PMTiles met
 | `FIELDS_PMTILES` | `https://wri-datalab-sandbox.s3.amazonaws.com/trazofields/trazo4/relative-land-productivity/tiles/fields.pmtiles` | one polygon per 2024 Trazo4 field plus the abandoned 2020 fields, layer name `fields`, zoom 9 to 13, 6.36 GB |
 | `SUMMARY_PMTILES` | `.../tiles/summary.pmtiles` | one polygon per H3 cell at two resolutions by zoom band (5 at zooms 3 to 4, 6 at zooms 5 to 9; 23,878 and 144,909 cells), layer name `summary`, zoom 3 to 9 |
 | `STATS_URL` | `.../tiles/stats.json` | class counts for Brazil and per state, read by the legend and the Where card |
+| `ECOREGIONS_URL` | `./data/ecoregions.json` (on Pages) | RESOLVE 2017 ecoregion names by `eco_id`, with the class-weighted (`c`, `p`) and per peer class (`k`: class to `[Scale C change, plain change percent]`) context written by `s07_decisions.py lookup` |
 
 The bucket is public read with CORS (`Access-Control-Allow-Origin: *`, GET and HEAD), so
 GitHub Pages range-reads the PMTiles. The fields archive stops at zoom 13; MapLibre
@@ -36,14 +40,19 @@ is dropped or merged. Outlines are simplified with a 0.0001 degree tolerance and
 | `prod_2024` | float | the same for 2024 | not cropped or not measured in 2024 |
 | `change` | float | `prod_2024` minus `prod_2020`, on the ratio scale, only when both exist and the crop group is the same | not comparable |
 | `change_class` | string | one of `large_decline`, `decline`, `stable`, `gain`, `large_gain` (set on the change in peer standard deviations, thresholds 1 and 2), `crop_switched`, `newly_cropped`, `abandoned`, `no_data` | never absent |
-| `decision` | string | one of `restore`, `switch_crop`, `change_pattern`, `abandon`, `intensify`, `improve_yields`, `keep`, `none` (newly cropped and no-data fields) | never absent |
+| `decision` | string | version 2 field call (methods section 7.2): one of `restore`, `converted_below`, `converted_ok`, `convert_pasture`, `switch_paid_off`, `switch_failed`, `improve_yields`, `intensify`, `keep`, `abandon`, `abandoned_outline` (the abandoned 2020 outlines), `none` (no data) | never absent |
+| `area_decision` | string | area call of the field's H3 resolution 5 cell (methods section 7.1): `restore_area`, `good_land_underused`, `system_misfit`, `area_declining`, `area_fine`, `none` (no area call); abandoned 2020 outlines take the call of the cell of their centroid | never absent |
+| `eco_id` | int | RESOLVE 2017 `ECO_ID` of the field centroid; the key into `ecoregions.json` | 0 for the 3 unassigned fields |
 | `confidence` | string | `low` when the field is under 6.25 ha (one MODIS pixel) or fewer than 75 percent of its window composites were observed in either year, else `high` | never absent |
 | `n_obs_2020` | int | observed (not interpolated) 16-day composites inside the 2020 growing season window, 0 to 23 | not measured |
 | `n_obs_2024` | int | the same for 2024, 0 to 22 (composite 2024225 is missing from the source and always interpolated) | not measured |
 | `muni_code` | int | IBGE 7-digit municipality code of the field centroid | outside coverage |
 | `vigor_2020`, `vigor_2024` | int | in the original contract (MapBiomas pasture vigor 1 low, 2 medium, 3 high); not written in this release because the product was not available | always absent |
 
-`r_adj_2020` and `r_adj_2024` (the relative metric in peer standard deviations) are in the
+`r_adj_2020` and `r_adj_2024` (the relative metric in peer standard deviations),
+`decision_v1` (the version 1 suggestion: `restore`, `switch_crop`, `change_pattern`, `abandon`,
+`intensify`, `improve_yields`, `keep`, `none`) and `eco_trend` (`declining`, `steady`,
+`gaining`, `unknown`: the ecoregion-class Scale C change at plus or minus 0.1) are in the
 analysis GeoParquet but not in the tiles.
 
 The five compared change classes are thresholds on `D = r_adj_2024 - r_adj_2020` in peer
@@ -86,7 +95,13 @@ names the level.
 | `dominant_crop_2020` | int | most common `crop_2020` |
 | `dominant_crop_2024` | int | most common `crop_2024` |
 | `share_pasture` | float | share of fields with `crop_2024` 15 |
-| `dominant_decision` | string | most common `decision`, including `none` |
+| `dominant_decision` | string | most common `decision` (version 2), including `none` |
+| `dominant_area_decision` | string | most common `area_decision`; at resolution 5 it is the cell's own call, at resolution 6 the call of the parent resolution 5 cell |
+| `share_restore`, `share_improve_yields`, `share_convert_pasture`, `share_switch_failed` | float | share of the cell's fields with that `decision`, 0 to 1 |
+| `share_converted` | float | share with `converted_below` or `converted_ok` |
+| `area_crops_2024`, `area_pasture_2024`, `area_mosaic_2024` | float | pooled cell-within-ecoregion term of the resolution 5 cell (the parent at resolution 6) in 2024, ecoregion SD; absent with under 30 fields of every class of the group |
+| `area_crops_change`, `area_pasture_change`, `area_mosaic_change` | float | the same, 2024 minus 2020 |
+| `eco_trend` | string | `declining`, `steady` or `gaining`: class-weighted Scale C change of the ecoregion holding most of the resolution 5 cell's fields, at plus or minus 0.1 national cell SD |
 | `mean_vigor_change` | float | in the original contract; absent in this release |
 
 ## stats.json
@@ -99,7 +114,9 @@ names the level.
   "source": "MODIS MOD13Q1 16-day NDVI, 250 m",
   "brazil": { "n_fields": 24554482, "area_ha": 190716947.2,
               "change_class": { "stable": 15672741, "...": 0 },
-              "decision": { "intensify": 7061028, "...": 0 },
+              "decision": { "intensify": 6712927, "abandoned_outline": 748022, "...": 0 },
+              "decision_v1": { "intensify": 7061028, "...": 0 },
+              "area_decision": { "area_fine": 18801214, "...": 0 },
               "crop_2020": { "15": 13704598, "...": 0 },
               "crop_2024": { "15": 13920904, "...": 0 },
               "confidence_low": 20344905 },
@@ -110,7 +127,9 @@ names the level.
 State keys are the two-letter codes in `STATES` in `config.js`; all 27 are present. Count
 keys are the class values as strings. `n_fields` and `area_ha` count the 2024 outlines; the
 `change_class` and `decision` counts also include the abandoned 2020 outlines, so they sum to
-748,022 more than `n_fields` nationally. `confidence_low` is the number of fields with
+748,022 more than `n_fields` nationally. The abandoned outlines count as `decision.abandoned_outline`,
+`decision_v1.restore` and under the `area_decision` of their cell, so `area_decision` sums to
+the same total. `confidence_low` is the number of fields with
 `confidence` `low`. The page shows `confidence_low / n_fields` and
 `change_class.no_data / n_fields` as shares.
 

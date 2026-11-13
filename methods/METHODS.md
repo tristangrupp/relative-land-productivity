@@ -156,9 +156,124 @@ and checks the thresholds against the validation in section 8.
 
 ## 7. Decision framing
 
-Level in 2024: below peers (R* < -0.5), at peers, above peers (R* > 0.5). Trend: the class
-above. These are screening suggestions from satellite greenness, not agronomic advice; every
-suggestion needs a field visit before any decision.
+Version 2, set by the user on 13 November 2026 and built by `pipeline/s07_decisions.py`
+(report: `pipeline/DECISIONS_V2.md`). The user's words: "if productivity fell + crop type
+switch, thats a different story than just productivity fell. if pasture is low productivity
+but its soy neighbors are high productivity, thats also a very different story with different
+recommendation. if soy and pasture are all low in an area and declining, restore the whole
+area", and "we keep the ecoregion reference scores, those are good. we want to see larger
+scale land use tradeoffs ... but its important to also consider the immediate area ... there
+needs to be a blend of the two."
+
+The decision has two tiers. The area call is made first, per H3 resolution 5 cell (about 15
+km across), from the cell's crops and pasture against the same uses in the RESOLVE 2017
+ecoregion. The field call is made second, inside the area, from the field's own record
+against its cell peers (section 5). These are screening suggestions from satellite
+greenness, not agronomic advice; every suggestion needs a field visit before any decision.
+
+### 7.1 Area call
+
+The area term is the cell-within-ecoregion term of `s06_ecoregion_peers.py`: the median of
+the weather-adjusted seasonal integral (`metric_adj`) of a peer class in the cell, inside one
+ecoregion, minus the median of that class in the ecoregion, divided by the robust SD of the
+ecoregion-class field distribution. A (cell, ecoregion, class) value needs 30 valid fields
+of the class. Per cell, the values are pooled into two groups, weighted by the 2024 field
+count of each class:
+
+- crops: soybean (39), temporary crops (19 and 41), sugarcane (20), rice (40), cotton (62),
+  and the perennials coffee (46), citrus (47), other perennials (48) and oil palm (35);
+- pasture (15).
+
+Mosaic of uses (21) is pooled and reported on its own (summary tile attributes
+`area_mosaic_2024` and `area_mosaic_change`) but does not enter the call. Forest plantation
+(9) and the generic agriculture class (18) do not enter either. A group is present in a cell
+when at least one of its classes has a 2024 value, so the minimum is 30 fields of one class.
+The group's level is its pooled 2024 value; its change is the pooled 2024 minus 2020 value
+over the classes that have both years.
+
+Thresholds, in ecoregion SD:
+
+- below: level under -0.5;
+- declining: change under -0.3.
+
+The level threshold puts 16.8 percent of crop cells and 23.5 percent of pasture cells below.
+It is more than twice the sampling error of a cell median of 30 fields (1.2533 / sqrt(30) =
+0.23 SD) and about six times that error at the median row size of 210 fields. The change
+threshold puts 20.7 percent of crop cells and 21.6 percent of pasture cells in decline,
+about the lowest fifth; it is 2.5 times the error of a change between two 210-field medians
+(0.12 SD) and is smaller than the level threshold because the same fields are compared in
+both years. The quartiles of the pooled change are -0.24 and +0.26 for crops and -0.25 and
++0.28 for pasture.
+
+| area call | rule | what it means for a planner |
+|---|---|---|
+| restore the area (`restore_area`) | crops and pasture both present, both below, both declining | the land is weak for every use present and getting weaker; restore across the area rather than field by field |
+| good land underused (`good_land_underused`) | crops present and not below, pasture present and below | the land supports crops at the ecoregion level while pasture lags; intensify the pasture or convert it to crops |
+| system misfit (`system_misfit`) | crops present and below, pasture present and not below | pasture does as well as elsewhere but crops do not; the crops may not suit this land |
+| area declining (`area_declining`) | every group present is below, and at least one is declining (and not restore the area) | the only use present, or both uses, sit below the ecoregion and at least one is falling further |
+| area fine (`area_fine`) | at least one group present and none of the above | no area-wide problem; the field call decides |
+| no area call (`none`) | neither crops nor pasture has 30 fields of a class in the cell | the area cannot be compared with its ecoregion |
+
+The area declining rule extends the user's wording ("one group present, below and
+declining") to cells where both groups are below and only one declines, since those are
+neither fine nor a full restore case.
+
+Context attached to each area and field, not used in the call: the ecoregion's Scale C
+change, the change of the ecoregion-class median against the national class median between
+2020 and 2024 in national cell SD (section `s06`), read as losing ground (-0.1 or lower),
+gaining (0.1 or higher) or steady. The 0.1 threshold separates the Amazon frontier rows
+(-0.15 to -0.35 for pasture) from the large ecoregions (Cerrado, Caatinga, Alto Paraná,
+within 0.07). The field has the row of its own class (`eco_trend` in the GeoParquet; the
+site reads it from `docs/data/ecoregions.json` by `eco_id` and crop); the summary cell
+has the class-weighted row of the ecoregion that holds most of the cell's fields.
+
+### 7.2 Field call
+
+Level against cell peers in 2024: below (`r_adj_2024` under -0.5), at, above (over 0.5), as
+in version 1. The first matching row wins.
+
+| order | field | suggestion | note for the farmer or planner |
+|---|---|---|---|
+| 1 | change class no data, or crop switched with no 2024 value | no data (`none`) | too few clear satellite images in one of the years to compare |
+| 2 | below cell peers in both years, declining, and the 2024 integral under the 20th percentile of the class in the state | abandon or change use (`abandon`) | close to bare soil for two seasons; the land may suit another use or restoration |
+| 3 | newly cropped, 2024 below ecoregion peers (`r_eco_2024` under -0.5) | recently converted, below peers (`converted_below`) | cleared since 2020 and already weaker than the same use elsewhere in the ecoregion: the strongest restore case |
+| 4 | newly cropped, 2024 at or above ecoregion peers, or no 2024 ecoregion value | recently converted, at or above peers (`converted_ok`) | cleared since 2020 and producing; the open question is the clearing itself |
+| 5 | the cell's area call is restore the area | restore (`restore`) | restore across the area, this field included |
+| 6 | pasture, not above cell peers, in a good land underused cell | improve or convert pasture (`convert_pasture`) | recover the pasture or move the land into crops |
+| 7 | crop group switched, 2024 at or above cell peers of the new crop | switch paid off (`switch_paid_off`) | keep the new crop |
+| 8 | crop group switched, 2024 below cell peers of the new crop | switch failed (`switch_failed`) | reconsider the switch or how the new crop is managed |
+| 9 | same crop, decline or large decline, or below cell peers in 2024 | improve yields (`improve_yields`) | the cause is likely on the field: soil, management, inputs |
+| 10 | same crop, at cell peers, not declining | intensify (`intensify`) | the best neighbors show room to produce more |
+| 11 | same crop, above cell peers, not declining | keep (`keep`) | nothing to change on this evidence |
+| 12 | 2020 outline with no crop or pasture in 2024 (abandoned layer) | abandoned since 2020 (`abandoned_outline`) | check whether native vegetation is coming back; restore it if not |
+
+Recently converted land stays its own suggestion (user decision of 13 November 2026), so a
+newly cropped field in a restore-the-area cell keeps its converted class. "Change land use
+pattern" and "switch crop" of version 1 are gone: a crop switch is now judged by its 2024
+level, and the question whether the crop suits the land moved to the area tier (system
+misfit). A field below its cell peers on the same crop with a stable record, which version 1
+called switch crop, is now improve yields. Every field keeps its version 1 suggestion as
+`decision_v1` in the GeoParquet.
+
+### 7.3 Weather term for the area call
+
+The area term was tested on a refit of layer 2 per ecoregion and peer class with the field
+location's mean annual CHIRPS precipitation (agricultural years 2016 to 2024) as an extra
+regressor, centered on the fit's mean, with the guards of section 5
+(`pipeline/s07_weather_refit.py`, `data/summaries/weather_refit_compare.json`). R squared
+over the group medians rose from a median 0.150 (134 state-class pairs) to 0.188 (146
+ecoregion-class pairs); without the precipitation regressor the ecoregion fit was worse
+(0.126). The blocks in the 2024 change of the area term did not shrink: Moran's I over ring-1
+neighbors 0.616 on the state fit and 0.626 on the refit, neighbor correlation at ring 8 (about
+120 km) 0.23 and 0.35. The correlation of the cell's change with its change in precipitation
+anomaly fell from 0.13 to 0.04, so the blocks are not the precipitation anomaly the fit can
+see. The refit was not adopted; the state-class fit of section 5 stays.
+
+### 7.4 Superseded 2026-11-13: version 1 decision table
+
+Version 1 judged each field alone. Level in 2024: below peers (R* < -0.5), at peers, above
+peers (R* > 0.5). Trend: the class above. Kept here for the record; the `decision_v1`
+column holds it.
 
 | 2024 level | trend | suggestion | reasoning |
 |---|---|---|---|

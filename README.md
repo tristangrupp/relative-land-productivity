@@ -6,8 +6,11 @@ resuming work.
 
 A public web map that shows, field by field across Brazil, where crop and pasture
 productivity rose or fell between the 2020 and 2024 agricultural years, broken out by crop
-type. For each field it states which land use decision the evidence points to: restore,
-switch crop, change the land use pattern, abandon, intensify, improve yields, or keep.
+type. Each area of about 15 km gets an area call from its crops and pasture against the same
+uses in its ecoregion (restore the area, good land underused, system misfit, area declining,
+area fine), and each field inside it a field call: restore, recently converted (below or at
+peers), improve or convert pasture, switch paid off, switch failed, improve yields,
+intensify, keep, abandon, or abandoned since 2020.
 
 Live: **https://tristangrupp.github.io/relative-land-productivity/**
 
@@ -95,6 +98,8 @@ page on `docs/data/`; it is `false` in the released site.
 | s03 | `pipeline/s03_*` | per-field greenness (MODIS MOD13Q1; Sentinel-2 in `s03g` and `s03h`), MapBiomas class and weather extraction, resumable per state; see `pipeline/EXTRACT.md` and `pipeline/EXTRACT_S2.md` |
 | s04 | `pipeline/s04_*` | metrics, relative productivity, weather adjustment, change classes, decisions, validation; see `pipeline/ANALYZE.md` |
 | s05 | `pipeline/s05_*` | PMTiles with tippecanoe, summary layer, stats.json, upload to S3 |
+| s06 | `pipeline/s06_ecoregion_peers.py` | RESOLVE 2017 ecoregion scores: field against ecoregion, cell against ecoregion (the area term), ecoregion against nation; see `pipeline/EXPLORE_ECOREGIONS.md` |
+| s07 | `pipeline/s07_weather_refit.py`, `pipeline/s07_decisions.py` | the ecoregion weather refit test (not adopted) and the two-tier decisions, written into `fields_scored.parquet` (`decision`, `area_decision`, `decision_v1`, `eco_id`, `eco_trend`) and `docs/data/ecoregions.json`; run after s04_change and s06 score, before s05; see `pipeline/DECISIONS_V2.md` |
 | site | `docs/` | the map, wired to the tiles through `docs/config.js` |
 
 No Google Earth Engine is used anywhere. Every raster is downloaded or streamed and reduced
