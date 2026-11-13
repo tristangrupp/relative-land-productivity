@@ -163,11 +163,13 @@ export const CHANGE_STEPS = {
     decline and gain balance draw at low opacity so the frontiers stand out. */
 export const NET_STEPS = {
 	breaks: [-0.15, -0.05, 0.05, 0.15],
-	colors: [GREEN2, GREEN1, NEUTRAL, BROWN1, BROWN2],
+	/* The balanced color is darker than the fields' NEUTRAL because the summary cells sit on
+	   the basemap with no outline at the national zooms, and NEUTRAL matches the land color. */
+	colors: [GREEN2, GREEN1, '#bdb7a9', BROWN1, BROWN2],
 	labels: ['gaining fields outnumber declining by 15 points or more', 'gaining outnumber declining by 5 to 15 points',
 		'balanced, within 5 points', 'declining outnumber gaining by 5 to 15 points',
 		'declining fields outnumber gaining by 15 points or more'],
-	neutralOpacity: 0.72,
+	neutralOpacity: 0.8,
 	fullOpacity: 0.92,
 	/* a cell with fewer fields than this draws at the neutral opacity, since its share is noisy */
 	minFields: 10

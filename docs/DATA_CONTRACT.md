@@ -66,8 +66,8 @@ rather than comparing against null.
 
 One feature per H3 cell, over the scored 2024 fields. The layer holds three resolutions in
 zoom bands that do not overlap, so the zoomed-out map shows regions rather than sub-pixel
-cells: resolution 4 (about 40 km across) at zooms 3 to 5, resolution 5 (about 15 km) at
-zooms 6 to 7, resolution 6 (about 6 km, 36 km²) at zooms 8 to 9. Every level aggregates the
+cells: resolution 4 (about 40 km across) at zoom 3, resolution 5 (about 15 km) at zooms 4
+to 5, resolution 6 (about 6 km, 36 km²) at zooms 6 to 9. Every level aggregates the
 fields directly, so a share is the share of the fields in that cell. The `res` property
 names the level.
 
