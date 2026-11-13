@@ -270,9 +270,10 @@ def build_summary(states, source="modis"):
     return rec
 
 
-# H3 resolution per zoom band of the summary tiles. Cell widths: res 3 about 100 km, res 4 about
-# 40 km, res 5 about 15 km, res 6 about 6 km, so a cell is 10 to 30 pixels wide in its band.
-SUMMARY_LEVELS = [(3, 3, 3), (4, 4, 5), (5, 6, 7), (6, 8, 9)]
+# H3 resolution per zoom band of the summary tiles. Cell widths: res 4 about 40 km, res 5 about
+# 15 km, res 6 about 6 km. Resolution 3 (100 km) was tried at zoom 3 and dropped: it averages
+# every cell to balanced and reads as a handful of giant hexagons, so zoom 3 keeps resolution 4.
+SUMMARY_LEVELS = [(4, 3, 5), (5, 6, 7), (6, 8, 9)]
 
 
 def summarize_cells(df, key):

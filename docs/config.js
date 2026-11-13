@@ -167,8 +167,8 @@ export const NET_STEPS = {
 	labels: ['gaining fields outnumber declining by 15 points or more', 'gaining outnumber declining by 5 to 15 points',
 		'balanced, within 5 points', 'declining outnumber gaining by 5 to 15 points',
 		'declining fields outnumber gaining by 15 points or more'],
-	neutralOpacity: 0.42,
-	fullOpacity: 0.9,
+	neutralOpacity: 0.72,
+	fullOpacity: 0.92,
 	/* a cell with fewer fields than this draws at the neutral opacity, since its share is noisy */
 	minFields: 10
 };
