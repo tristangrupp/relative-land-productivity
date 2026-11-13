@@ -173,7 +173,8 @@ suggestion needs a field visit before any decision.
 | above | gain | maintain | nothing to change on this evidence |
 | below in both years, decline, and 2024 iNDVI under the 20th percentile of the class in the state | abandon or change land use pattern | greenness close to bare soil for two seasons; the land may suit another use |
 | crop switched | any | change land use pattern already made; judge the new crop by its 2024 level | the switch is the decision; the 2024 level says whether it paid off |
-| newly cropped | none | no suggestion | one year of evidence only |
+| newly cropped | none | recently converted land | forest, savanna or other native cover in 2020 and crop or pasture in 2024; there is no 2020 productivity to compare, so the field is flagged as a conversion rather than judged (user decision 2026-11-13; drawn in a green next to restore; the planned revamp splits it by the 2024 level against ecoregion peers) |
+| no data | none | no suggestion | too few clear composites in one of the years to compare |
 | abandoned | none | restore or confirm abandonment | a field left cropping; check whether it is regenerating or degrading |
 | pasture low vigor in both years | any | restore or change land use pattern | MapBiomas low vigor means low forage and exposed soil through the year |
 | pasture vigor down | any | restore | vigor fell by at least one class |
