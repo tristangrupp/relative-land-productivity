@@ -132,9 +132,27 @@ function vigorFill() {
 	return ['case', ['all', ['has', a], ['has', b]], m, NODATA_COLOR];
 }
 
+/** Classes with `derivedFrom` are not values of the view's attribute; they are read from
+    another attribute and drawn ahead of the attribute's own match. */
+function derivedFill(view, base) {
+	let expr = base;
+	for (const c of view.classes || []) {
+		if (!c.derivedFrom) continue;
+		expr = ['case', ['==', ['get', ATTR[c.derivedFrom.attr]], c.derivedFrom.value], c.color, expr];
+	}
+	return expr;
+}
+
+function derivedKey(view, p) {
+	for (const c of view.classes || []) {
+		if (c.derivedFrom && p[ATTR[c.derivedFrom.attr]] === c.derivedFrom.value) return c.key;
+	}
+	return null;
+}
+
 function fieldFill(view) {
 	if (view.kind === 'vigor') return vigorFill();
-	if (view.kind === 'class') return classFill(ATTR[view.attr], view.classes);
+	if (view.kind === 'class') return derivedFill(view, classFill(ATTR[view.attr], view.classes));
 	return stepFill(ATTR[view.attr], view.steps);
 }
 
@@ -335,7 +353,7 @@ function fieldValueText(v, p) {
 			const b = p[ATTR.vigor_2024];
 			return a == null || b == null ? 'not pasture in both years' : `${vigorName(a)} to ${vigorName(b)}`;
 		}
-		case 'decision': return decisionName(p[ATTR.decision]);
+		case 'decision': return decisionName(derivedKey(v, p) || p[ATTR.decision]);
 		default: return '';
 	}
 }
@@ -378,7 +396,18 @@ function scopeName() {
 function renderLegend() {
 	const v = state.view;
 	const st = scopeStats();
-	const counts = v.countKey && st && st[v.countKey] ? st[v.countKey] : null;
+	let counts = v.countKey && st && st[v.countKey] ? st[v.countKey] : null;
+	/* A derived class takes its count from the source attribute's counts and leaves the
+	   tile value it was split from (decision "none") with the rest. */
+	if (counts && v.classes && st) {
+		for (const c of v.classes) {
+			if (!c.derivedFrom || !st[c.derivedFrom.attr]) continue;
+			const n = st[c.derivedFrom.attr][c.derivedFrom.value];
+			if (n == null) continue;
+			counts = { ...counts, [c.key]: n };
+			if (counts.none != null) counts.none = Math.max(0, counts.none - n);
+		}
+	}
 	let items;
 	if (state.summaryVisible) {
 		const s = v.summary;
@@ -557,12 +586,13 @@ function renderPick() {
 		rows.push(['Pasture vigor 2020', vigorName(p[ATTR.vigor_2020])]);
 		rows.push(['Pasture vigor 2024', vigorName(p[ATTR.vigor_2024])]);
 	}
-	rows.push(['Suggested decision', decisionName(p[ATTR.decision])]);
+	const decKey = derivedKey(VIEWS.find((x) => x.id === 'decision'), p) || p[ATTR.decision];
+	rows.push(['Suggested decision', decisionName(decKey)]);
 	rows.push(['Confidence', confidenceName(p[ATTR.confidence])]);
 	rows.push(['Clear composites 2020 / 2024', `${fmtInt(p[ATTR.n_obs_2020])} / ${fmtInt(p[ATTR.n_obs_2024])}`]);
 	rows.push(['Municipality (IBGE)', p[ATTR.muni_code] == null ? NA : String(p[ATTR.muni_code])]);
 	$('pickRows').innerHTML = rows.map(row).join('');
-	const d = decisionByKey[p[ATTR.decision]];
+	const d = decisionByKey[decKey];
 	let note = d ? `${d.label}: ${d.note}.` : '';
 	if (p[ATTR.confidence] === CONFIDENCE.LOW) {
 		note += ` Low confidence: the field is under ${CONFIDENCE.LOW_AREA_HA} ha or had few clear composites, so its greenness is shared with neighboring land.`;

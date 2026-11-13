@@ -169,8 +169,8 @@ export const NET_STEPS = {
 	labels: ['gaining fields outnumber declining by 15 points or more', 'gaining outnumber declining by 5 to 15 points',
 		'balanced, within 5 points', 'declining outnumber gaining by 5 to 15 points',
 		'declining fields outnumber gaining by 15 points or more'],
-	neutralOpacity: 0.8,
-	fullOpacity: 0.92,
+	neutralOpacity: 0.85,
+	fullOpacity: 1.0,
 	/* a cell with fewer fields than this draws at the neutral opacity, since its share is noisy */
 	minFields: 10
 };
@@ -247,7 +247,12 @@ export const DECISIONS = [
 	{ key: 'intensify', label: 'Intensify', color: '#eb6834', note: 'at peers and stable or gaining: an average field with headroom to the best neighbors' },
 	{ key: 'improve_yields', label: 'Improve yields', color: '#eda100', note: 'closing a gap from below, or slipping from at or above peers: management on the same crop is the lever' },
 	{ key: 'keep', label: 'Keep', color: NEUTRAL, note: 'above peers and stable or gaining' },
-	{ key: 'none', label: 'No suggestion', color: GRAY_NEUTRAL, note: 'newly cropped or no data: one year of evidence or none' }
+	/* Not a value in the tiles: the tiles give these fields decision "none". The site derives it
+	   from change_class == newly_cropped, so the tiles need no rebuild. */
+	{ key: 'recently_converted', label: 'Recently converted land', color: '#7cc24e',
+		derivedFrom: { attr: 'change_class', value: 'newly_cropped' },
+		note: 'forest, savanna or other native cover in 2020, crop or pasture in 2024' },
+	{ key: 'none', label: 'No suggestion', color: GRAY_NEUTRAL, note: 'too few clear satellite composites in one of the years' }
 ];
 
 /** The views in the left nav. attr names a key of ATTR; summary.attr a key of SUMMARY_ATTR.

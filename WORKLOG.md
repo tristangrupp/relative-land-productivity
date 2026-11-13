@@ -161,3 +161,25 @@ Reports: pipeline/PROBE.md, EXTRACT.md, EXTRACT_S2.md, ANALYZE.md, EXPLORE_ECORE
   (strongest restore case), abandoned. Implementation waits for the ecoregion agent's
   per-field and per-cell outputs.
 - 08:30 This log created at the user's request so the work survives context compaction.
+- 09:00 User: the zoomed-out map is still too coarse and sparse. Summary levels now H3
+  resolution 5 (15 km) at zooms 3 to 4 and resolution 6 (6 km) at zooms 5 to 9; colored
+  cells at full opacity, balanced cells 0.85. The 40 km and 100 km levels are rejected.
+- 09:05 User asked why so much of the 2020 crop view is forest. Answer recorded: every view
+  draws the 2024 outlines, and crop 2020 is the MapBiomas 2020 class inside them, so fields
+  cleared after 2020 show forest or savanna (forest formation 2.7 percent, savanna formation
+  3.0 percent of fields). The summary cell shows the modal 2020 class, so frontier cells read
+  forest (1,427 of 23,878 resolution 5 cells). Proposed, not yet approved: summary cell shows
+  the most common agricultural 2020 class plus a "share newly cropped since 2020" view.
+- 09:10 User asked why the Amazon conversion frontier is mostly "no suggestion". Answer
+  recorded: decision "none" is newly cropped plus no data. Pará 33.0 percent (12.3 newly
+  cropped, 20.7 no data from wet-season cloud), Amazonas 32.7, Roraima 21.7, Maranhão 20.9,
+  Acre 18.0, Mato Grosso 6.1.
+- 09:15 Decision (user): newly cropped fields get their own suggestion category, "Recently
+  converted land", in a green near but distinct from restore (restore #008300, recently
+  converted #7cc24e). "No suggestion" now means no data only. Implemented in the site without
+  a tile rebuild: config.js DECISIONS has the class with derivedFrom change_class ==
+  newly_cropped; app.js draws it ahead of the decision match, names it in tooltip and card,
+  and takes its legend count from change_class.newly_cropped, subtracting it from "none".
+  The summary cells' dominant_decision still says "none" where newly cropped fields are the
+  mode; fix when the summary is next rebuilt with the decision revamp. In the revamp,
+  recently converted fields are split by their 2024 level against ecoregion peers.

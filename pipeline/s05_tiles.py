@@ -274,7 +274,7 @@ def build_summary(states, source="modis"):
 # 15 km, res 6 about 6 km. Resolution 3 (100 km) was tried at zoom 3 and dropped: it averages
 # every cell to balanced and reads as a handful of giant hexagons. The user asked for a dense
 # national view, so resolution 5 starts at zoom 4 and resolution 6 at zoom 6.
-SUMMARY_LEVELS = [(4, 3, 3), (5, 4, 5), (6, 6, 9)]
+SUMMARY_LEVELS = [(5, 3, 4), (6, 5, 9)]
 
 
 def summarize_cells(df, key):
