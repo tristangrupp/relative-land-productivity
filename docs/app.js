@@ -1,10 +1,12 @@
 /**
  * Relative land productivity, Brazil 2020 to 2024: the map page.
  *
- * One MapLibre map with two PMTiles sources. Below FIELDS_MIN_ZOOM the summary cells (H3)
- * are drawn; from it upward, the fields. Each view in the left nav sets one fill expression
- * on both layers and one legend. Clicking a field opens the field card with its attributes
- * and a 2020 against 2024 bar.
+ * One MapLibre map with two PMTiles sources, read from S3 with HTTP range requests. Below
+ * FIELDS_MIN_ZOOM the summary cells (H3) are drawn; from it upward, the fields. The fields
+ * archive stops at zoom 13 and MapLibre overzooms it from there. Each view in the left nav
+ * sets one fill expression on both layers and one legend. Clicking a field opens the field
+ * card with its attributes and a 2020 against 2024 bar. The Where card loads stats.json for
+ * the national and per-state counts and holds the low-confidence control.
  *
  * All attribute names come from config.js (ATTR, SUMMARY_ATTR). Nothing here names a tile
  * property directly.
@@ -12,12 +14,13 @@
 
 import {
 	CONFIG, ATTR, SUMMARY_ATTR, VIEWS, CROPS, VIGOR, VIGOR_CHANGE, DECISIONS,
-	CHANGE_CLASSES, STATES, NODATA_COLOR
+	CHANGE_CLASSES, STATES, NODATA_COLOR, CONFIDENCE
 } from './config.js';
 
 const $ = (id) => document.getElementById(id);
-const fmt = (n, d = 2) => (n == null || !isFinite(n) ? '–' : Number(n).toFixed(d));
-const fmtInt = (n) => (n == null ? '–' : Number(n).toLocaleString('en-US'));
+const NA = 'n/a';
+const fmt = (n, d = 2) => (n == null || !isFinite(n) ? NA : Number(n).toFixed(d));
+const fmtInt = (n) => (n == null ? NA : Number(n).toLocaleString('en-US'));
 const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 
 const SRC = CONFIG.USE_PLACEHOLDER ? CONFIG.PLACEHOLDER : CONFIG;
@@ -26,6 +29,7 @@ const PLACEHOLDER = CONFIG.USE_PLACEHOLDER || /placeholder/i.test(SRC.FIELDS_PMT
 const state = {
 	view: VIEWS[0],
 	stateCode: '',
+	confMode: CONFIDENCE.DEFAULT,
 	stats: null,
 	picked: null,
 	mapReady: false,
@@ -60,13 +64,27 @@ const FIELD_OPACITY = 0.82;
 
 /** Per-class fill opacity: a class with its own `opacity` draws at that value, every other
     feature at FIELD_OPACITY. */
-function fieldOpacity(view) {
+function classOpacity(view) {
 	if (view.kind !== 'class' || !view.classes.some((c) => c.opacity != null)) return FIELD_OPACITY;
 	const attrName = ATTR[view.attr];
 	const m = ['match', ['get', attrName]];
 	for (const c of view.classes) if (c.opacity != null) m.push(c.key, c.opacity);
 	m.push(FIELD_OPACITY);
 	return ['case', ['has', attrName], m, FIELD_OPACITY];
+}
+
+/** The class opacity, scaled down for low-confidence fields when the control says fade. */
+function fieldOpacity(view) {
+	const base = classOpacity(view);
+	if (state.confMode !== 'fade') return base;
+	const low = ['==', ['get', ATTR.confidence], CONFIDENCE.LOW];
+	return ['*', base, ['case', low, CONFIDENCE.FADE_FACTOR, 1]];
+}
+
+/** Filter for the fields layers: everything, or only fields that are not low confidence. */
+function fieldFilter() {
+	if (state.confMode !== 'hide') return null;
+	return ['!=', ['get', ATTR.confidence], CONFIDENCE.LOW];
 }
 
 function stepFill(attrName, steps) {
@@ -118,7 +136,7 @@ async function initMap() {
 		style,
 		bounds: CONFIG.BRAZIL_BOUNDS,
 		fitBoundsOptions: { padding: 20 },
-		maxZoom: 16,
+		maxZoom: CONFIG.MAX_ZOOM,
 		hash: 'map',
 		attributionControl: { compact: true }
 	});
@@ -131,8 +149,10 @@ async function initMap() {
 
 		map.addSource('summary', {
 			type: 'vector', url: 'pmtiles://' + absolute(SRC.SUMMARY_PMTILES),
-			attribution: 'Trazo4 fields (WRI), MapBiomas Collection 10'
+			attribution: 'Trazo4 fields (WRI), MapBiomas Collection 10, MODIS MOD13Q1'
 		});
+		/* The PMTiles header gives minzoom 9 and maxzoom 13; MapLibre overzooms the zoom 13
+		   tiles for every zoom above that, because no layer below sets a maxzoom. */
 		map.addSource('fields', { type: 'vector', url: 'pmtiles://' + absolute(SRC.FIELDS_PMTILES) });
 
 		map.addLayer({
@@ -156,7 +176,7 @@ async function initMap() {
 			paint: {
 				'line-color': '#2c2a28',
 				'line-opacity': ['interpolate', ['linear'], ['zoom'], 9, 0.15, 13, 0.45],
-				'line-width': ['interpolate', ['linear'], ['zoom'], 9, 0.2, 14, 1]
+				'line-width': ['interpolate', ['linear'], ['zoom'], 9, 0.2, 14, 1, 16, 1.6]
 			}
 		}, before);
 		map.addLayer({
@@ -165,6 +185,7 @@ async function initMap() {
 			filter: ['==', ['get', ATTR.fid], -1],
 			paint: { 'line-color': '#2c2a28', 'line-width': 2.2 }
 		}, before);
+		applyConfidence();
 
 		for (const id of ['fields-fill', 'summary-fill']) {
 			map.on('mouseenter', id, () => { map.getCanvas().style.cursor = 'pointer'; });
@@ -196,6 +217,14 @@ function applyView() {
 	map.setPaintProperty('summary-fill', 'fill-color', summaryFill(state.view));
 }
 
+function applyConfidence() {
+	if (!state.mapReady) return;
+	const f = fieldFilter();
+	map.setFilter('fields-fill', f);
+	map.setFilter('fields-line', f);
+	map.setPaintProperty('fields-fill', 'fill-opacity', fieldOpacity(state.view));
+}
+
 function goToPlaceholder() {
 	map.fitBounds(CONFIG.PLACEHOLDER.BOUNDS, { padding: 20, duration: 1200 });
 }
@@ -222,6 +251,7 @@ function showTip(e, layerId) {
 	if (layerId === 'fields-fill') {
 		title = `Field ${p[ATTR.fid]}`;
 		rows = [[v.title, fieldValueText(v, p)], ['Area', `${fmt(p[ATTR.area_ha], 1)} ha`]];
+		if (p[ATTR.confidence] != null) rows.push(['Confidence', confidenceName(p[ATTR.confidence])]);
 	} else {
 		title = 'Summary cell';
 		rows = [[v.summary.label, summaryValueText(v, p)], ['Fields', fmtInt(p[SUMMARY_ATTR.n_fields])]];
@@ -234,10 +264,14 @@ function showTip(e, layerId) {
 }
 function hideTip() { $('tip').style.opacity = 0; }
 
-function cropName(k) { return k == null ? '–' : (cropByKey[k] ? cropByKey[k].label : `class ${k}`); }
-function decisionName(k) { return k == null ? '–' : (decisionByKey[k] ? decisionByKey[k].label : k); }
-function changeName(k) { return k == null ? '–' : (changeByKey[k] ? changeByKey[k].label : k); }
-function vigorName(k) { return k == null ? '–' : (VIGOR[k] || k); }
+function cropName(k) { return k == null ? NA : (cropByKey[k] ? cropByKey[k].label : `class ${k}`); }
+function decisionName(k) { return k == null ? NA : (decisionByKey[k] ? decisionByKey[k].label : k); }
+function changeName(k) { return k == null ? NA : (changeByKey[k] ? changeByKey[k].label : k); }
+function vigorName(k) { return k == null ? NA : (VIGOR[k] || k); }
+function confidenceName(k) {
+	if (k == null) return NA;
+	return k === CONFIDENCE.LOW ? 'low' : (k === CONFIDENCE.HIGH ? 'high' : String(k));
+}
 
 function fieldValueText(v, p) {
 	switch (v.id) {
@@ -261,7 +295,7 @@ function summaryValueText(v, p) {
 	const val = p[SUMMARY_ATTR[s.attr]];
 	if (s.kind === 'class') {
 		const c = s.classes.find((x) => x.key == val);
-		return c ? c.label : (val == null ? '–' : String(val));
+		return c ? c.label : (val == null ? NA : String(val));
 	}
 	return fmt(val);
 }
@@ -274,6 +308,10 @@ function scopeStats() {
 		return state.stats.states[state.stateCode];
 	}
 	return state.stats.brazil || null;
+}
+
+function scopeName() {
+	return state.stateCode ? (STATES.find((s) => s.code === state.stateCode) || {}).name : 'Brazil';
 }
 
 function renderLegend() {
@@ -291,16 +329,22 @@ function renderLegend() {
 		items = VIGOR_CHANGE.map((c) => ({ color: c.color, label: c.label }));
 		$('legendTitle').textContent = '2024 class minus 2020 class';
 	} else if (v.kind === 'class') {
-		items = v.classes.map((c) => ({
-			color: c.color, label: c.label, note: c.note, opacity: c.opacity,
-			n: counts ? counts[String(c.key)] : undefined
-		}));
+		items = v.classes
+			.map((c) => ({
+				color: c.color, label: c.label, note: c.note, opacity: c.opacity,
+				n: counts ? counts[String(c.key)] : undefined
+			}))
+			/* Crop classes that never occur in the scope are left off the legend. */
+			.filter((it) => v.attr.indexOf('crop') !== 0 || !counts || it.n != null);
 		$('legendTitle').textContent = 'Classes';
 	} else {
 		items = v.steps.labels.map((l, i) => ({ color: v.steps.colors[i], label: l }));
 		$('legendTitle').textContent = 'Field value against the peer median';
 	}
 	items.push({ color: NODATA_COLOR, label: 'No value' });
+	if (!state.summaryVisible && state.confMode === 'fade') {
+		items.push({ color: '#2c2a28', opacity: CONFIDENCE.FADE_FACTOR, label: 'Low confidence (faded)' });
+	}
 	$('legend').innerHTML = items.map((it) => `
 		<li><span class="sw" style="background:${it.color}${it.opacity != null ? `;opacity:${it.opacity}` : ''}"></span><span>${esc(it.label)}</span>
 		<span class="n">${it.n != null ? fmtInt(it.n) : ''}</span>
@@ -310,8 +354,15 @@ function renderLegend() {
 	const hasCounts = items.some((it) => it.n != null);
 	$('legendCountNote').hidden = !hasCounts;
 	if (hasCounts) {
-		const name = state.stateCode ? (STATES.find((s) => s.code === state.stateCode) || {}).name : 'Brazil';
-		$('legendCountNote').textContent = `Counts are fields in ${name}${state.stats && state.stats.placeholder ? ' (placeholder)' : ''}.`;
+		let note = `Counts are fields in ${scopeName()}${state.stats && state.stats.placeholder ? ' (placeholder)' : ''}.`;
+		const ab = st && st.change_class ? st.change_class.abandoned : null;
+		if (v.id === 'change' && ab != null) {
+			note += ` The ${fmtInt(ab)} abandoned fields are 2020 outlines and add to the field total above.`;
+		}
+		if (v.id === 'decision' && ab != null && counts && counts.restore != null) {
+			note += ` Restore includes the ${fmtInt(ab)} abandoned 2020 outlines; on 2024 outlines alone it is ${fmtInt(counts.restore - ab)}.`;
+		}
+		$('legendCountNote').textContent = note;
 	}
 }
 
@@ -319,11 +370,24 @@ function renderScope() {
 	const st = scopeStats();
 	const box = $('scopeStats');
 	if (!st) { box.innerHTML = '<p class="ctxNote">No summary statistics loaded.</p>'; return; }
+	const n = st.n_fields || 0;
+	const cc = st.change_class || {};
+	const noData = cc.no_data;
+	const abandoned = cc.abandoned;
+	const low = st.confidence_low;
+	const share = (x) => (x == null || !n ? NA : `${(100 * x / n).toFixed(1)}%`);
+	const src = state.stats.source ? esc(state.stats.source) : '';
+	const gen = state.stats.generated ? esc(state.stats.generated) : '';
 	box.innerHTML = `
 		<div class="stats">
-			<div class="stat"><span class="v">${fmtInt(st.n_fields)}</span><span class="k">fields</span></div>
+			<div class="stat"><span class="v">${fmtInt(n)}</span><span class="k">fields, 2024 outlines</span></div>
 			<div class="stat"><span class="v">${fmtInt(Math.round(st.area_ha || 0))}</span><span class="k">hectares</span></div>
-		</div>`;
+			<div class="stat"><span class="v">${share(low)}</span><span class="k">low confidence</span></div>
+			<div class="stat"><span class="v">${share(noData)}</span><span class="k">no data</span></div>
+			<div class="stat"><span class="v">${fmtInt(abandoned)}</span><span class="k">abandoned, 2020 outlines</span></div>
+		</div>
+		<p class="ctxNote">Shares are of the 2024 outlines. Abandoned fields are 2020 outlines, listed on their own and not in the shares; in the legend counts they add to the abandoned class and to the restore suggestion.</p>
+		${src ? `<p class="ctxNote">Source: ${src}${gen ? `, built ${gen}` : ''}. Low confidence means the field is under ${CONFIDENCE.LOW_AREA_HA} ha (one MODIS pixel) or fewer than 75 percent of its growing-season composites were observed.</p>` : ''}`;
 }
 
 function setView(id, push = true) {
@@ -336,12 +400,7 @@ function setView(id, push = true) {
 	applyView();
 	renderLegend();
 	if (state.picked) renderPick();
-	if (push) {
-		const u = new URL(location.href);
-		u.searchParams.set('view', v.id);
-		if (state.stateCode) u.searchParams.set('state', state.stateCode); else u.searchParams.delete('state');
-		history.replaceState(null, '', u);
-	}
+	if (push) writeUrl();
 }
 
 function setState(code, fly = true) {
@@ -354,8 +413,22 @@ function setState(code, fly = true) {
 	}
 	renderScope();
 	renderLegend();
+	writeUrl();
+}
+
+function setConfidence(mode) {
+	state.confMode = CONFIDENCE.MODES.some((m) => m.key === mode) ? mode : CONFIDENCE.DEFAULT;
+	$('confSel').value = state.confMode;
+	applyConfidence();
+	renderLegend();
+	writeUrl();
+}
+
+function writeUrl() {
 	const u = new URL(location.href);
-	if (code) u.searchParams.set('state', code); else u.searchParams.delete('state');
+	u.searchParams.set('view', state.view.id);
+	if (state.stateCode) u.searchParams.set('state', state.stateCode); else u.searchParams.delete('state');
+	if (state.confMode !== CONFIDENCE.DEFAULT) u.searchParams.set('conf', state.confMode); else u.searchParams.delete('conf');
 	history.replaceState(null, '', u);
 }
 
@@ -382,50 +455,62 @@ function renderPick() {
 	const box = $('pickBox');
 	box.hidden = false;
 	const { kind, p } = state.picked;
+	const has = (name) => p[name] != null;
 	if (kind === 'cell') {
 		$('pickTitle').textContent = 'Summary cell';
-		$('pickRows').innerHTML = [
+		const rows = [
 			['H3 cell', p[SUMMARY_ATTR.h3]],
 			['Fields', fmtInt(p[SUMMARY_ATTR.n_fields])],
 			['Area', `${fmtInt(Math.round(p[SUMMARY_ATTR.area_ha] || 0))} ha`],
-			['Mean change', fmt(p[SUMMARY_ATTR.mean_change])],
+			['Mean change (ratio scale)', fmt(p[SUMMARY_ATTR.mean_change])],
 			['Share declining', pct(p[SUMMARY_ATTR.share_decline])],
 			['Share gaining', pct(p[SUMMARY_ATTR.share_gain])],
+			['Share no data', pct(p[SUMMARY_ATTR.share_no_data])],
 			['Mean productivity 2020', fmt(p[SUMMARY_ATTR.mean_prod_2020])],
 			['Mean productivity 2024', fmt(p[SUMMARY_ATTR.mean_prod_2024])],
 			['Main crop 2020', cropName(p[SUMMARY_ATTR.dominant_crop_2020])],
 			['Main crop 2024', cropName(p[SUMMARY_ATTR.dominant_crop_2024])],
-			['Share pasture', pct(p[SUMMARY_ATTR.share_pasture])],
-			['Mean vigor change', fmt(p[SUMMARY_ATTR.mean_vigor_change])],
-			['Main suggestion', decisionName(p[SUMMARY_ATTR.dominant_decision])]
-		].map(row).join('');
+			['Share pasture', pct(p[SUMMARY_ATTR.share_pasture])]
+		];
+		if (has(SUMMARY_ATTR.mean_vigor_change)) rows.push(['Mean vigor change', fmt(p[SUMMARY_ATTR.mean_vigor_change])]);
+		rows.push(['Main suggestion', decisionName(p[SUMMARY_ATTR.dominant_decision])]);
+		$('pickRows').innerHTML = rows.map(row).join('');
 		$('pickChart').innerHTML = '';
+		$('pickNote').textContent = '';
 		return;
 	}
 	$('pickTitle').textContent = `Field ${p[ATTR.fid]}`;
 	const c20 = p[ATTR.crop_2020];
 	const c24 = p[ATTR.crop_2024];
-	$('pickRows').innerHTML = [
+	const rows = [
 		['Area', `${fmt(p[ATTR.area_ha], 1)} ha`],
 		['Crop 2020', cropName(c20)],
 		['Crop 2024', cropName(c24) + (c20 != null && c24 != null && c20 !== c24 ? ' (switched)' : '')],
 		['Relative productivity 2020', fmt(p[ATTR.prod_2020])],
 		['Relative productivity 2024', fmt(p[ATTR.prod_2024])],
-		['Change', fmt(p[ATTR.change])],
-		['Change class', changeName(p[ATTR.change_class])],
-		['Pasture vigor 2020', vigorName(p[ATTR.vigor_2020])],
-		['Pasture vigor 2024', vigorName(p[ATTR.vigor_2024])],
-		['Suggested decision', decisionName(p[ATTR.decision])],
-		['Clear observations 2020 / 2024', `${fmtInt(p[ATTR.n_obs_2020])} / ${fmtInt(p[ATTR.n_obs_2024])}`],
-		['Municipality (IBGE)', p[ATTR.muni_code] == null ? '–' : String(p[ATTR.muni_code])]
-	].map(row).join('');
+		['Change (ratio scale)', fmt(p[ATTR.change])],
+		['Change class', changeName(p[ATTR.change_class])]
+	];
+	if (has(ATTR.vigor_2020) || has(ATTR.vigor_2024)) {
+		rows.push(['Pasture vigor 2020', vigorName(p[ATTR.vigor_2020])]);
+		rows.push(['Pasture vigor 2024', vigorName(p[ATTR.vigor_2024])]);
+	}
+	rows.push(['Suggested decision', decisionName(p[ATTR.decision])]);
+	rows.push(['Confidence', confidenceName(p[ATTR.confidence])]);
+	rows.push(['Clear composites 2020 / 2024', `${fmtInt(p[ATTR.n_obs_2020])} / ${fmtInt(p[ATTR.n_obs_2024])}`]);
+	rows.push(['Municipality (IBGE)', p[ATTR.muni_code] == null ? NA : String(p[ATTR.muni_code])]);
+	$('pickRows').innerHTML = rows.map(row).join('');
 	const d = decisionByKey[p[ATTR.decision]];
-	$('pickNote').textContent = d ? `${d.label}: ${d.note}.` : '';
+	let note = d ? `${d.label}: ${d.note}.` : '';
+	if (p[ATTR.confidence] === CONFIDENCE.LOW) {
+		note += ` Low confidence: the field is under ${CONFIDENCE.LOW_AREA_HA} ha or had few clear composites, so its greenness is shared with neighboring land.`;
+	}
+	$('pickNote').textContent = note.trim();
 	$('pickChart').innerHTML = prodBars(p[ATTR.prod_2020], p[ATTR.prod_2024]);
 }
 
 function row([k, v]) { return `<li><span class="k">${esc(k)}</span><span class="v">${esc(v)}</span></li>`; }
-function pct(v) { return v == null ? '–' : `${Math.round(v * 100)}%`; }
+function pct(v) { return v == null ? NA : `${Math.round(v * 100)}%`; }
 
 /** Two bars, 2020 and 2024, against a dashed line at 1.0 (the peer median). */
 function prodBars(a, b) {
@@ -485,6 +570,13 @@ function buildStateSelect() {
 	sel.addEventListener('change', () => setState(sel.value));
 }
 
+function buildConfidenceSelect() {
+	const sel = $('confSel');
+	sel.innerHTML = CONFIDENCE.MODES.map((m) => `<option value="${m.key}">${esc(m.label)}</option>`).join('');
+	sel.value = state.confMode;
+	sel.addEventListener('change', () => setConfidence(sel.value));
+}
+
 async function loadStats() {
 	try {
 		const r = await fetch(SRC.STATS_URL);
@@ -508,9 +600,11 @@ function setupBanner() {
 function boot() {
 	buildNav();
 	buildStateSelect();
+	buildConfidenceSelect();
 	setupBanner();
 	$('pickClose').addEventListener('click', clearPick);
 	const u = new URL(location.href);
+	if (u.searchParams.get('conf')) setConfidence(u.searchParams.get('conf'));
 	setView(u.searchParams.get('view') || VIEWS[0].id, false);
 	if (u.searchParams.get('state')) setState(u.searchParams.get('state'), false);
 	loadStats();
@@ -520,4 +614,4 @@ function boot() {
 boot();
 
 /** Debug handle, so a console or a test can drive the page. */
-window.__rlp = { get map() { return map; }, state, setView, setState, pickField, goToPlaceholder, CONFIG };
+window.__rlp = { get map() { return map; }, state, setView, setState, setConfidence, pickField, goToPlaceholder, CONFIG };

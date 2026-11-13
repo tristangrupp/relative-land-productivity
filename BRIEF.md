@@ -287,3 +287,15 @@ Append dated entries here. Keep each one to a few lines.
   coalescing at 9 to 11, tippecanoe output on the WSL disk), `s05_upload.py`. The national
   run is `s04_run_all.py`, started 22:35 as pid 37580, log
   `F:\relative-land-productivity-data\analysis\run_all.log`. Details in `pipeline/ANALYZE.md`.
+- 2026-11-13 integrate: the site reads the released S3 tiles (`USE_PLACEHOLDER` false). Read
+  back from the PMTiles metadata: the fields layer runs zoom 9 to 13 (not 14) and MapLibre
+  overzooms it; it holds `confidence` (high or low) and no vigor attributes, and `r_adj_*`
+  are not in the tiles; the summary layer is H3 resolution 6 with `share_no_data` and no
+  `mean_vigor_change`. The site adds legend entries for `no_data` and decision `none`, a
+  low-confidence control (draw, fade, hide) in the Where card, the stats.json shares of no
+  data and low confidence (83 percent nationally), and SD-threshold legend text. The pasture
+  vigor view is left off the nav. `docs/methods.html` is written from METHODS.md and
+  ANALYZE.md with the weather fit (134 of 176 pairs, median R squared 0.15) and the national
+  validation table. Verified with curl: range requests on both PMTiles return 206 with
+  `Access-Control-Allow-Origin: *`, and the remote stats.json is byte-identical to the local
+  copy.

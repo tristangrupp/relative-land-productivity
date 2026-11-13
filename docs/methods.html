@@ -7,7 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
-<link rel="stylesheet" href="./style.css?v=1">
+<link rel="stylesheet" href="./style.css?v=2">
 </head>
 <body>
 <header class="header">
@@ -24,24 +24,107 @@
 
 <main class="page">
   <h1>Methods</h1>
-  <p class="lead">How field productivity is measured from satellite greenness, how weather is corrected for, and how the suggested decisions are derived.</p>
+  <p class="lead">How field productivity is measured from satellite greenness, how weather is corrected for, how the change classes and suggested decisions are derived, and what the measure cannot say.</p>
 
   <div class="note">
-    <p>The methods text is being written. The methods agent is writing it as
-    <a href="https://github.com/tristangrupp/relative-land-productivity/blob/main/methods/METHODS.md">methods/METHODS.md</a>
-    in the repository, and this page will hold the same text once it is settled.</p>
+    <p>This release measures greenness with MODIS MOD13Q1, a 250 m 16-day NDVI product. 78 percent of Brazilian fields are smaller than one MODIS pixel, so most field values are shared with neighboring land and are marked low confidence on the map. A Sentinel-2 run at 30 m is being extracted for Mato Grosso and the other tier 1 states and will replace the MODIS values there. The full specification is <a href="https://github.com/tristangrupp/relative-land-productivity/blob/main/methods/METHODS.md">methods/METHODS.md</a> and the implementation notes are <a href="https://github.com/tristangrupp/relative-land-productivity/blob/main/pipeline/ANALYZE.md">pipeline/ANALYZE.md</a> in the repository.</p>
   </div>
 
-  <h2>What the page will cover</h2>
+  <h2>1. Data sources</h2>
+  <table>
+    <tr><th>Input</th><th>Source</th><th>Resolution</th><th>What is read</th></tr>
+    <tr><td>Field polygons</td><td>Trazo4 field delineation (WRI), Brazil, 2020 and 2024 editions</td><td>vector</td><td>outline, area in hectares, modal MapBiomas class</td></tr>
+    <tr><td>Greenness</td><td>MODIS Terra MOD13Q1 Collection 6.1, 16-day NDVI with pixel reliability and quality flags, from the Planetary Computer</td><td>250 m</td><td>23 composites per agricultural year, day 241 of the year before to day 225</td></tr>
+    <tr><td>Land cover and crop type</td><td>MapBiomas Collection 10 coverage GeoTIFFs for 2020 and 2024</td><td>30 m</td><td>modal class inside each outline</td></tr>
+    <tr><td>Crop calendars</td><td>CONAB, Calendário de Plantio e Colheita, per crop and state</td><td>state by crop</td><td>sowing start to harvest end, the growing season window</td></tr>
+    <tr><td>Precipitation</td><td>CHIRPS v2.0 monthly</td><td>0.05 degree</td><td>mm per month at the field centroid</td></tr>
+    <tr><td>Temperature</td><td>TerraClimate monthly maximum and minimum temperature</td><td>4 km</td><td>(tmax + tmin) / 2 per month at the field centroid</td></tr>
+    <tr><td>Yields for validation</td><td>IBGE, Produção Agrícola Municipal, SIDRA table 5457, variable 112</td><td>municipality</td><td>kg per hectare for soybean, maize and sugarcane, 2020 and 2024</td></tr>
+  </table>
+  <p>No Google Earth Engine was used. Every raster was downloaded or streamed and reduced to fields on one machine with coverage-fraction weights (the share of each pixel inside each field), computed once with exactextract and applied to every composite as a sparse matrix product.</p>
+
+  <h2>2. The agricultural year</h2>
+  <p>Agricultural year Y runs from 1 September of Y-1 to 31 August of Y. "2020" is 1 September 2019 to 31 August 2020 and "2024" is 1 September 2023 to 31 August 2024. Starting on 1 September keeps the September soybean sowing in Mato Grosso, Mato Grosso do Sul, Paraná, Santa Catarina and São Paulo inside the window, and the window still holds the second-season maize harvest, which ends in August in the main states. The year also matches MapBiomas, which labels a temporary crop by the first cycle whose peak falls around January to February of Y.</p>
+  <p>The 2020 and 2024 field polygons are different delineations of the same land. Every metric is computed on the 2024 polygons for both years, so the change is measured on one outline. The 2020 crop of a 2024 polygon is the modal MapBiomas 2020 class inside it, which makes a crop switch visible per field. The 2020 polygons are also scored for 2020, and those whose MapBiomas 2024 class is not a crop or pasture class are shown as abandoned.</p>
+
+  <h2>3. The growing season window</h2>
+  <p>Each field's window is the state by crop window from the CONAB calendar, sowing start to harvest end, in <a href="https://github.com/tristangrupp/relative-land-productivity/blob/main/data/calendars/class_window_lookup.csv">data/calendars/class_window_lookup.csv</a>. A window is a run of months in the September to August order, so October to April is one run that wraps the calendar year. MapBiomas temporary crop classes 19 and 41 share a window and are pooled as one peer class. Perennial classes (sugarcane, coffee, citrus, oil palm, other perennial, pasture, forest plantation) take the full year. Forest plantation and unspecified agriculture are not in the calendar table and take the full year too.</p>
+
+  <h2>4. Greenness per field and the seasonal integral</h2>
+  <p>Per composite, a MODIS pixel is masked when its pixel reliability is 2 or 3 (snow, ice or cloud) or its quality flag is 2 or 3. The field value of a composite is the coverage-weighted mean of its valid pixels. A composite is missing for a field when under half of its covered area is valid; missing composites are filled by linear interpolation in time, and the count of observed composites is kept as <code>n_obs</code>. The Terra composite for day 225 of 2024 does not exist on the Planetary Computer and is interpolated for every field.</p>
+  <p>Baseline: for annual crops, the field's own minimum NDVI over the 23 composites, its bare-soil floor. For perennial classes, which have no bare month, the 5th percentile of all fields of that class in the state and year.</p>
+  <p>The headline metric is the seasonal integral <code>iNDVI = sum over the window of max(NDVI - baseline, 0)</code>, with each 16-day composite weighted 16 / 30.4375 months, so the unit is NDVI-months. Peak NDVI, the timing of the peak and the full-year integral are kept as diagnostics. The integral sums green canopy over the season, the quantity that light-use-efficiency and crop models relate to biomass and yield, and it ranks dense fields better than the peak alone, because NDVI saturates on dense canopies and the integral also counts duration. The references are in section 10 of METHODS.md.</p>
+  <p>Check on Mato Grosso 2024: soybean (116,914 fields) peaks a median 4.8 months after 1 September, in late January, with median peak NDVI 0.884 and a window integral of 2.45 NDVI-months; pasture (948,056 fields) has a full-year integral of 2.88 above its floor of 0.402.</p>
+
+  <h2>5. Peer-relative productivity and the weather correction</h2>
+  <p>Weather moves NDVI without moving a field's standing against its neighbors. Two layers remove it.</p>
+  <p><b>Peer region.</b> The H3 resolution 5 cell (about 253 km², 17 km across) of the field centroid. A peer group is (cell, peer class, year) with at least 30 fields whose class is agricultural and that have a raw value for at least half of their window composites; a smaller group falls back to the resolution 4 cell (1,770 km²), then resolution 3. Peer cells pool across state borders. Municipalities are not used as peers because their area ranges from under 100 km² to 159,000 km².</p>
+  <p><b>Layer 1, peer-relative metric.</b> <code>R = (iNDVI - median of the group) / (1.4826 x MAD of the group)</code>, in robust peer standard deviations.</p>
+  <p><b>Layer 2, regression on weather anomalies.</b> Per peer class and state, the group medians of both years are regressed on the standardized precipitation and temperature anomalies of the window with quadratic terms. The anomaly is against the mean and standard deviation of the nine complete agricultural years 2016 to 2024 (the rasters start in January 2015, so 2015 is incomplete). The fitted weather term is removed at field level from the field's own anomalies, with three guards: a class by state is fitted only with at least 30 groups spanning both years, field anomalies are clipped to the range of group anomalies the fit saw, and the term is capped at half the intercept. 134 of the 176 class by state pairs were fitted. The median R squared of the fits is 0.15 (quartiles 0.07 and 0.24, maximum 0.57), which is weak: the regional weather anomaly explains little of the variation in group medians, and most of the correction comes from layer 1. The coefficients, R squared and anomaly ranges per pair are in <a href="https://github.com/tristangrupp/relative-land-productivity/blob/main/data/summaries/weather_fit.csv">data/summaries/weather_fit.csv</a>.</p>
+  <p>Layer 1 is recomputed on the adjusted metric, giving <code>r_adj</code> in peer standard deviations. The scale the map shows is <code>prod = adjusted metric / peer median of the adjusted metric</code>, 1.0 at the peer median, clipped to 0 to 5.</p>
+  <p>In 2024 the windows had a median precipitation anomaly of -1.6 standard deviations and a temperature anomaly of +1.6 in Mato Grosso, the 2023 to 2024 El Niño drought. A peer-relative measure cancels weather that is common to a cell, but it cannot separate irrigation (a pivot in a drought year scores a gain that is water, not management), a shift in sowing date, a cultivar or management change, or a crop switch inside the same MapBiomas class.</p>
+
+  <h2>6. Change classes</h2>
+  <p><code>D = r_adj 2024 - r_adj 2020</code> on the 2024 polygon, in peer standard deviations (SD). The number the map shows beside the class is a different quantity: <code>change = prod 2024 - prod 2020</code> on the ratio scale. The summary cells below zoom 9 color the mean of that ratio-scale change in steps of 0.08 and 0.25.</p>
+  <table>
+    <tr><th>Class</th><th>Rule</th></tr>
+    <tr><td>Large decline</td><td>D below -2 SD</td></tr>
+    <tr><td>Decline</td><td>D from -2 to -1 SD</td></tr>
+    <tr><td>Stable</td><td>D from -1 to 1 SD</td></tr>
+    <tr><td>Gain</td><td>D from 1 to 2 SD</td></tr>
+    <tr><td>Large gain</td><td>D above 2 SD</td></tr>
+    <tr><td>Crop switched</td><td>the 2020 and 2024 crop groups differ and both are agricultural; the two years are not compared because the peers differ</td></tr>
+    <tr><td>Newly cropped</td><td>the MapBiomas 2020 class inside the 2024 outline is not a crop or pasture class</td></tr>
+    <tr><td>Abandoned</td><td>a 2020 polygon whose MapBiomas 2024 class is not a crop or pasture class, drawn on the 2020 outline</td></tr>
+    <tr><td>No data</td><td>the field has no relative value in one of the years, because fewer than half of its window composites were observed</td></tr>
+  </table>
+  <p>Under no change, D has about one peer standard deviation of noise, so the 1 SD threshold marks a one-sigma change. Newly cropped and abandoned use the land cover class rule only; the overlay rule in METHODS.md (a 2020 field with no 2024 field over half of it, and the reverse) was not applied, because an overlay of 21.6 million by 24.6 million polygons was not affordable for this release and the class rule catches the same fields where MapBiomas and Trazo4 agree.</p>
+  <p>National counts on the 2024 outlines: stable 15,672,741; decline 1,777,196; large decline 510,660; gain 1,661,737; large gain 487,082; crop switched 2,424,420; newly cropped 1,645,646; no data 375,000 (1.5 percent). Abandoned 2020 outlines: 748,022.</p>
+
+  <h2>7. Suggested decisions</h2>
+  <p>The 2024 level is below peers (<code>r_adj</code> under -0.5), at peers, or above peers (over 0.5). The trend is the change class. The suggestion is read from the table.</p>
+  <table>
+    <tr><th>2024 level</th><th>Trend</th><th>Suggestion</th><th>Reasoning</th></tr>
+    <tr><td>below</td><td>decline</td><td>restore</td><td>the field is falling further behind neighbors under the same weather, which points to soil or pasture degradation</td></tr>
+    <tr><td>below</td><td>stable</td><td>switch crop</td><td>a persistent gap under the same weather is a site or management limit</td></tr>
+    <tr><td>below</td><td>gain</td><td>improve yields</td><td>the gap is closing; keep the recent change going</td></tr>
+    <tr><td>at</td><td>decline</td><td>improve yields</td><td>the field was average and is slipping</td></tr>
+    <tr><td>at</td><td>stable or gain</td><td>intensify</td><td>an average field with headroom to the best neighbors</td></tr>
+    <tr><td>above</td><td>decline</td><td>improve yields</td><td>a top field losing ground</td></tr>
+    <tr><td>above</td><td>stable or gain</td><td>keep</td><td>nothing to change on this evidence</td></tr>
+    <tr><td>below in both years</td><td>decline, and the 2024 integral under the 20th percentile of the crop in the state</td><td>abandon</td><td>greenness close to bare soil for two seasons; the land may suit another use</td></tr>
+    <tr><td>any</td><td>crop switched</td><td>change land use pattern</td><td>the switch is the decision; the 2024 level says whether it paid off</td></tr>
+    <tr><td>any</td><td>newly cropped or no data</td><td>no suggestion</td><td>one year of evidence, or none</td></tr>
+    <tr><td>any</td><td>abandoned</td><td>restore</td><td>a field left cropping; check whether it is regenerating or degrading</td></tr>
+  </table>
+  <p>National counts: intensify 7,061,028; keep 5,902,506; switch crop 4,675,213; change land use pattern 2,424,420; restore 2,010,594; improve yields 1,074,137; abandon 133,960; no suggestion 2,020,646.</p>
+  <p>These are screening suggestions from satellite greenness, not agronomic advice. The method does not know prices, soils, tenure, inputs or the farmer's plans, and every suggestion needs a field visit before any decision.</p>
+
+  <h2>8. Validation</h2>
+  <p>Field metrics were aggregated to municipality means weighted by area for soybean (MapBiomas 39), maize (classes 19 and 41 in states where maize dominates) and sugarcane (20), and compared with IBGE municipal yields for 2020 and 2024. The national results in <a href="https://github.com/tristangrupp/relative-land-productivity/blob/main/data/summaries/validation.csv">data/summaries/validation.csv</a> are Spearman correlations between the municipal mean and yield.</p>
+  <table>
+    <tr><th>Crop</th><th>Year</th><th>Municipalities</th><th>Raw integral</th><th>Relative (prod)</th><th>Adjusted relative (r_adj)</th></tr>
+    <tr><td>Soybean</td><td>2020</td><td>1,951</td><td>0.46</td><td>0.02</td><td>0.06</td></tr>
+    <tr><td>Soybean</td><td>2024</td><td>2,089</td><td>0.09</td><td>0.11</td><td>0.18</td></tr>
+    <tr><td>Maize</td><td>2020</td><td>2,289</td><td>-0.04</td><td>0.12</td><td>0.10</td></tr>
+    <tr><td>Maize</td><td>2024</td><td>2,175</td><td>-0.03</td><td>0.12</td><td>0.09</td></tr>
+    <tr><td>Sugarcane</td><td>2020</td><td>985</td><td>0.23</td><td>-0.06</td><td>-0.08</td></tr>
+    <tr><td>Sugarcane</td><td>2024</td><td>950</td><td>0.48</td><td>-0.02</td><td>-0.04</td></tr>
+  </table>
+  <p>The correlations of the 2024 minus 2020 differences with the yield differences are 0.03 (maize), -0.02 (soybean) and 0.08 (sugarcane) for <code>r_adj</code>. A development run on two states gave Spearman 0.38 for maize and 0.28 for soybean.</p>
+  <p>Verdict: the raw integral correlates moderately with the IBGE yields only for soybean in 2020 (0.46) and sugarcane in 2024 (0.48), and not for maize. <code>prod</code>, <code>r_adj</code> and <code>change</code> correlate below 0.24 everywhere, so the relative productivity and the change on the map are not yield estimates. They rank a field against its neighbors; they do not predict how much it produced. The literature expects 0.5 to 0.8 for levels from fine-resolution greenness, and this release does not reach that. Two reasons are built in: MODIS pixels are larger than most fields, so the municipal mean mixes field and non-field greenness, and the relative metric removes the regional level by construction, so a municipal mean of it should not track absolute yields across municipalities. The Sentinel-2 run is the planned fix for the first reason.</p>
+
+  <h2>9. Limits of this release</h2>
   <ul>
-    <li>The greenness record: Sentinel-2 surface reflectance with Cloud Score+ masking, composited on Earth Engine and read at 30 m.</li>
-    <li>The growing season per crop and state, taken from the CONAB planting and harvest calendars.</li>
-    <li>The weather adjustment: how precipitation (CHIRPS) and temperature (ERA5-Land) changes that move greenness without moving yield are removed.</li>
-    <li>Relative productivity: a field against the median of its peers in the same crop and region, in 2020 and in 2024.</li>
-    <li>The change classes and their thresholds, and the handling of fields whose crop class changed.</li>
-    <li>Pasture vigor from MapBiomas Collection 10.</li>
-    <li>The decision rules that map the evidence to restore, switch crop, change land use pattern, abandon, intensify, improve yields or keep.</li>
-    <li>What the measure can and cannot say.</li>
+    <li><b>Pixel size.</b> MODIS pixels are 250 m (6.25 ha). 78 percent of fields are smaller than one pixel and read one or two cells shared with neighbors. A field is marked low confidence when it is under 6.25 ha or fewer than 75 percent of its window composites were observed in either year; 20,344,905 of the 24,554,482 fields (83 percent) are low confidence nationally, 684,199 of 1,151,506 in Mato Grosso. The map can fade or hide them.</li>
+    <li><b>Missing composite.</b> The Terra composite for day 225 of 2024 is absent from the Planetary Computer and is interpolated for every field.</li>
+    <li><b>Wet-season gaps.</b> In Pará the wet-season composites are valid for 31 to 45 percent of fields; fields with fewer than half of their window composites observed get no relative value and fall in the no data class (256,202 of 1,238,196 fields in Pará).</li>
+    <li><b>Pasture vigor is not implemented.</b> The brief asked for the MapBiomas Collection 10 pasture vigor classes as a second attribute for pasture fields. No public GeoTIFF of that product was found, so the vigor attributes are null, the vigor view is left off the map, and pasture is scored on NDVI alone.</li>
+    <li><b>Weak weather fit.</b> The layer 2 regressions explain a median 15 percent of the variation in group medians, so most of the weather correction is the peer-relative layer.</li>
+    <li><b>Validation.</b> Municipal yield correlations are weak (section 8).</li>
+    <li><b>Mixed classes.</b> The temporary crop classes 19 and 41 mix crops; a field that changed from maize to beans inside class 41 looks like a productivity change. Sugarcane harvest date moves the integral.</li>
+    <li><b>Outlines.</b> The 2020 metric on a 2024 polygon can average two 2020 fields. The drawn outlines are simplified with a one-pixel tolerance (0.0001 degree); the area shown is the original.</li>
+    <li><b>Low zooms.</b> From zoom 9 to 11 the smallest fields are merged into their neighbors so the tiles stay small; from zoom 12 upward every field is drawn.</li>
   </ul>
 </main>
 </body>

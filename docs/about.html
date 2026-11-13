@@ -7,7 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
-<link rel="stylesheet" href="./style.css?v=1">
+<link rel="stylesheet" href="./style.css?v=2">
 </head>
 <body>
 <header class="header">
@@ -24,37 +24,44 @@
 
 <main class="page">
   <h1>About this map</h1>
-  <p class="lead">A public web map that shows, field by field across Brazil, where crop and pasture productivity rose or fell between 2020 and 2024, broken out by crop type.</p>
+  <p class="lead">A public web map that shows, field by field across Brazil, where crop and pasture productivity rose or fell between the 2020 and 2024 agricultural years, broken out by crop type, with a suggested land use decision per field.</p>
 
   <h2>Purpose</h2>
   <p>The map is meant to say, at the field level, which land use decision could be improved: restore the land, switch the crop, change the land use pattern, abandon the field, intensify, or improve yields on the same crop.</p>
-  <p>Productivity is measured from the greenness record over the growing season, with the growing season taken from CONAB crop calendars per crop and state. The measure corrects for precipitation and temperature changes that move greenness without moving yield. The quantity of interest is relative productivity: a field against its peers in the same crop and region, compared between 2020 and 2024.</p>
-  <p>Pasture fields additionally use the MapBiomas Collection 10 pasture vigor product, which classifies each pasture pixel as low, medium or high vigor, already normalized by biome.</p>
+  <p>Productivity is measured from the satellite greenness record over the growing season, with the growing season taken from CONAB crop calendars per crop and state. The measure corrects for rainfall and temperature changes that move greenness without moving yield. The quantity on the map is relative productivity: a field against the median of its peers in the same crop and region, compared between 2020 and 2024.</p>
 
   <div class="note">
     <p>The suggested decisions are screening results from satellite greenness. They are not agronomic advice. The method does not know prices, soils, tenure, inputs or the farmer's plans, and a field flagged here deserves a visit before any decision is taken on it.</p>
   </div>
 
+  <h2>What this release holds</h2>
+  <p>24,554,482 Trazo4 fields in all 27 states, 190.7 million hectares, scored for the agricultural years 2020 (1 September 2019 to 31 August 2020) and 2024 (1 September 2023 to 31 August 2024), plus 748,022 fields from the 2020 delineation whose land cover in 2024 is no longer a crop or pasture class, shown as abandoned. The tiles were built on 12 November 2026.</p>
+  <p>The greenness source is MODIS MOD13Q1, a 250 m 16-day NDVI product. 78 percent of Brazilian fields are smaller than one MODIS pixel, so 20,344,905 fields (82.9 percent) are marked low confidence: their greenness is shared with neighboring land. The Where card on the map can fade or hide them. 375,000 fields (1.5 percent) have no data because too few clear composites were observed in one of the years; Pará holds 256,202 of them (20.7 percent of its fields) and in Amapá 59.6 percent of fields have no data. A Sentinel-2 run at 30 m is being extracted for Mato Grosso and the other tier 1 states (Pará, Amazonas, Acre, Rondônia, Roraima, Amapá) and will replace the MODIS values there in a later release.</p>
+  <p>Pasture vigor from MapBiomas is not in this release. No public GeoTIFF of the product was found, so pasture is scored on NDVI alone and the vigor view is left off the map.</p>
+  <p>The weather correction is weak (median R squared 0.15 across the 134 fitted crop by state pairs) and the municipal yield validation is weak (Spearman 0.06 to 0.18 for soybean against IBGE yields). The methods page states both and why.</p>
+
   <h2>Data sources</h2>
   <table>
     <tr><th>Input</th><th>Source</th><th>Use</th></tr>
-    <tr><td>Field boundaries</td><td>Trazo4 field delineation (WRI), Brazil, 2020 and 2024</td><td>The polygons on the map. The change map is drawn on the 2024 outlines.</td></tr>
-    <tr><td>Greenness</td><td>Sentinel-2 surface reflectance (harmonized) with Cloud Score+ masking, on Google Earth Engine</td><td>NDVI over the growing season, at 30 m.</td></tr>
+    <tr><td>Field boundaries</td><td>Trazo4 field delineation (WRI), Brazil, 2020 and 2024 editions</td><td>The polygons on the map. The change map is drawn on the 2024 outlines; abandoned fields on the 2020 outlines.</td></tr>
+    <tr><td>Greenness</td><td>MODIS Terra MOD13Q1 Collection 6.1, 16-day NDVI at 250 m, from the Planetary Computer</td><td>NDVI integrated over the growing season, 23 composites per agricultural year.</td></tr>
     <tr><td>Crop calendars</td><td>CONAB, Calendário de Plantio e Colheita, per crop and state</td><td>The growing season window per field.</td></tr>
     <tr><td>Land cover and crop type</td><td>MapBiomas Collection 10 coverage, 2020 and 2024</td><td>Crop class per field in each year.</td></tr>
-    <tr><td>Pasture vigor</td><td>MapBiomas Collection 10 pasture vigor</td><td>Low, medium, high class per pasture field in each year.</td></tr>
-    <tr><td>Precipitation</td><td>CHIRPS</td><td>The weather adjustment.</td></tr>
-    <tr><td>Temperature</td><td>ERA5-Land</td><td>The weather adjustment.</td></tr>
+    <tr><td>Precipitation</td><td>CHIRPS v2.0 monthly</td><td>The weather adjustment.</td></tr>
+    <tr><td>Temperature</td><td>TerraClimate monthly maximum and minimum temperature</td><td>The weather adjustment.</td></tr>
+    <tr><td>Yields</td><td>IBGE, Produção Agrícola Municipal (SIDRA table 5457)</td><td>Validation against municipal yields.</td></tr>
     <tr><td>Basemap</td><td>OpenFreeMap (OpenStreetMap data), Carto as fallback</td><td>Context under the fields.</td></tr>
   </table>
+  <p>No Google Earth Engine was used. The rasters were downloaded or streamed and reduced to fields on one machine.</p>
 
-  <h2>Geography</h2>
-  <p>The target is all of Brazil. If compute does not allow it, the first tier is Mato Grosso, Pará, Amazonas, Acre, Rondônia, Roraima and Amapá; the second is Mato Grosso do Sul, Goiás, Tocantins and Maranhão. The state selector on the map lists every state; states without tiles yet show nothing.</p>
+  <h2>Reading the map</h2>
+  <p>Below zoom 9 the map shows H3 hexagon cells (resolution 6, about 36 km²) with the mean or the most common value of the fields inside; from zoom 9 the fields themselves. From zoom 9 to 11 the smallest fields are merged into their neighbors so the tiles stay small; from zoom 12 every field is drawn. Clicking a field opens a card with its values in both years, its confidence and its suggested decision. The state selector flies to a state and switches the counts in the legend to that state.</p>
 
   <h2>Code and data</h2>
   <p>The site, the pipeline and the methods text are in the repository at
   <a href="https://github.com/tristangrupp/relative-land-productivity">github.com/tristangrupp/relative-land-productivity</a>.
-  The field tiles are served as PMTiles from a public bucket; the file <code>docs/DATA_CONTRACT.md</code> lists every attribute the map reads.</p>
+  The field tiles (6.4 GB), the summary tiles (53 MB) and the statistics file are served as PMTiles and JSON from a public bucket under
+  <code>s3://wri-datalab-sandbox/trazofields/trazo4/relative-land-productivity/tiles/</code>; the file <code>docs/DATA_CONTRACT.md</code> lists every attribute the map reads.</p>
 </main>
 </body>
 </html>

@@ -7,9 +7,10 @@
 <meta name="description" content="Field by field across Brazil, where crop and pasture productivity rose or fell between 2020 and 2024, and which land use decision the evidence points to.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="preconnect" href="https://wri-datalab-sandbox.s3.amazonaws.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
 <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css">
-<link rel="stylesheet" href="./style.css?v=1">
+<link rel="stylesheet" href="./style.css?v=2">
 </head>
 <body class="app">
 
@@ -53,6 +54,8 @@
       <label class="group" for="stateSel">State</label>
       <select id="stateSel"></select>
       <div id="scopeStats" style="margin-top:12px"></div>
+      <label class="group" for="confSel">Low-confidence fields</label>
+      <select id="confSel"></select>
     </section>
 
     <section class="card">
@@ -81,6 +84,6 @@
 
 <script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
 <script src="https://unpkg.com/pmtiles@3.2.1/dist/pmtiles.js"></script>
-<script type="module" src="./app.js?v=1"></script>
+<script type="module" src="./app.js?v=2"></script>
 </body>
 </html>
