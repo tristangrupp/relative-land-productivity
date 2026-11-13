@@ -190,3 +190,27 @@ Reports: pipeline/PROBE.md, EXTRACT.md, EXTRACT_S2.md, ANALYZE.md, EXPLORE_ECORE
   published data, site workflow, the user's standing map preferences and the caveats.
   The "newly cropped" row of the METHODS.md decision table now reads "recently converted
   land" (5b5f7de).
+- 07:15 to 08:00 Ecoregion exploration agent (s06_ecoregion_peers.py, report
+  pipeline/EXPLORE_ECOREGIONS.md). Built: RESOLVE 2017 ecoregions downloaded to
+  `raw\ecoregions\`, rasterized at 0.005 degree, every 2024 polygon assigned by centroid
+  (24,553,822 direct, 657 filled from the nearest ecoregion, 3 unassigned); Scale B (field vs
+  ecoregion-class peers) and its cell-within-ecoregion term; Scale C (ecoregion-class vs
+  nation) and the plain weather-adjusted percent change; per-field tables
+  `analysis\ecoregions\fields\<State>.parquet` (fid, eco_id, peer_cls_2020, peer_cls_2024,
+  r_eco_2020, r_eco_2024, d_eco, cell_vs_eco_2020, cell_vs_eco_2024, eco_change_class,
+  change_class_a), `data/summaries/ecoregions.csv`, `ecoregions_by_biome.csv`,
+  `cell_vs_ecoregion.csv` (55,225 cell by ecoregion by class rows), five figures under
+  docs/figures/ecoregions/. Headline numbers: 46 ecoregions and 20,113,253 fields with a
+  Scale B change; Scale A and B classes agree exactly on 80.2 percent of 20,109,313 fields and
+  in direction on 83.1 percent, opposite sign on 0.07 percent; national pasture -2.3 percent;
+  Tapajós-Xingu pasture -9.7 percent and -0.35 national cell SD, Purus-Madeira -6.9,
+  Southwest Amazon -5.9, Xingu-Tocantins-Araguaia -4.7, Madeira-Tapajós -2.1, Mato Grosso
+  tropical dry forests -0.1, Cerrado pasture -1.0, Caatinga pasture -2.4. Answer: ecoregion
+  peers do not change the field map and cannot judge a region either (the ecoregion mean is
+  subtracted); the regional call comes from Scale C and the plain change, the area call from
+  the cell-within-ecoregion term. Recommended: keep Scale A as the field term, add
+  cell_vs_eco as the area term and Scale C per ecoregion and class as a region layer. Open:
+  the weather fit should be refitted per ecoregion and class with the cell's mean
+  precipitation as a regressor before the area term is acted on (its 2024 change forms
+  weather-shaped blocks in the Caatinga); the decision revamp can start from the per-field and
+  per-cell tables above. Run times: assign 18 s, score 124 to 148 s, figures 4 s.

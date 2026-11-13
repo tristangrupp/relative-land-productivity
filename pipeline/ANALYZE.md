@@ -408,3 +408,22 @@ connection drops in total. The GeoParquet set is complete.
 - The `_z12_14` file names under `tiles\states\` hold zoom 12 and 13.
 - The development folder `analysis\dev` (319,865,570 bytes, two partial `ndvi_16day.parquet`
   tables for Mato Grosso and Tocantins) was deleted on 2026-11-13 after the national run.
+
+## Ecoregion peers, an exploration (s06_ecoregion_peers.py)
+
+Written 2026-11-13 by the ecoregion exploration agent. The user asked whether relative
+productivity works inside climate zones or ecoregions, so that calls can be made about whole
+regions such as the deforestation frontier. `pipeline/s06_ecoregion_peers.py` keeps the
+weather-adjusted metric of `s04_relative.py` (reproduced from the saved fit; it matches the
+relative tables to 2.4e-7 on Acre) and scores every 2024 polygon against three nested
+references: its H3 resolution 5 cell (Scale A, the existing product), its RESOLVE 2017
+ecoregion (Scale B, with a cell-within-ecoregion term), and the ecoregion against the nation
+(Scale C, plus the plain weather-adjusted percent change). The report with the numbers, the
+frontier ecoregion table, the five figures and the direct answer is
+`pipeline/EXPLORE_ECOREGIONS.md`. Outputs: `analysis\ecoregions\fields\<State>.parquet`
+(per-field Scale B values and classes), `data/summaries/ecoregions.csv`,
+`ecoregions_by_biome.csv` and `cell_vs_ecoregion.csv`, and `docs/figures/ecoregions/`.
+In short: 46 ecoregions and 20,113,253 fields get a Scale B change; its classes agree with
+Scale A on 80.2 percent of fields; and only Scale C and the plain change can say that a
+region as a whole lost ground, because every peer-relative score cancels the mean of its own
+reference.

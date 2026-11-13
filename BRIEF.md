@@ -304,3 +304,12 @@ Append dated entries here. Keep each one to a few lines.
 WORKLOG.md at the repo root is the running record of state, decisions and open items, kept
 so the work survives a context reset. Every agent appends a dated entry to its Log section
 before it ends, in addition to the Decisions entry here.
+- 2026-11-13 ecoregions: `pipeline/s06_ecoregion_peers.py` scores the 2024 polygons against
+  RESOLVE 2017 ecoregion peers (Scale B) and each ecoregion against the nation (Scale C) on the
+  same weather-adjusted metric as `s04_relative.py`; the field assignment uses a 0.005 degree
+  raster of ECO_ID under `analysis\ecoregions\`. Finding: the field-level classes agree with
+  the cell design on 80.2 percent of fields, so ecoregion peers do not change the field map,
+  and only Scale C and the plain weather-adjusted change can judge a whole region. Recommended
+  design: keep the cell peers for the field term, add the cell-within-ecoregion term as the
+  area term and Scale C per ecoregion and class as a region layer. Report:
+  `pipeline/EXPLORE_ECOREGIONS.md`.
