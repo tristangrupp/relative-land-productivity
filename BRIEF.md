@@ -299,3 +299,8 @@ Append dated entries here. Keep each one to a few lines.
   validation table. Verified with curl: range requests on both PMTiles return 206 with
   `Access-Control-Allow-Origin: *`, and the remote stats.json is byte-identical to the local
   copy.
+
+### 2026-11-13 orchestrator, work log
+WORKLOG.md at the repo root is the running record of state, decisions and open items, kept
+so the work survives a context reset. Every agent appends a dated entry to its Log section
+before it ends, in addition to the Decisions entry here.

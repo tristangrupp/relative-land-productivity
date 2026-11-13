@@ -1,5 +1,8 @@
 # Relative land productivity, Brazil 2020 to 2024
 
+WORKLOG.md is the running record of state, decisions and open items; read it first when
+resuming work.
+
 A public web map that shows, field by field across Brazil, where crop and pasture
 productivity rose or fell between the 2020 and 2024 agricultural years, broken out by crop
 type. For each field it states which land use decision the evidence points to: restore,
