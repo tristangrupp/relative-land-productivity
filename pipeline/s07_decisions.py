@@ -1,6 +1,7 @@
 """Stage 7b: two-tier land use decisions, the area call per H3 resolution 5 cell first and the
 field call inside it second (methods/METHODS.md section 7, pipeline/DECISIONS_V2.md).
 
+  python s07_decisions.py national   cell_vs_nation and the plain change per H3 cell and class, resolutions 5 and 6
   python s07_decisions.py dist       distributions of the area term, to set the thresholds
   python s07_decisions.py area       area call per cell -> analysis\\decisions\\area_cells.parquet, data/summaries/area_cells.csv.gz
   python s07_decisions.py fields     field call per state, written into fields_scored.parquet and the abandoned layer
@@ -11,10 +12,13 @@ field call inside it second (methods/METHODS.md section 7, pipeline/DECISIONS_V2
 Run after s04_change.py and s06_ecoregion_peers.py score. Rerunning s04_change.py rewrites
 fields_scored.parquet with the first-version decision only, so this stage must follow it.
 
-Area call. The area term is the cell-within-ecoregion term of s06: the median of the
-weather-adjusted seasonal integral of a peer class in an H3 resolution 5 cell, inside one
-ecoregion, against the ecoregion-class median, in robust SD of the ecoregion-class field
-distribution. A (cell, ecoregion, class) row exists only with 30 valid fields of the class.
+Area call. The area term is the national reference (user direction of 13 November 2026, "lets
+do brazil as a whole then to get the true frontiers of productivity change"): cell_vs_nation,
+the median of the weather-adjusted seasonal integral of a peer class in an H3 resolution 5
+cell minus the national median of the class, divided by 1.4826 MAD of the national
+distribution of cell medians of the class (cells with 30 valid fields). A (cell, class) row
+exists only with 30 valid fields of the class. The cell-within-ecoregion term of s06 and the
+ecoregion's Scale C change are kept as secondary context (eco_* columns), not used in the call.
 Per cell the rows are pooled into two groups, weighted by the 2024 field count: crops
 (soybean 39, temporary crops 19 and 41, sugarcane 20, rice 40, cotton 62, the perennials
 coffee 46, citrus 47, other perennials 48 and oil palm 35) and pasture (15). Mosaic of uses
@@ -75,8 +79,8 @@ ECO_CSV = os.path.join(C.SUMMARIES, "ecoregions.csv")
 CROP_CLASSES = [39, 19, 20, 40, 62, 46, 47, 48, 35]  # peer classes; 41 pools into 19
 PASTURE = 15
 MOSAIC = 21
-LEVEL_T = 0.5     # ecoregion SD
-CHANGE_T = 0.3    # ecoregion SD
+LEVEL_T = 0.75    # national cell SD of the class
+CHANGE_T = 0.4    # national cell SD of the class
 MIN_FIELDS = 30   # per class row, inherited from s06 MIN_CELL
 FIELD_LEVEL = 0.5  # cell peer SD, as in version 1
 ECO_T = 0.1       # national cell SD
@@ -96,24 +100,115 @@ def log(**kw):
     print(json.dumps(kw, ensure_ascii=False, default=str), flush=True)
 
 
-# ----------------------------------------------------------------------------- area
+# ----------------------------------------------------------------------------- national reference
 
-def load_cells():
-    c = pd.read_csv(CELL_CSV)
-    c["cell"] = c["h3_5"].map(lambda s: int(s, 16)).astype(np.int64)
-    c["group"] = np.where(c["peer_cls"].isin(CROP_CLASSES), "crops",
-                          np.where(c["peer_cls"] == PASTURE, "pasture", np.where(c["peer_cls"] == MOSAIC, "mosaic", "other")))
+def national(states, levels=(5, 6)):
+    """cell_vs_nation and the plain change per (H3 cell, peer class), at resolutions 5 and 6.
+
+    cell_vs_nation = (cell median of metric_adj - national class median of metric_adj) /
+    (1.4826 MAD of the national distribution of cell medians of the class), over cells with at
+    least MIN_FIELDS valid fields of the class, per year; the unit is computed per resolution.
+    plain_pct = 100 * median(metric_adj_2024 - metric_adj_2020) / median(metric_adj_2020) over
+    the cell's fields valid in both years with the same peer class (at least MIN_FIELDS)."""
+    t0 = time.time()
+    os.makedirs(OUT, exist_ok=True)
+    frames = {}
+    for ay in (2020, 2024):
+        parts = []
+        for s in states:
+            m = read(C.metrics_path(SOURCE, 2024, ay, s), ["fid", "peer_cls", "h3_5", "h3_6"])
+            r = read(C.relative_path(SOURCE, 2024, ay, s), ["fid", "valid", "metric_adj"])
+            assert np.array_equal(m["fid"].values, r["fid"].values), "relative table order differs"
+            parts.append(pd.DataFrame({"cls": m["peer_cls"].values.astype(np.int16), "h3_5": m["h3_5"].values,
+                                       "h3_6": m["h3_6"].values, "valid": r["valid"].values,
+                                       "m": r["metric_adj"].values.astype(np.float32)}))
+        frames[ay] = pd.concat(parts, ignore_index=True)
+        log(step="national", ay=ay, rows=len(frames[ay]), seconds=round(time.time() - t0))
+    f20, f24 = frames[2020], frames[2024]
+    out = {}
+    summary = {}
+    for res in levels:
+        key = f"h3_{res}"
+        per_year = {}
+        for ay, f in frames.items():
+            v = f[f["valid"].values & np.isfinite(f["m"].values)]
+            nat_med = v.groupby("cls")["m"].median()
+            cell = v.groupby([key, "cls"])["m"].agg(["median", "size"]).reset_index()
+            big = cell[cell["size"] >= MIN_FIELDS]
+            cell_sd = big.groupby("cls")["median"].agg(lambda x: 1.4826 * np.median(np.abs(x - np.median(x))))
+            big = big.assign(v=(big["median"] - big["cls"].map(nat_med)) / big["cls"].map(cell_sd))
+            per_year[ay] = big.rename(columns={key: "cell", "size": f"n_{ay}", "v": f"v{ay % 100}"})[["cell", "cls", f"n_{ay}", f"v{ay % 100}"]]
+            summary[f"r{res}_{ay}"] = {"cells_classes": int(len(big)),
+                                       "cell_sd": {int(k): round(float(x), 4) for k, x in cell_sd.items()},
+                                       "nat_med": {int(k): round(float(x), 4) for k, x in nat_med.items()}}
+        t = per_year[2020].merge(per_year[2024], on=["cell", "cls"], how="outer")
+        t["change"] = t["v24"] - t["v20"]
+        ok = (f20["valid"].values & f24["valid"].values & (f20["cls"].values == f24["cls"].values)
+              & np.isfinite(f20["m"].values) & np.isfinite(f24["m"].values))
+        p = pd.DataFrame({"cell": f24[key].values[ok], "cls": f24["cls"].values[ok],
+                          "d": f24["m"].values[ok] - f20["m"].values[ok], "m20": f20["m"].values[ok]})
+        pl = p.groupby(["cell", "cls"]).agg(n_both=("d", "size"), md=("d", "median"), m20=("m20", "median")).reset_index()
+        pl = pl[pl["n_both"] >= MIN_FIELDS]
+        with np.errstate(all="ignore"):
+            pl["pct"] = 100 * pl["md"] / pl["m20"]
+        t = t.merge(pl[["cell", "cls", "n_both", "pct"]], on=["cell", "cls"], how="left")
+        t["n_2020"] = t["n_2020"].fillna(0).astype(np.int32)
+        t["n_2024"] = t["n_2024"].fillna(0).astype(np.int32)
+        t["n_both"] = t["n_both"].fillna(0).astype(np.int32)
+        t.to_parquet(os.path.join(OUT, f"cell_nation_r{res}.parquet"), index=False)
+        out[res] = t
+        if res == 5:
+            import h3
+            csv = t.copy()
+            csv.insert(0, "h3_5", [h3.int_to_str(int(x)) for x in csv["cell"]])
+            csv = csv.drop(columns="cell").rename(columns={"cls": "peer_cls", "v20": "cell_vs_nation_2020", "v24": "cell_vs_nation_2024",
+                                                            "pct": "plain_change_pct"})
+            csv.to_csv(os.path.join(C.SUMMARIES, "cell_vs_nation.csv.gz"), index=False, float_format="%.3f")
+        log(step="national", res=res, rows=int(len(t)), with_change=int(np.isfinite(t["change"]).sum()),
+            with_pct=int(np.isfinite(t["pct"]).sum()), seconds=round(time.time() - t0))
+    with open(os.path.join(OUT, "national_summary.json"), "w") as fh:
+        json.dump(summary, fh, indent=1)
+    return out
+
+
+def group_of(cls):
+    cls = np.asarray(cls)
+    return np.where(np.isin(cls, CROP_CLASSES), "crops", np.where(cls == PASTURE, "pasture", np.where(cls == MOSAIC, "mosaic", "other")))
+
+
+def load_nation(res=5):
+    c = pd.read_parquet(os.path.join(OUT, f"cell_nation_r{res}.parquet"))
+    c["group"] = group_of(c["cls"].values)
     return c
 
 
-def pool(c, group):
+def frontier(c):
+    """Class-weighted national change and plain percent change per cell, over every class (the frontier map)."""
+    ch = c[np.isfinite(c["change"])]
+    ch = ch.assign(wv=ch["n_2024"] * ch["change"]).groupby("cell").agg(w=("n_2024", "sum"), wv=("wv", "sum"))
+    pc = c[np.isfinite(c["pct"])]
+    pc = pc.assign(wv=pc["n_both"] * pc["pct"]).groupby("cell").agg(w=("n_both", "sum"), wv=("wv", "sum"))
+    return pd.DataFrame({"nat_change": ch["wv"] / ch["w"]}).join(pd.DataFrame({"nat_pct_change": pc["wv"] / pc["w"]}), how="outer")
+
+
+# ----------------------------------------------------------------------------- area
+
+def load_cells():
+    """The ecoregion area term of s06 (secondary context since the national reference became primary)."""
+    c = pd.read_csv(CELL_CSV)
+    c["cell"] = c["h3_5"].map(lambda s: int(s, 16)).astype(np.int64)
+    c["group"] = group_of(c["peer_cls"].values)
+    return c
+
+
+def pool(c, group, lv_col, ch_col, prefix=""):
     g = c[c["group"] == group]
-    lv = g[np.isfinite(g["cell_vs_eco_2024"])]
-    lv = lv.assign(w=lv["n_2024"], wv=lv["n_2024"] * lv["cell_vs_eco_2024"]).groupby("cell").agg(w=("w", "sum"), wv=("wv", "sum"))
-    ch = g[np.isfinite(g["change"])]
-    ch = ch.assign(w=ch["n_2024"], wv=ch["n_2024"] * ch["change"]).groupby("cell").agg(w=("w", "sum"), wv=("wv", "sum"))
-    out = pd.DataFrame({f"{group}_level": lv["wv"] / lv["w"], f"{group}_n": lv["w"]})
-    out = out.join(pd.DataFrame({f"{group}_change": ch["wv"] / ch["w"]}), how="outer")
+    lv = g[np.isfinite(g[lv_col])]
+    lv = lv.assign(w=lv["n_2024"], wv=lv["n_2024"] * lv[lv_col]).groupby("cell").agg(w=("w", "sum"), wv=("wv", "sum"))
+    ch = g[np.isfinite(g[ch_col])]
+    ch = ch.assign(w=ch["n_2024"], wv=ch["n_2024"] * ch[ch_col]).groupby("cell").agg(w=("w", "sum"), wv=("wv", "sum"))
+    out = pd.DataFrame({f"{prefix}{group}_level": lv["wv"] / lv["w"], f"{prefix}{group}_n": lv["w"]})
+    out = out.join(pd.DataFrame({f"{prefix}{group}_change": ch["wv"] / ch["w"]}), how="outer")
     return out
 
 
@@ -137,12 +232,16 @@ def area_call(t):
 
 
 def build_area():
+    """Area call per H3 resolution 5 cell on the national reference; the ecoregion terms ride along as context."""
     t0 = time.time()
     os.makedirs(OUT, exist_ok=True)
-    c = load_cells()
-    t = pool(c, "crops").join(pool(c, "pasture"), how="outer").join(pool(c, "mosaic"), how="outer")
-    # the ecoregion holding most of the cell's fields, and its class-weighted Scale C change
-    dom = c.groupby(["cell", "eco_id"])["n_2024"].sum().reset_index().sort_values("n_2024").drop_duplicates("cell", keep="last")
+    n = load_nation(5)
+    t = pool(n, "crops", "v24", "change").join(pool(n, "pasture", "v24", "change"), how="outer") \
+        .join(pool(n, "mosaic", "v24", "change"), how="outer").join(frontier(n), how="outer")
+    e = load_cells()
+    t = t.join(pool(e, "crops", "cell_vs_eco_2024", "change", "eco_"), how="outer") \
+        .join(pool(e, "pasture", "cell_vs_eco_2024", "change", "eco_"), how="outer")
+    dom = e.groupby(["cell", "eco_id"])["n_2024"].sum().reset_index().sort_values("n_2024").drop_duplicates("cell", keep="last")
     t = t.join(dom.set_index("cell")["eco_id"])
     eco = pd.read_csv(ECO_CSV)
     allrow = eco[eco["peer_cls"] == "all"].set_index("eco_id")
@@ -150,14 +249,19 @@ def build_area():
     t["eco_plain_change_pct"] = t["eco_id"].map(allrow["plain_change_pct"])
     t["eco_trend"] = trend(t["eco_scale_c_change"].values)
     t["area_decision"] = area_call(t)
-    t = t.reset_index().rename(columns={"index": "cell"})
+    t.index.name = "cell"
+    t = t.reset_index()
     t.to_parquet(os.path.join(OUT, "area_cells.parquet"), index=False)
     import h3
     out = t.copy()
     out.insert(0, "h3_5", [h3.int_to_str(int(x)) for x in out["cell"]])
     out.drop(columns="cell").to_csv(os.path.join(C.SUMMARIES, "area_cells.csv.gz"), index=False, float_format="%.3f")
+    # resolution 6 frontier values for the dense summary level
+    f6 = frontier(load_nation(6))
+    f6.index.name = "cell"
+    f6.reset_index().to_parquet(os.path.join(OUT, "frontier_r6.parquet"), index=False)
     vc = t["area_decision"].value_counts()
-    log(step="area", cells=int(len(t)), **{k: int(vc.get(k, 0)) for k in AREA}, seconds=round(time.time() - t0))
+    log(step="area", cells=int(len(t)), **{k: int(vc.get(k, 0)) for k in AREA}, r6_cells=int(len(f6)), seconds=round(time.time() - t0))
     return t
 
 
@@ -172,24 +276,23 @@ def trend(v):
 
 
 def dist():
-    """Quantiles of the pooled area term, to set LEVEL_T and CHANGE_T."""
-    c = load_cells()
+    """Quantiles of the pooled national area term and of the frontier values, to set the thresholds and breaks."""
+    q = [0.05, 0.1, 0.2, 0.25, 0.5, 0.75, 0.8, 0.9, 0.95]
     res = {}
-    for grp in ("crops", "pasture", "mosaic"):
-        p = pool(c, grp)
-        q = [0.05, 0.1, 0.25, 0.5, 0.75, 0.9, 0.95]
-        lv = p[f"{grp}_level"].dropna()
-        ch = p[f"{grp}_change"].dropna()
-        res[grp] = {"cells_level": int(len(lv)), "cells_change": int(len(ch)),
-                    "level_q": {str(k): round(float(lv.quantile(k)), 3) for k in q},
-                    "change_q": {str(k): round(float(ch.quantile(k)), 3) for k in q},
-                    "level_share_below_-0.5": round(float((lv < -0.5).mean()), 3), "level_share_below_-0.3": round(float((lv < -0.3).mean()), 3),
-                    "change_share_below_-0.3": round(float((ch < -0.3).mean()), 3), "change_share_below_-0.5": round(float((ch < -0.5).mean()), 3),
-                    "n_median": float(p[f"{grp}_n"].median())}
-    # sampling noise of a cell median of n fields, in units of the field SD: 1.2533 / sqrt(n)
-    rows = c[np.isfinite(c["cell_vs_eco_2024"])]
-    res["row_n_2024_quantiles"] = {str(k): float(rows["n_2024"].quantile(k)) for k in (0.1, 0.25, 0.5, 0.75)}
-    res["se_median_at_n"] = {str(n): round(1.2533 / np.sqrt(n), 3) for n in (30, 50, 100, 300)}
+    for r in (5, 6):
+        c = load_nation(r)
+        for grp in ("crops", "pasture", "mosaic"):
+            p = pool(c, grp, "v24", "change")
+            lv = p[f"{grp}_level"].dropna()
+            ch = p[f"{grp}_change"].dropna()
+            res[f"r{r}_{grp}"] = {"cells_level": int(len(lv)), "cells_change": int(len(ch)),
+                                  "level_q": {str(k): round(float(lv.quantile(k)), 3) for k in q},
+                                  "change_q": {str(k): round(float(ch.quantile(k)), 3) for k in q},
+                                  "n_median": float(p[f"{grp}_n"].median())}
+        fr = frontier(c)
+        for col in ("nat_change", "nat_pct_change"):
+            v = fr[col].dropna()
+            res[f"r{r}_{col}"] = {"cells": int(len(v)), "q": {str(k): round(float(v.quantile(k)), 3) for k in q}}
     print(json.dumps(res, indent=1))
     return res
 
@@ -400,10 +503,12 @@ def rnd(v, d=2):
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("step", choices=["dist", "area", "fields", "report", "lookup", "all"])
+    ap.add_argument("step", choices=["national", "dist", "area", "fields", "report", "lookup", "all"])
     ap.add_argument("--states", nargs="*", default=None)
     args = ap.parse_args()
     states = args.states or C.state_dirs(2024)
+    if args.step in ("national", "all"):
+        national(states)
     if args.step == "dist":
         dist()
     if args.step in ("area", "all"):

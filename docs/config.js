@@ -17,6 +17,9 @@ export const CONFIG = {
 	FIELDS_PMTILES: `${TILE_BASE}/fields.pmtiles`,
 	SUMMARY_PMTILES: `${TILE_BASE}/summary.pmtiles`,
 	STATS_URL: `${TILE_BASE}/stats.json`,
+	/** Ecoregion names and their Scale C change per class (s07_decisions.py lookup), for the
+	    ecoregion line of the tooltip and the field card. Served from the site, not S3. */
+	ECOREGIONS_URL: './data/ecoregions.json',
 
 	PLACEHOLDER: {
 		FIELDS_PMTILES: './data/placeholder_fields.pmtiles',
@@ -64,6 +67,8 @@ export const ATTR = {
 	vigor_2020: 'vigor_2020',
 	vigor_2024: 'vigor_2024',
 	decision: 'decision',
+	area_decision: 'area_decision',
+	eco_id: 'eco_id',
 	confidence: 'confidence',
 	n_obs_2020: 'n_obs_2020',
 	n_obs_2024: 'n_obs_2024',
@@ -85,7 +90,31 @@ export const SUMMARY_ATTR = {
 	dominant_crop_2024: 'dominant_crop_2024',
 	share_pasture: 'share_pasture',
 	mean_vigor_change: 'mean_vigor_change',
-	dominant_decision: 'dominant_decision'
+	dominant_decision: 'dominant_decision',
+	dominant_area_decision: 'dominant_area_decision',
+	share_restore: 'share_restore',
+	share_improve_yields: 'share_improve_yields',
+	share_convert_pasture: 'share_convert_pasture',
+	share_converted: 'share_converted',
+	share_switch_failed: 'share_switch_failed',
+	area_crops_2024: 'area_crops_2024',
+	area_pasture_2024: 'area_pasture_2024',
+	area_crops_change: 'area_crops_change',
+	area_pasture_change: 'area_pasture_change',
+	area_mosaic_2024: 'area_mosaic_2024',
+	area_mosaic_change: 'area_mosaic_change',
+	eco_trend: 'eco_trend',
+	eco_crops_2024: 'eco_crops_2024',
+	eco_pasture_2024: 'eco_pasture_2024',
+	eco_crops_change: 'eco_crops_change',
+	eco_pasture_change: 'eco_pasture_change',
+	nat_change: 'nat_change',
+	nat_pct_change: 'nat_pct_change',
+	top_action: 'top_action',
+	top_action_share: 'top_action_share',
+	top3: 'top3',
+	top_area: 'top_area',
+	top_area_share: 'top_area_share'
 };
 
 /** The confidence attribute: 'low' when the field is under 6.25 ha (one MODIS pixel) or
@@ -236,24 +265,106 @@ export const VIGOR_CHANGE = [
 	{ key: 2, label: 'Rose two classes (low to high)', color: GREEN2 }
 ];
 
-/** Suggested decision, from the methods section 7 table as the analyze stage applied it.
-    Colors follow the dataviz reference categorical order; "keep" is the neutral because it
-    means no change, and "none" is gray because no suggestion is made. */
+/** Field decision, version 2 (methods, section 7): the area call of the field's H3
+    resolution 5 cell first, the field's own record second. A class with `opacity` draws at
+    that value: crop-switched, newly cropped and abandoned fields draw at half strength in
+    every view, as in the change view. Recently converted land is green next to restore. */
 export const DECISIONS = [
-	{ key: 'restore', label: 'Restore', color: '#008300', note: 'below peers in 2024 and declining: the field falls further behind neighbors under the same weather' },
-	{ key: 'switch_crop', label: 'Switch crop', color: '#6250d6', note: 'below peers in 2024 and stable: a persistent gap under the same weather is a site or management limit' },
-	{ key: 'change_pattern', label: 'Change land use pattern', color: '#2a78d6', note: 'the crop group changed between the years; the 2024 level says whether the switch paid off' },
-	{ key: 'abandon', label: 'Abandon', color: '#e34948', note: 'below peers in both years, declining, and 2024 greenness in the lowest fifth of the crop in the state' },
-	{ key: 'intensify', label: 'Intensify', color: '#eb6834', note: 'at peers and stable or gaining: an average field with headroom to the best neighbors' },
-	{ key: 'improve_yields', label: 'Improve yields', color: '#eda100', note: 'closing a gap from below, or slipping from at or above peers: management on the same crop is the lever' },
-	{ key: 'keep', label: 'Keep', color: NEUTRAL, note: 'above peers and stable or gaining' },
-	/* Not a value in the tiles: the tiles give these fields decision "none". The site derives it
-	   from change_class == newly_cropped, so the tiles need no rebuild. */
-	{ key: 'recently_converted', label: 'Recently converted land', color: '#7cc24e',
-		derivedFrom: { attr: 'change_class', value: 'newly_cropped' },
-		note: 'forest, savanna or other native cover in 2020, crop or pasture in 2024' },
-	{ key: 'none', label: 'No suggestion', color: GRAY_NEUTRAL, note: 'too few clear satellite composites in one of the years' }
+	{ key: 'restore', label: 'Restore', color: '#008300',
+		note: 'The field lies in an area where crops and pasture are both less green than the same uses across Brazil and both fell further behind since 2020. Restoring the land is suggested for the whole area, this field included.' },
+	{ key: 'converted_below', label: 'Recently converted, below peers', color: '#7cc24e', opacity: 0.5,
+		note: 'Native vegetation in 2020, crop or pasture in 2024, and already less green than the same use elsewhere in the ecoregion. The clearing is not paying off, which makes this the strongest case for restoring.' },
+	{ key: 'converted_ok', label: 'Recently converted, at or above peers', color: '#b5c95a', opacity: 0.5,
+		note: 'Native vegetation in 2020, crop or pasture in 2024, and at least as green as the same use elsewhere in the ecoregion, or not measured in 2024. The new use produces; the open question is the clearing itself.' },
+	{ key: 'convert_pasture', label: 'Improve or convert pasture', color: '#0f8b8d',
+		note: 'A pasture in an area where crops do as well as across Brazil but pasture lags behind. Recover the pasture (reform, fertilize, rotate grazing) or move the land into crops.' },
+	{ key: 'switch_paid_off', label: 'Switch paid off', color: '#2a78d6', opacity: 0.5,
+		note: 'The crop changed since 2020, and in 2024 the field is at least as green as nearby fields of the new crop. Keep the new crop.' },
+	{ key: 'switch_failed', label: 'Switch failed', color: '#6250d6', opacity: 0.5,
+		note: 'The crop changed since 2020, and in 2024 the field is less green than nearby fields of the new crop. Reconsider the switch or how the new crop is managed.' },
+	{ key: 'improve_yields', label: 'Improve yields', color: '#eda100',
+		note: 'Same crop in both years, and the field fell behind nearby fields of the same crop or stays below them. The cause is likely on the field: soil, management or inputs.' },
+	{ key: 'intensify', label: 'Intensify', color: '#c4b38f',
+		note: 'Same crop, about as green as nearby fields of the same crop and not falling behind. The best neighbors show room to produce more.' },
+	{ key: 'keep', label: 'Keep', color: NEUTRAL,
+		note: 'Same crop, greener than nearby fields of the same crop and not falling behind. Nothing to change on this evidence.' },
+	{ key: 'abandon', label: 'Abandon or change use', color: '#e34948',
+		note: 'Below nearby fields in both years, falling further, and close to bare soil in 2024. The land may suit another use or restoration better than the present one.' },
+	{ key: 'abandoned_outline', label: 'Abandoned since 2020', color: '#898781', opacity: 0.5,
+		note: 'Cropped or grazed in 2020 and not in 2024; drawn on the 2020 outline. Check whether native vegetation is coming back; if it is not, restore it.' },
+	{ key: 'none', label: 'No data', color: GRAY_NEUTRAL,
+		note: 'Too few clear satellite images in one of the years to compare.' }
 ];
+
+/** Area decision per H3 resolution 5 cell (about 15 km across), from the cell's crops and
+    pasture against the same uses across Brazil (methods, section 7). Below means more than
+    0.75 national SD of cell medians under the national median; declining means the gap grew
+    by more than 0.4 SD between 2020 and 2024. */
+export const AREA_DECISIONS = [
+	{ key: 'restore_area', label: 'Restore the area', color: '#008300',
+		note: 'Crops and pasture here are both less green than the same uses across Brazil, and both fell further behind since 2020. Restore the land across the area rather than fix single fields.' },
+	{ key: 'good_land_underused', label: 'Good land underused', color: '#0f8b8d',
+		note: 'Crops here do as well as or better than crops across Brazil, but the pasture is weaker than pasture across Brazil. The land can give more: improve the pasture or convert it to crops.' },
+	{ key: 'system_misfit', label: 'System misfit', color: '#6250d6',
+		note: 'Pasture here does as well as pasture across Brazil, but the crops are weaker than crops across Brazil. The crops may not suit this land; pasture or another use may fit better.' },
+	{ key: 'area_declining', label: 'Area declining', color: BROWN1,
+		note: 'The uses present are less green than the same uses across Brazil, and at least one fell further behind since 2020. Look for a cause shared across the area.' },
+	{ key: 'area_fine', label: 'Area fine', color: '#d6d1c7',
+		note: 'No area-wide problem: crops and pasture stand at or above the same uses across Brazil, or below them without falling further. The field call decides.' },
+	{ key: 'none', label: 'No area call', color: GRAY_NEUTRAL,
+		note: 'Fewer than 30 fields of any crop or of pasture in the area, so it cannot be compared with Brazil.' }
+];
+
+/** The ecoregion line of the tooltip: the ecoregion median of the field's crop against the
+    national median, change between 2020 and 2024 in national cell SD (Scale C), read as
+    losing or gaining ground beyond this threshold. */
+export const ECO_TREND = {
+	threshold: 0.1,
+	labels: { declining: 'losing ground against Brazil', steady: 'steady against Brazil', gaining: 'gaining ground against Brazil' }
+};
+
+/** The zoomed-out change map: the national frontier. Each cell is colored on a continuous
+    ramp by the class-weighted change of its crops against Brazil (cell_vs_nation 2024 minus
+    2020, in national cell SD of each class). The stops sit near the 5th, 25th, 75th and 95th
+    percentiles of the resolution 6 cells (-1.03, -0.36, 0.30, 0.92); balanced cells are the
+    gray at zero, darker than the basemap so they stay visible. */
+export const FRONTIER_RAMP = {
+	attr: 'nat_change',
+	stops: [[-1.0, BROWN2], [-0.4, BROWN1], [0, '#bdb7a9'], [0.4, GREEN1], [1.0, GREEN2]],
+	ticks: ['-1.0', '-0.4', '0', '+0.4', '+1.0'],
+	ends: ['lost ground against Brazil', 'gained'],
+	fullOpacity: 1.0,
+	/* a cell with fewer fields than this draws at this opacity, since its value is noisy */
+	fewOpacity: 0.55,
+	minFields: 10
+};
+
+/** The zoomed-out decision map: a cell takes the color of its top action, the actionable
+    decision (any except keep, intensify and no data) most over-represented against its
+    national share, among those that cover at least 15 percent of the cell's fields and at
+    least 1.5 times their national share (s05_tiles.py writes it as top_action). Other cells
+    are the gray of "no action stands out". 15 percent is about twice the national share of
+    every actionable decision except improve yields; the 1.5 lift keeps improve yields, 27
+    percent of all fields, from painting the map one color (it is the most common action in
+    100,538 of 144,909 cells, but stands out in 17,508). */
+export const ACTION_SUMMARY = {
+	attr: 'top_action', shareAttr: 'top_action_share', minShare: 0.15,
+	background: ['keep', 'intensify', 'none', 'abandoned_outline'],
+	otherLabel: 'No action stands out', otherColor: '#d6d1c7',
+	otherNote: 'Mostly keep or intensify, or the national mix: no action other than keep or intensify reaches 15 percent of the cell’s fields and 1.5 times its share across Brazil.'
+};
+
+/** The zoomed-out area map, drawn by the same rule as the decision map: a cell takes the color
+    of its most common area call other than area fine and no call when that call covers at
+    least 15 percent of the cell's fields, else the background gray. The area call is made per
+    15 km cell, and each 6 km summary cell and each field inherits the call of the 15 km cell
+    that holds it. */
+export const AREA_SUMMARY = {
+	attr: 'top_area', shareAttr: 'top_area_share', minShare: 0.15,
+	background: ['area_fine', 'none'],
+	otherLabel: 'Area fine or no call', otherColor: '#d6d1c7',
+	otherNote: 'No area problem was found, or the area has too few fields of a crop or of pasture to compare with Brazil.'
+};
 
 /** The views in the left nav. attr names a key of ATTR; summary.attr a key of SUMMARY_ATTR.
     The pasture vigor view is left out of this release because the vigor attributes are null;
@@ -264,11 +375,11 @@ export const VIEWS = [
 		question: 'Where did a field gain or lose ground against its peers?',
 		kind: 'class', attr: 'change_class', classes: CHANGE_CLASSES, countKey: 'change_class',
 		summary: {
-			kind: 'net', minuend: 'share_decline', subtrahend: 'share_gain', steps: NET_STEPS,
-			label: 'Fields that declined minus fields that gained, share of each cell'
+			kind: 'ramp', ramp: FRONTIER_RAMP,
+			label: 'Change against Brazil, 2020 to 2024 (national SD, all crops)'
 		},
-		method: 'Relative productivity is the field\u2019s seasonal greenness (MODIS NDVI integrated over the CONAB growing season, corrected for rainfall and temperature) divided by the median of fields with the same crop in the same region. The class is set on the change in peer standard deviations between the 2024 and the 2020 agricultural year, both measured on the 2024 field outline; the number in the tooltip is the change on the ratio scale, where 1.0 is the peer median. Fields whose crop group differs between the years are shown as switched, newly cropped or abandoned rather than compared.',
-		caveat: 'A change in greenness relative to peers is not a measured yield change. 83 percent of fields are smaller than one MODIS pixel and are marked low confidence.'
+		method: 'Zoomed out, each H3 cell of about 6 km is colored by how its crops moved against Brazil as a whole: for each crop in the cell, the median weather-adjusted seasonal greenness against the national median of that crop, in national standard deviations (SD) of cell medians, 2024 minus 2020, weighted by field count. The tooltip adds the plain change in greenness and the share of fields declining minus gaining. Zoomed in, each field is classed on its change against fields of the same crop nearby (peer SD), with switched, newly cropped and abandoned fields shown on their own.',
+		caveat: 'A change in greenness is not a measured yield change. The national comparison keeps regional weather the adjustment missed, including the 2024 drought, so part of a frontier may be weather. A crop needs 30 fields in a cell to count; a 6 km cell without one takes the value of its 15 km parent. 83 percent of fields are smaller than one MODIS pixel.'
 	},
 	{
 		id: 'prod_2020', group: 'Productivity', title: 'Relative productivity 2020',
@@ -303,11 +414,19 @@ export const VIEWS = [
 		caveat: 'MapBiomas separates soybean, sugarcane, rice, cotton, coffee, citrus, oil palm and a few perennials. Maize, beans and most other annuals fall in the temporary crop classes.'
 	},
 	{
+		id: 'area_decision', group: 'Decision', title: 'Area decision',
+		question: 'Which land use tradeoff does each area of about 15 km face?',
+		kind: 'class', attr: 'area_decision', classes: AREA_DECISIONS, countKey: 'area_decision',
+		summary: { kind: 'action', action: AREA_SUMMARY, classes: AREA_DECISIONS, label: 'Area call, 15 km areas' },
+		method: 'Each H3 cell of about 15 km (resolution 5) is compared with Brazil as a whole, separately for crops (soybean, other temporary crops, sugarcane, rice, cotton, perennials) and for pasture: the median weather-adjusted greenness of each crop in the cell against its national median, in national SD of cell medians, pooled by field count. Below means more than 0.75 SD under; declining means the gap grew by more than 0.4 SD from 2020 to 2024. A crop needs 30 fields in the cell to count. The cell card also shows the same terms against the RESOLVE 2017 ecoregion, and the tooltip how the ecoregion moved against Brazil. Mosaic of uses is shown but does not enter the call. Legend counts are the fields in cells with each call.',
+		caveat: 'The change of the area term forms blocks of 50 to 200 km, partly weather that the adjustment left in (median R squared 0.15). A refit per ecoregion with mean rainfall did not remove the blocks. Read an area call next to the 2024 drought.'
+	},
+	{
 		id: 'decision', group: 'Decision', title: 'Suggested decision',
-		question: 'Which land use decision does the evidence point to on each field?',
+		question: 'Which land use decision does the evidence point to on each field, inside its area?',
 		kind: 'class', attr: 'decision', classes: DECISIONS, countKey: 'decision',
-		summary: { kind: 'class', attr: 'dominant_decision', classes: DECISIONS, label: 'Most common suggestion per cell' },
-		method: 'A rule set over the change class and the 2024 level against peers (below, at, above), written in methods, section 7. Newly cropped fields and fields without data get no suggestion.',
+		summary: { kind: 'action', action: ACTION_SUMMARY, classes: DECISIONS, label: 'Action that stands out per cell' },
+		method: 'The area call comes first: every field in a restore-the-area cell is restore, and pasture that is not above its neighbors in a good-land-underused cell is improve or convert pasture. Then the field\u2019s own record: a crop switch is judged by the 2024 level against nearby fields of the new crop, a recently converted field by its 2024 level against the same use in the ecoregion, and a field on the same crop by its change and its 2024 level against nearby fields (methods, section 7).',
 		caveat: 'These are screening results from satellite greenness. They are not agronomic advice, they do not know prices, soils, tenure or the farmer\u2019s plans, and a field flagged here deserves a visit before any decision.'
 	}
 ];

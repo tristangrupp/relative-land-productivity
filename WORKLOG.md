@@ -61,10 +61,12 @@ plus `fields/abandoned/state=<State>.parquet` (54 objects, 12.9 GB). AWS profile
 | tiles | s05_tiles.py | tiles\fields.pmtiles, summary.pmtiles, stats.json |
 | upload | s05_upload.py | S3 (skips same-size objects, retries dropped connections) |
 | runner | s04_run_all.py | analysis\run_all.log |
-| ecoregions | s06_ecoregion_peers.py (in progress) | analysis\ecoregions, data/summaries/ecoregions*.csv |
+| ecoregions | s06_ecoregion_peers.py | analysis\ecoregions, data/summaries/ecoregions*.csv |
+| weather refit test | s07_weather_refit.py (not adopted) | analysis\weather_refit, data/summaries/weather_refit_compare.json |
+| decisions v2 | s07_decisions.py national, area, fields, report, lookup (after s04_change and s06 score, before s05) | analysis\decisions, columns in fields_scored, data/summaries/decisions_v2*, docs/data/ecoregions.json |
 
-Reports: pipeline/PROBE.md, EXTRACT.md, EXTRACT_S2.md, ANALYZE.md, EXPLORE_ECOREGIONS.md
-(pending). Methods: methods/METHODS.md. Site contract: docs/DATA_CONTRACT.md.
+Reports: pipeline/PROBE.md, EXTRACT.md, EXTRACT_S2.md, ANALYZE.md, EXPLORE_ECOREGIONS.md,
+DECISIONS_V2.md. Methods: methods/METHODS.md. Site contract: docs/DATA_CONTRACT.md.
 
 ## Current state, 13 November 2026, 08:30
 
@@ -88,17 +90,25 @@ Reports: pipeline/PROBE.md, EXTRACT.md, EXTRACT_S2.md, ANALYZE.md, EXPLORE_ECORE
   in `data/summaries/cell_vs_ecoregion.csv`, the ecoregion-class Scale C rows in
   `data/summaries/ecoregions.csv`. Ecoregion peers agree with the cell design on 80.2 percent
   of fields; the regional call comes from Scale C and the plain change.
+- Decisions version 2 (13 Nov, report pipeline/DECISIONS_V2.md, METHODS.md section 7): area
+  call per H3 resolution 5 cell on the national reference (`cell_vs_nation`), field call
+  inside it. Restore 91,076 fields in 52 restore areas; area declining 1,224,818 fields
+  nationally and 338,554 (12.0 percent) in the seven Amazon frontier ecoregions, which get no
+  restore. `decision_v1` keeps the old suggestion. The weather refit per ecoregion was tested
+  and not adopted. The site has the national frontier change map (continuous ramp on 6 km
+  cells), the Area decision view, the top-action decision summary, short legends with info
+  tooltips, and calm intensify. See the log for whether the tiles and site are published.
 
 ## Open items
 
-1. Decision revamp (agreed in principle 13 Nov, see the log): two-tier rules built on the
-   ecoregion scores, area term plus field term. The inputs now exist: `cell_vs_eco_2020` and
-   `cell_vs_eco_2024` per field in `analysis\ecoregions\fields\<State>.parquet` (area term),
-   `r_adj` from the relative tables (field term), Scale C per ecoregion and class in
-   `data/summaries/ecoregions.csv`. Before acting on the area term, refit the weather term per
-   ecoregion and class with the cell's mean precipitation as a regressor (EXPLORE_ECOREGIONS.md).
-2. "Change land use pattern" is a label on crop-switched fields, not advice; it goes away in
-   the revamp (crop-switched fields get judged by their 2024 level: switch paid off or failed).
+1. Decisions version 2 is built (see the log). Questions for the user, from DECISIONS_V2.md:
+   restore is rare (91,076 fields, none on the Amazon frontier); should area declining with
+   pasture alone lead to restore for its declining fields? Is "improve yields" right for
+   below-and-stable fields that version 1 called switch crop? Is the 1.5 lift in the
+   zoomed-out top-action rule acceptable?
+2. Resolution 7 summary cells (about 2.5 km) at zooms 7 to 9 measured 173.0 MB, over the
+   150 MB budget; resolution 6 is used at every zoom. A slimmer resolution 7 layer (fewer
+   attributes) could fit if the user wants it.
 3. Pasture vigor: user to decide whether to submit the MapBiomas platform jobs.
 4. Sentinel-2 refinement for Mato Grosso, then tier 1, then tier 2.
 5. The user may want conversion of pasture to crop never suggested inside the Amazon biome
@@ -220,3 +230,69 @@ Reports: pipeline/PROBE.md, EXTRACT.md, EXTRACT_S2.md, ANALYZE.md, EXPLORE_ECORE
   precipitation as a regressor before the area term is acted on (its 2024 change forms
   weather-shaped blocks in the Caatinga); the decision revamp can start from the per-field and
   per-cell tables above. Run times: assign 18 s, score 124 to 148 s, figures 4 s.
+
+- 10:00 to 12:00 Decision revamp agent (version 2 of the decisions; report
+  pipeline/DECISIONS_V2.md; METHODS.md section 7 rewritten with the version 1 table kept
+  under a dated superseded heading).
+  Step 1, weather refit: `s07_weather_refit.py` fitted layer 2 per ecoregion and peer class
+  with the field location's mean annual CHIRPS precipitation (2016 to 2024) as an extra
+  regressor, same guards as s04_relative. Median R squared rose from 0.150 (134 state-class
+  pairs) to 0.188 (146 ecoregion-class pairs), but the blocks in the 2024 change of the area
+  term did not shrink (Moran's I 0.616 to 0.626; ring 8 neighbor correlation 0.23 to 0.35),
+  so the existing state-class fit stays and nothing downstream was recomputed on the refit.
+  Step 2 first build: area call per H3 resolution 5 cell against the ecoregion
+  (cell_vs_eco), thresholds 0.5 and 0.3 ecoregion SD; superseded the same morning, see below.
+- User direction, relayed by the coordinator: "lets do brazil as a whole then to get the
+  true frontiers of productivity change". Done: `s07_decisions.py national` computes
+  cell_vs_nation per H3 cell and class (cell median minus national class median, in 1.4826
+  MAD of the national distribution of cell medians) for 2020 and 2024 at resolutions 5 and 6,
+  and the plain percent change per cell and class (`data/summaries/cell_vs_nation.csv.gz`).
+  The area call now uses it (below under -0.75, declining under -0.4 national SD; justified
+  in METHODS.md 7.1); the ecoregion terms and Scale C stay as secondary context in the
+  tooltip and cell card (user: keep the ecoregion scores). The zoomed-out change map is now
+  the national frontier map: cells colored by the class-weighted cell_vs_nation change; the
+  net share of declining minus gaining fields moved to the tooltip with the plain percent
+  change. National SD change was chosen over the plain percent change because it removes
+  each class's nationwide shift (pasture -2.3 percent, much of it the 2024 drought) and puts
+  classes on one unit. Results: 52 restore-area cells (93,244 fields), good land underused
+  1,675 (3,096,673), system misfit 356 (883,479), area declining 1,189 (1,224,818), area fine
+  16,993 (19,072,057), no call 272 (184,211). Field calls: restore 91,076; recently converted
+  below 418,860 and at or above 1,226,786; improve or convert pasture 633,043; switch paid off
+  1,669,629; switch failed 671,801; improve yields 6,715,891; intensify 6,722,391; keep
+  5,879,276; abandon 133,960; no data 391,769; abandoned since 2020 748,022. 97.2 percent of
+  version 1 restore fields became improve yields. Amazon frontier (7 ecoregions, 2,814,635
+  fields): no restore, 338,554 in area-declining cells.
+- User feedback on the site, relayed by the coordinator: "put the explanatory text into a
+  hoverable tooltip that appears on hover. make it clear there is text to read for the user,
+  but this currently is way too long for a legend. also the main map is still too coarse and
+  oversimplified! on the recommendations zoom out, the whole thing is orange!" Done: legend
+  rows show swatch, label and count; a circled "i" beside the label opens the note on hover,
+  keyboard focus or tap (every view). Summary cells are H3 resolution 6 (about 6 km) at every
+  zoom from 3; resolution 7 at zooms 7 to 9 was built and measured 173.0 MB (214.7 MB joined),
+  over the 150 MB budget, so it is not used (summary.pmtiles 92.2 MB). The change view uses a
+  continuous diverging ramp (-1.0 to +1.0 national SD, gray at zero) with a gradient legend.
+  The decision summary colors a cell by its top action: the actionable decision (not keep,
+  intensify, no data) most over-represented against its national share, among those with at
+  least 15 percent of the cell's fields and 1.5 times their national share; else gray "no
+  action stands out". The plain most-common-action rule was measured first and would have
+  colored 100,538 of 144,909 cells improve yields (27 percent of all fields); with the lift
+  68,556 cells take a color across seven actions. Intensify is khaki #c4b38f instead of
+  orange. Tooltips list each cell's top three decisions. Legend counts come from the rebuilt
+  stats.json (decision, decision_v1, area_decision keys).
+- User feedback, relayed by the coordinator: "i am seeing the latest update on the page, it
+  looks very good. styling, clarity, relative differences across the country. this is in the
+  right direction". Confirmed direction: the national reference, the finer 6 km cells, the
+  continuous frontier ramp, the styling and the short legends with info tooltips. Keep that
+  look. At the time of this remark the changes were on the local server
+  (http://127.0.0.1:8810) with local summary tiles; nothing had been pushed yet.
+- User feedback, relayed by the coordinator: "area decision as it currently looks on the page
+  is too coarse and not as nice as the suggested decision." Done: the Area decision view now
+  draws the 6 km summary cells by the same rule as the decision view (the most common area
+  call other than area fine and no call, when it covers at least 15 percent of the cell's
+  fields, else the background gray), with the same legend style and info tooltips; area fine
+  takes the same gray as "no action stands out", and the area colors match the decision
+  palette (restore green, good land underused teal like improve or convert pasture, system
+  misfit violet like switch failed). The area call is still made per 15 km (H3 resolution 5)
+  cell; every 6 km cell and every field inherits its parent's call, and at field zoom the
+  fields draw their area call. Making the call itself at 6 km would need a method change and
+  a field tile rebuild; offered to the user, not done.

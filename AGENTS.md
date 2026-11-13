@@ -83,8 +83,8 @@ Apply to prose, code comments, commit messages, identifiers and JSON keys.
 Prefix: `https://wri-datalab-sandbox.s3.amazonaws.com/trazofields/trazo4/relative-land-productivity/`
 
 - `tiles/fields.pmtiles`: 2024 field outlines, zoom 9 to 13 (overzoomed above).
-- `tiles/summary.pmtiles`: H3 summary cells, resolution 5 at zooms 3 to 4, resolution 6 at
-  zooms 5 to 9.
+- `tiles/summary.pmtiles`: H3 summary cells, resolution 6 (about 6 km) at zooms 3 to 9
+  (13 November 2026; resolution 7 measured 173 MB, over the 150 MB budget).
 - `tiles/stats.json`: counts nationally and per state. Its change_class and decision counts
   include the abandoned 2020 outlines; shares divide by n_fields of 2024 outlines.
 - `fields/year=2024/state=<State>/fields_scored.parquet` and `fields/abandoned/state=<State>.parquet`.
@@ -103,16 +103,25 @@ Prefix: `https://wri-datalab-sandbox.s3.amazonaws.com/trazofields/trazo4/relativ
 ## The user's standing preferences for the map
 
 - Default view: productivity change 2020 vs 2024.
-- The zoomed-out map must be dense: many small cells. 40 km and 100 km cells were rejected
-  as too coarse and sparse.
+- The zoomed-out map must be dense: many small cells. 100 km, 40 km and (13 November) 15 km
+  cells were rejected as too coarse; 6 km cells at every zoom now. The change view uses a
+  continuous ramp, not a few flat steps ("too coarse and oversimplified").
+- The zoomed-out change map is the national frontier map: cells colored by their change
+  against Brazil as a whole ("lets do brazil as a whole then to get the true frontiers of
+  productivity change").
+- Legend rows are short: swatch, label, count. Explanatory notes open from an info marker on
+  hover, focus or tap, never as text in the legend.
 - Crop names (from the MapBiomas mode codes, legend from the source.coop mapbiomas-brazil
   collection) show on hover in every view, for 2020 and 2024.
 - Crop switched, newly cropped and abandoned draw at 50 percent opacity.
 - Newly cropped fields get the suggestion "Recently converted land", in a green near but
   distinct from restore.
-- Decisions must blend two scales: the immediate area (H3 cell) and a large reference
-  (RESOLVE 2017 ecoregion). The ecoregion reference scores stay. See WORKLOG.md for the
-  agreed two-tier design.
+- Decisions must blend two scales: the immediate area (H3 cell) and a large reference.
+  Since 13 November the area call uses Brazil as the reference; the RESOLVE 2017 ecoregion
+  scores stay as secondary context in the tooltip and card. See WORKLOG.md and METHODS.md
+  section 7 for the two-tier design.
+- The zoomed-out decision map must not be one color: it shows the action that stands out in
+  each cell, and intensify is a calm color, not orange.
 
 ## Caveats every output should state where relevant
 

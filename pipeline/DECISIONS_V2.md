@@ -17,7 +17,10 @@ consider the immediate area ... there needs to be a blend of the two."
 
 Version 1 judged each field alone against the fields of the same class in its H3 resolution 5
 cell. Version 2 adds an area call per cell, made from the cell's crops and pasture against the
-same uses in the RESOLVE 2017 ecoregion, and makes the field call inside that area.
+same uses across Brazil (first against the RESOLVE 2017 ecoregion, changed the same day at the
+user's request), and makes the field call inside that area. Later the same day the user also
+asked for a finer and less uniform zoomed-out map and shorter legends; those changes are
+reported below and in WORKLOG.md.
 
 ## Step 1: the weather refit was tested and not adopted
 
@@ -55,39 +58,63 @@ and they did not improve, the state-class fit stays, and `apply` was not run. Th
 tables, `fields_scored.parquet` change classes and the ecoregion tables are those of the
 13 November release. The fitted coefficients are kept in `data/summaries/weather_fit_eco.csv`.
 
-## Step 2: the area call
+## Step 2: the area call, on the national reference
 
-Thresholds were set from the distribution of the pooled cell values (`s07_decisions.py dist`):
+The first build of the area call (13 November 2026, morning) compared each cell's crops and
+pasture with the same uses in its RESOLVE 2017 ecoregion. After reading the ecoregion
+results the user asked for Brazil as the reference: "lets do brazil as a whole then to get
+the true frontiers of productivity change". The area call now uses `cell_vs_nation`
+(methods/METHODS.md section 7.1): the cell median of a class against the national median of
+the class, in national SD of cell medians. The ecoregion terms stay as secondary context in
+the cell card and the tooltip.
 
-| group | cells with a 2024 value | level quartiles | share below -0.5 | change quartiles | share with change under -0.3 |
+`s07_decisions.py national` computed 48,865 (cell, class) rows at resolution 5 (44,078 with a
+change, 42,301 with a plain percent change) and 174,114 at resolution 6 (150,196 and 143,050),
+in 19 s. The pooled distributions over resolution 5 cells (`s07_decisions.py dist`):
+
+| group | cells | level quartiles | 20th percentile of level | change quartiles | 20th percentile of change |
 |---|---|---|---|---|---|
-| crops | 8,506 | -0.34, +0.45 | 16.8% | -0.24, +0.26 | 20.7% |
-| pasture | 18,653 | -0.47, +0.49 | 23.5% | -0.25, +0.28 | 21.6% |
-| mosaic of uses (reported only) | 12,026 | -0.29, +0.57 | 15.6% | -0.44, +0.23 | 34.5% |
+| crops | 8,601 | -0.35, +0.96 | -0.52 | -0.29, +0.23 | -0.36 |
+| pasture | 18,737 | -0.80, +0.56 | -0.96 | -0.34, +0.36 | -0.43 |
+| mosaic (reported only) | 12,146 | -0.18, +1.19 | -0.36 | -0.54, +0.25 | -0.64 |
 
-Below is a level under -0.5 ecoregion SD and declining is a change under -0.3 SD. A cell
-median of 30 fields has a sampling error of about 0.23 SD and one of 210 fields (the median
-row) about 0.09 SD, so both thresholds sit at two or more standard errors for most cells.
+Below is a level under -0.75 national SD and declining a change under -0.4. The level
+threshold puts 24.4 percent of pasture cells and 5.6 percent of crop cells below; the change
+threshold puts 19.0 percent of pasture cells and 7.2 percent of crop cells in decline. Crop
+cells sit mostly above the national crop medians (median pooled level +0.38), so few crop
+areas are below Brazil.
 
-20,433 cells have a value for crops, pasture or mosaic. Area calls per cell and the 2024
-fields inside those cells (`data/summaries/area_cells.csv.gz`, `area_decisions_by_state.csv`):
+Area calls per resolution 5 cell and the 2024 fields inside those cells
+(`data/summaries/area_cells.csv.gz`, `area_decisions_by_state.csv`):
 
-| area call | cells | fields |
-|---|---|---|
-| restore the area | 68 | 111,673 |
-| good land underused | 1,432 | 2,970,980 |
-| system misfit | 735 | 1,369,466 |
-| area declining | 1,032 | 1,112,908 |
-| area fine | 16,933 | 18,801,214 |
-| no area call | 233 | 188,241 |
+| area call | cells | fields | first build, ecoregion reference: cells / fields |
+|---|---|---|---|
+| restore the area | 52 | 93,244 | 68 / 111,673 |
+| good land underused | 1,675 | 3,096,673 | 1,432 / 2,970,980 |
+| system misfit | 356 | 883,479 | 735 / 1,369,466 |
+| area declining | 1,189 | 1,224,818 | 1,032 / 1,112,908 |
+| area fine | 16,993 | 19,072,057 | 16,933 / 18,801,214 |
+| no area call | 272 | 184,211 | 233 / 188,241 |
 
-Only 6,959 cells have both a crop and a pasture value; 11,694 have pasture alone and 1,547
-crops alone; 233 have only mosaic. A restore-the-area call needs both groups below and both
-declining, which happens in 68 cells. The largest restore areas by field count are in
-Pernambuco (42,303 fields), São Paulo (24,132), Bahia (12,375), Minas Gerais (8,654) and
-Ceará (8,182). Good land underused is concentrated in Santa Catarina (870,793 fields), Rio
-Grande do Sul (756,399) and Minas Gerais (483,082), where pasture sits next to strong crops;
-system misfit in Paraná (362,464) and São Paulo (231,739).
+7,073 cells have both a crop and a pasture value, 11,664 pasture alone and 1,528 crops alone.
+The largest restore areas by field count are in São Paulo (38,976 fields), Espírito Santo
+(22,319), Santa Catarina (12,193), Minas Gerais (10,449) and Rio de Janeiro (3,885). Good
+land underused is concentrated in Rio Grande do Sul (799,773 fields), Santa Catarina
+(722,562), Minas Gerais (480,567) and Paraná (335,697); system misfit in Paraná (376,608), São
+Paulo (200,871) and Pernambuco (156,832); area declining in Rio Grande do Sul (212,544) and
+Pará (211,516).
+
+## The national frontier map
+
+The zoomed-out change view now shows the class-weighted `cell_vs_nation` change per summary
+cell on a continuous ramp. Over resolution 5 cells its quartiles are -0.32 and +0.26, its 5th
+and 95th percentiles -0.90 and +0.80; over resolution 6 cells -0.36 and +0.30, and -1.03 and
++0.92. The ramp runs from -1.0 to +1.0 with stops at -0.4 and +0.4 and the balanced gray at
+zero. The plain percent change was the alternative: its resolution 5 quartiles are -7.2 and
++6.0 percent. The national SD change was chosen because it removes each class's nationwide
+shift (pasture -2.3 percent nationally, much of it the 2024 drought) and puts classes with
+different integral scales on one unit; the plain percent change is shown in the tooltip, next
+to the old net share of fields declining minus gaining.
 
 ## Step 3: the field call
 
@@ -96,49 +123,49 @@ National counts on the 24,554,482 2024 outlines, plus the 748,022 abandoned 2020
 
 | field call | fields |
 |---|---|
-| restore | 104,769 |
+| restore | 91,076 |
 | recently converted, below peers | 418,860 |
 | recently converted, at or above peers | 1,226,786 |
-| improve or convert pasture | 645,098 |
-| switch paid off | 1,668,338 |
-| switch failed | 670,859 |
-| improve yields | 6,705,702 |
-| intensify | 6,712,927 |
-| keep | 5,875,414 |
+| improve or convert pasture | 633,043 |
+| switch paid off | 1,669,629 |
+| switch failed | 671,801 |
+| improve yields | 6,715,891 |
+| intensify | 6,722,391 |
+| keep | 5,879,276 |
 | abandon or change use | 133,960 |
 | no data | 391,769 |
 | abandoned since 2020 (2020 outlines) | 748,022 |
 
-Of the 1,645,646 recently converted fields, 29,875 have no 2024 ecoregion value and are in
-the at-or-above class; the site's note says "or not measured in 2024". No data is the 375,000
+Of the 1,645,646 recently converted fields, 29,875 have no 2024 ecoregion value and are in the
+at-or-above class; the site's note says "or not measured in 2024". No data is the 375,000
 fields of change class no data plus 16,769 crop-switched fields with no 2024 value.
 
-How the area call and the field call combine (`area_vs_field_decision.csv`): in the 68 restore
-areas, 104,769 fields are restore, 4,907 recently converted, 638 abandon and 1,359 no data. In
-good-land-underused cells, 645,098 pasture fields are improve or convert pasture, and the
-pasture fields above their cell peers stay keep. 5,336,622 of the 6,705,702 improve-yields
-fields lie in cells where the area is fine.
+How the area call and the field call combine (`area_vs_field_decision.csv`): in the 52 restore
+areas, 91,076 fields are restore, 1,647 recently converted, 500 abandon and 21 no data. In
+good-land-underused cells 633,043 pasture fields are improve or convert pasture, and pasture
+above its cell peers stays keep. 5,417,955 of the 6,715,891 improve-yields fields lie in cells
+where the area is fine.
 
 ## Old against new
 
-`data/summaries/decisions_v1_vs_v2.csv`, 2024 outlines. 14,150,021 fields (57.6 percent) keep
+`data/summaries/decisions_v1_vs_v2.csv`, 2024 outlines. 14,164,524 fields (57.7 percent) keep
 the same key; the rest move as follows.
 
 | version 1 | fields | version 2 |
 |---|---|---|
-| restore | 1,262,572 | improve yields 1,225,939; improve or convert pasture 29,887; restore 6,746 |
-| switch crop | 4,675,213 | improve yields 4,433,789; improve or convert pasture 221,596; restore 19,828 |
-| change land use pattern | 2,424,420 | switch paid off 1,668,338; switch failed 670,859; improve or convert pasture 54,685; restore 13,769; no data 16,769 |
-| intensify | 7,061,028 | intensify 6,712,927; improve or convert pasture 316,289; restore 31,812 |
-| improve yields | 1,074,137 | improve yields 1,045,974; restore 5,522; improve or convert pasture 22,641 |
-| keep | 5,902,506 | keep 5,875,414; restore 27,092 |
+| restore | 1,262,572 | improve yields 1,226,690; improve or convert pasture 29,193; restore 6,689 |
+| switch crop | 4,675,213 | improve yields 4,441,993; improve or convert pasture 217,182; restore 16,038 |
+| change land use pattern | 2,424,420 | switch paid off 1,669,629; switch failed 671,801; improve or convert pasture 52,804; restore 13,417; no data 16,769 |
+| intensify | 7,061,028 | intensify 6,722,391; improve or convert pasture 311,653; restore 26,984 |
+| improve yields | 1,074,137 | improve yields 1,047,208; improve or convert pasture 22,211; restore 4,718 |
+| keep | 5,902,506 | keep 5,879,276; restore 23,230 |
 | abandon | 133,960 | abandon 133,960 |
 | no suggestion | 2,020,646 | recently converted 1,645,646 (418,860 below peers); no data 375,000 |
 
-The largest change is that restore is now an area call. Version 1 called 1,262,572 single
-fields restore because each was below its cell peers and declining; version 2 calls 97.1
-percent of those improve yields, because their areas are not weak and declining for both crops
-and pasture. Restore on 2024 outlines falls from 1,262,572 to 104,769.
+Restore is now an area call. Version 1 called 1,262,572 single fields restore because each was
+below its cell peers and declining; version 2 calls 97.2 percent of those improve yields,
+because their areas are not weak and declining for both crops and pasture. Restore on 2024
+outlines falls from 1,262,572 to 91,076.
 
 ## The Amazon frontier
 
@@ -148,43 +175,66 @@ Southwest Amazon moist forests) hold 2,814,635 fields (`decisions_v2_frontier.cs
 
 | field call | fields | | area call | fields |
 |---|---|---|---|---|
-| restore | 285 | | restore the area | 301 |
-| recently converted, below peers | 51,422 | | good land underused | 61,837 |
-| recently converted, at or above | 225,411 | | system misfit | 53,879 |
-| improve or convert pasture | 25,233 | | area declining | 272,172 |
-| switch paid off | 18,230 | | area fine | 2,410,298 |
-| switch failed | 9,592 | | no area call | 16,148 |
-| improve yields | 766,797 | | | |
-| intensify | 784,444 | | | |
-| keep | 639,603 | | | |
+| restore | 0 | | restore the area | 0 |
+| recently converted, below peers | 51,422 | | good land underused | 72,416 |
+| recently converted, at or above | 225,411 | | system misfit | 22,869 |
+| improve or convert pasture | 31,777 | | area declining | 338,554 |
+| switch paid off | 18,211 | | area fine | 2,365,490 |
+| switch failed | 9,552 | | no area call | 15,306 |
+| improve yields | 763,788 | | | |
+| intensify | 781,180 | | | |
+| keep | 639,676 | | | |
 | abandon | 16,190 | | | |
 | no data | 277,428 | | | |
 
-The frontier gets almost no restore call. Its cells are mostly pasture alone, and a cell with
-one group present can be area declining but never restore the area, by the rule the user set.
-272,172 frontier fields (9.7 percent) lie in area-declining cells, against 4.5 percent of all
-fields nationally. All 285 frontier restore fields and all 301 fields in frontier restore areas
-are in the Mato Grosso tropical dry forests. Recently converted land below its ecoregion
-peers, the strongest restore case at field level, is 51,422 fields on the frontier and
-418,860 nationally.
+The frontier gets no restore call. Its cells are mostly pasture alone, and a cell with one
+group present can be area declining but never restore the area, by the rule the user set.
+338,554 frontier fields (12.0 percent) lie in area-declining cells, against 5.0 percent of all
+fields nationally; on the ecoregion reference it was 272,172 (9.7 percent). By ecoregion, area
+declining holds 85,714 fields in Xingu-Tocantins-Araguaia, 80,852 in Madeira-Tapajós, 50,885
+in Tapajós-Xingu, 48,306 in the Mato Grosso tropical dry forests, 32,652 in Southwest Amazon,
+22,297 in Tocantins/Pindare and 17,848 in Purus-Madeira. Recently converted land below its
+ecoregion peers, the strongest restore case at field level, is 51,422 fields on the frontier
+and 418,860 nationally.
+
+## The zoomed-out decision map
+
+The summary cell of the decision view showed the modal decision, which was intensify in most
+cells (the user: "on the recommendations zoom out, the whole thing is orange!"). The summary
+now shows the cell's top action: the actionable decision (any except keep, intensify and no
+data) most over-represented against its national share, among those covering at least 15
+percent of the cell's fields and at least 1.5 times their national share; other cells are a
+gray "no action stands out". The most common actionable decision alone was tried first: over
+the 144,909 resolution 6 cells it is improve yields in 100,538, because improve yields is
+27.35 percent of all fields, and with a 15 percent floor it still colored 93,359 cells the
+same amber. With the 1.5 lift rule 68,556 cells take a color: recently converted at or above
+25,003, improve yields 17,508, switch paid off 9,471, recently converted below 7,449, improve
+or convert pasture 6,359, switch failed 1,941, abandon 468, restore 357. 15 percent is about
+twice the national share of every actionable decision except improve yields (restore 0.37,
+recently converted 6.7, improve or convert pasture 2.6, switch paid off 6.8, switch failed
+2.7, abandon 0.55 percent). The tooltip lists the cell's top three decisions with shares.
+Intensify now draws in a muted khaki (#c4b38f) instead of orange (#eb6834).
 
 ## Open questions for the user
 
-1. Restore is now rare (104,769 fields in 68 cells). Should area declining with pasture
-   alone (the frontier case) also lead to restore for the declining fields inside it, or stay
-   an area flag?
+1. Restore is now rare (91,076 fields in 52 cells) and absent from the Amazon frontier.
+   Should area declining with pasture alone (the frontier case) also lead to restore for the
+   declining fields inside it, or stay an area flag?
 2. A field below its cell peers on the same crop and stable was "switch crop" in version 1 and
    is "improve yields" now; whether the crop suits the land is answered only by the system
    misfit area call. Confirm.
 3. Should pasture to crop conversion ever be suggested inside the Amazon biome (asked earlier,
-   still open)? Version 2 suggests "improve or convert pasture" on 25,233 frontier pasture
+   still open)? Version 2 suggests "improve or convert pasture" on 31,777 frontier pasture
    fields.
+4. The top-action rule of the zoomed-out decision map adds a 1.5 lift to the coordinator's
+   15 percent share; confirm or choose another rule.
 
 ## Caveats
 
 - The weather adjustment explains little (median R squared 0.15), and the refit did not remove
-  the 50 to 200 km blocks in the change of the area term; part of every area-declining call may
-  be weather, especially in the 2024 drought.
+  the 50 to 200 km blocks in the change of the area term; part of every area-declining call and
+  of the national frontier map may be weather, especially the 2024 drought, which the national
+  reference does not cancel.
 - MODIS at 250 m: 82.9 percent of fields are low confidence. Area calls rest on cell medians of
   at least 30 fields and are steadier than single fields.
 - Wet-season cloud removes about a fifth of Pará's fields (no data); the frontier no-data count
@@ -194,10 +244,10 @@ peers, the strongest restore case at field level, is 51,422 fields on the fronti
 
 ## Run times and verification
 
-`s07_weather_refit.py pclim` 16 s, `compare` 160 s; `s07_decisions.py area` 1 s, `fields`
-3 minutes 20 seconds for the 27 states (Minas Gerais 24 s), `report` 20 s. Verified: the field
-call counts sum to 24,554,482; the cross table rows match the version 1 national counts of
-methods.html (restore 2,010,594 there includes the 748,022 abandoned outlines, and 1,262,572
-plus 748,022 is 2,010,594); fid order of fields_scored, the metrics tables and the ecoregion
-tables is asserted equal per state. Not verified: no field visit or independent reference
-checks any of the calls.
+`s07_weather_refit.py pclim` 16 s, `compare` 160 s; `s07_decisions.py national` 19 s, `area`
+1 s, `fields` about 3 minutes 20 seconds for the 27 states, `report` 21 s. Verified: the
+field call counts sum to 24,554,482; the cross table rows match the version 1 national counts
+of methods.html (restore 2,010,594 there includes the 748,022 abandoned outlines, and
+1,262,572 plus 748,022 is 2,010,594); the area-by-field table sums to the restore-area field
+count; fid order of fields_scored, the metrics, relative and ecoregion tables is asserted
+equal per state. Not verified: no field visit or independent reference checks any call.

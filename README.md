@@ -7,7 +7,7 @@ resuming work.
 A public web map that shows, field by field across Brazil, where crop and pasture
 productivity rose or fell between the 2020 and 2024 agricultural years, broken out by crop
 type. Each area of about 15 km gets an area call from its crops and pasture against the same
-uses in its ecoregion (restore the area, good land underused, system misfit, area declining,
+uses across Brazil (restore the area, good land underused, system misfit, area declining,
 area fine), and each field inside it a field call: restore, recently converted (below or at
 peers), improve or convert pasture, switch paid off, switch failed, improve yields,
 intensify, keep, abandon, or abandoned since 2020.
@@ -69,8 +69,8 @@ Bulk data lives outside the repository in `F:\relative-land-productivity-data` (
 grid, weather, extracted metrics, analysis tables, tiles before upload). Published tiles are
 public read at
 `https://wri-datalab-sandbox.s3.amazonaws.com/trazofields/trazo4/relative-land-productivity/tiles/`:
-`fields.pmtiles` (6.36 GB, zoom 9 to 13), `summary.pmtiles` (H3 resolution 5 at zooms 3 to 4,
-6 at zooms 5 to 9) and `stats.json`.
+`fields.pmtiles` (6.36 GB, zoom 9 to 13), `summary.pmtiles` (H3 resolution 6 at zooms 3
+to 9) and `stats.json`.
 
 ## Running the site locally
 

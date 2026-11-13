@@ -82,22 +82,39 @@
   <p>National counts on the 2024 outlines: stable 15,672,741; decline 1,777,196; large decline 510,660; gain 1,661,737; large gain 487,082; crop switched 2,424,420; newly cropped 1,645,646; no data 375,000 (1.5 percent). Abandoned 2020 outlines: 748,022.</p>
 
   <h2>7. Suggested decisions</h2>
-  <p>The 2024 level is below peers (<code>r_adj</code> under -0.5), at peers, or above peers (over 0.5). The trend is the change class. The suggestion is read from the table.</p>
+  <p>The suggestion has two tiers, set by the user on 13 November 2026. The area call comes first, per H3 cell of about 15 km (resolution 5). The field call comes second, inside the area. The field's record is judged against nearby fields of the same crop; the area is judged against the same uses across Brazil, with the RESOLVE 2017 ecoregion shown as context. The national reference follows the user's request of the same day: “lets do brazil as a whole then to get the true frontiers of productivity change”.</p>
+  <h3>Area call</h3>
+  <p>For each cell and each crop class, the median weather-adjusted greenness of the class in the cell is compared with the national median of the class, in national standard deviations (SD) of cell medians. The classes are pooled, weighted by field count, into crops (soybean, other temporary crops, sugarcane, rice, cotton, coffee, citrus, other perennials, oil palm) and pasture. A class needs 30 fields in the cell. Mosaic of uses is shown in the cell card but does not enter the call. Below means more than 0.75 SD under the national median; declining means the gap grew by more than 0.4 SD from 2020 to 2024. These put 24 percent of pasture cells below and 19 percent declining, about the lowest quarter and fifth; crop cells sit mostly above the national crop medians, so only 6 percent are below.</p>
   <table>
-    <tr><th>2024 level</th><th>Trend</th><th>Suggestion</th><th>Reasoning</th></tr>
-    <tr><td>below</td><td>decline</td><td>restore</td><td>the field is falling further behind neighbors under the same weather, which points to soil or pasture degradation</td></tr>
-    <tr><td>below</td><td>stable</td><td>switch crop</td><td>a persistent gap under the same weather is a site or management limit</td></tr>
-    <tr><td>below</td><td>gain</td><td>improve yields</td><td>the gap is closing; keep the recent change going</td></tr>
-    <tr><td>at</td><td>decline</td><td>improve yields</td><td>the field was average and is slipping</td></tr>
-    <tr><td>at</td><td>stable or gain</td><td>intensify</td><td>an average field with headroom to the best neighbors</td></tr>
-    <tr><td>above</td><td>decline</td><td>improve yields</td><td>a top field losing ground</td></tr>
-    <tr><td>above</td><td>stable or gain</td><td>keep</td><td>nothing to change on this evidence</td></tr>
-    <tr><td>below in both years</td><td>decline, and the 2024 integral under the 20th percentile of the crop in the state</td><td>abandon</td><td>greenness close to bare soil for two seasons; the land may suit another use</td></tr>
-    <tr><td>any</td><td>crop switched</td><td>change land use pattern</td><td>the switch is the decision; the 2024 level says whether it paid off</td></tr>
-    <tr><td>any</td><td>newly cropped or no data</td><td>no suggestion</td><td>one year of evidence, or none</td></tr>
-    <tr><td>any</td><td>abandoned</td><td>restore</td><td>a field left cropping; check whether it is regenerating or degrading</td></tr>
+    <tr><th>Area call</th><th>Rule</th><th>Cells</th><th>Fields</th></tr>
+    <tr><td>Restore the area</td><td>crops and pasture both below and both declining</td><td>52</td><td>93,244</td></tr>
+    <tr><td>Good land underused</td><td>crops not below, pasture below: improve the pasture or convert it to crops</td><td>1,675</td><td>3,096,673</td></tr>
+    <tr><td>System misfit</td><td>crops below, pasture not below: the crops may not suit the land</td><td>356</td><td>883,479</td></tr>
+    <tr><td>Area declining</td><td>every use present below and at least one declining</td><td>1,189</td><td>1,224,818</td></tr>
+    <tr><td>Area fine</td><td>a use present and none of the above</td><td>16,993</td><td>19,072,057</td></tr>
+    <tr><td>No area call</td><td>under 30 fields of any crop class or of pasture</td><td>272</td><td>184,211</td></tr>
   </table>
-  <p>National counts: intensify 7,061,028; keep 5,902,506; switch crop 4,675,213; change land use pattern 2,424,420; restore 2,010,594; improve yields 1,074,137; abandon 133,960; no suggestion 2,020,646.</p>
+  <p>Zoomed out, the change view colors each cell by the same national comparison for all its crops: the change between 2020 and 2024 of the cell's medians against the national medians, weighted by field count, on a continuous scale. It is the map of where productivity rose or fell against Brazil as a whole. The decision view colors each cell by its most over-represented action that covers at least 15 percent of its fields and 1.5 times its share across Brazil.</p>
+  <p>The tooltip also shows the ecoregion line: how the ecoregion's median for the field's crop moved against the national median between 2020 and 2024 (losing or gaining ground beyond 0.1 national SD), with the plain change in greenness. It is context and does not enter the call.</p>
+  <h3>Field call</h3>
+  <p>The level in 2024 is below nearby peers (<code>r_adj</code> under -0.5), at, or above (over 0.5). The first matching row wins.</p>
+  <table>
+    <tr><th>Field</th><th>Suggestion</th><th>Fields</th></tr>
+    <tr><td>too few clear images in one year</td><td>no data</td><td>391,769</td></tr>
+    <tr><td>below peers in both years, declining, 2024 greenness in the lowest fifth of the crop in the state</td><td>abandon or change use</td><td>133,960</td></tr>
+    <tr><td>native vegetation in 2020, below the same use in the ecoregion in 2024</td><td>recently converted, below peers</td><td>418,860</td></tr>
+    <tr><td>native vegetation in 2020, at or above the same use in the ecoregion in 2024, or not measured</td><td>recently converted, at or above peers</td><td>1,226,786</td></tr>
+    <tr><td>in a restore-the-area cell</td><td>restore</td><td>91,076</td></tr>
+    <tr><td>pasture not above its neighbors, in a good-land-underused cell</td><td>improve or convert pasture</td><td>633,043</td></tr>
+    <tr><td>crop switched, 2024 at or above nearby fields of the new crop</td><td>switch paid off</td><td>1,669,629</td></tr>
+    <tr><td>crop switched, 2024 below nearby fields of the new crop</td><td>switch failed</td><td>671,801</td></tr>
+    <tr><td>same crop, declined, or below peers in 2024</td><td>improve yields</td><td>6,715,891</td></tr>
+    <tr><td>same crop, at peers, not declining</td><td>intensify</td><td>6,722,391</td></tr>
+    <tr><td>same crop, above peers, not declining</td><td>keep</td><td>5,879,276</td></tr>
+    <tr><td>2020 field with no crop or pasture in 2024</td><td>abandoned since 2020</td><td>748,022</td></tr>
+  </table>
+  <p>Version 1, which judged each field alone, called 1,262,572 fields on 2024 outlines restore (below their neighbors and declining). Version 2 calls 97.2 percent of them improve yields, because their areas are not weak and declining for both crops and pasture; restore falls to 91,076. Version 1's change land use pattern became switch paid off (1,669,629) or switch failed (671,801), and its switch crop (4,675,213) became mostly improve yields. The full cross table is in <a href="https://github.com/tristangrupp/relative-land-productivity/blob/main/data/summaries/decisions_v1_vs_v2.csv">data/summaries/decisions_v1_vs_v2.csv</a> and the report in <a href="https://github.com/tristangrupp/relative-land-productivity/blob/main/pipeline/DECISIONS_V2.md">pipeline/DECISIONS_V2.md</a>.</p>
+  <p>Before the area call was used, the weather term was refitted per ecoregion and crop with each location's mean annual rainfall as an extra input. R squared rose from 0.15 to 0.19, but the blocks of 50 to 200 km in the 2024 change of the area term did not shrink, so the original fit stays. Part of an area-declining call may be weather the adjustment missed.</p>
   <p>These are screening suggestions from satellite greenness, not agronomic advice. The method does not know prices, soils, tenure, inputs or the farmer's plans, and every suggestion needs a field visit before any decision.</p>
 
   <h2>8. Validation</h2>

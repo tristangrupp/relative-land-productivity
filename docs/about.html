@@ -24,10 +24,10 @@
 
 <main class="page">
   <h1>About this map</h1>
-  <p class="lead">A public web map that shows, field by field across Brazil, where crop and pasture productivity rose or fell between the 2020 and 2024 agricultural years, broken out by crop type, with a suggested land use decision per field.</p>
+  <p class="lead">A public web map that shows, field by field across Brazil, where crop and pasture productivity rose or fell between the 2020 and 2024 agricultural years, broken out by crop type, with a suggested land use decision per area and per field.</p>
 
   <h2>Purpose</h2>
-  <p>The map is meant to say, at the field level, which land use decision could be improved: restore the land, switch the crop, change the land use pattern, abandon the field, intensify, or improve yields on the same crop.</p>
+  <p>The map is meant to say which land use decision the evidence points to, first for each area of about 15 km and then for each field inside it. The area call compares the area's crops and pasture with the same uses across Brazil: restore the whole area, good land underused (strong crops next to weak pasture), system misfit (weak crops next to fine pasture), area declining, or area fine. The field call then compares the field with nearby fields of the same crop: improve yields, intensify, keep, judge a crop switch as paid off or failed, flag recently converted land, improve or convert pasture, or abandon.</p>
   <p>Productivity is measured from the satellite greenness record over the growing season, with the growing season taken from CONAB crop calendars per crop and state. The measure corrects for rainfall and temperature changes that move greenness without moving yield. The quantity on the map is relative productivity: a field against the median of its peers in the same crop and region, compared between 2020 and 2024.</p>
 
   <div class="note">
@@ -55,7 +55,7 @@
   <p>No Google Earth Engine was used. The rasters were downloaded or streamed and reduced to fields on one machine.</p>
 
   <h2>Reading the map</h2>
-  <p>Below zoom 9 the map shows H3 hexagon cells with the mean, the net share or the most common value of the fields inside, at a cell size that follows the zoom: about 15 km across at the national view and 6 km (36 km²) from zoom 5 until the fields appear; from zoom 9 the fields themselves. In the change view a cell is colored by how many more of its fields declined than gained, and cells where the two balance are faded, so the regions where productivity fell against peers stand out. From zoom 9 to 11 the smallest fields are merged into their neighbors so the tiles stay small; from zoom 12 every field is drawn. Clicking a field opens a card with its values in both years, its confidence and its suggested decision. The state selector flies to a state and switches the counts in the legend to that state.</p>
+  <p>Below zoom 9 the map shows H3 hexagon cells with the mean, the net share or the most common value of the fields inside, at a cell size that follows the zoom: about 6 km (36 km²) at every zoom until the fields appear; from zoom 9 the fields themselves. In the change view a cell is colored on a continuous scale by how its crops moved against Brazil as a whole between 2020 and 2024, so the frontiers where productivity fell or rose stand out; cells that kept pace are gray. In the decision view a cell takes the color of the action that stands out in it, and is gray where no action does. From zoom 9 to 11 the smallest fields are merged into their neighbors so the tiles stay small; from zoom 12 every field is drawn. Clicking a field opens a card with its values in both years, its confidence and its suggested decision. The state selector flies to a state and switches the counts in the legend to that state.</p>
 
   <h2>Code and data</h2>
   <p>The site, the pipeline and the methods text are in the repository at

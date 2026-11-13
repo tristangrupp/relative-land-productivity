@@ -13,7 +13,7 @@ terms). The site also reads `docs/data/ecoregions.json` from Pages (`CONFIG.ECOR
 | config key | URL | what it is |
 |---|---|---|
 | `FIELDS_PMTILES` | `https://wri-datalab-sandbox.s3.amazonaws.com/trazofields/trazo4/relative-land-productivity/tiles/fields.pmtiles` | one polygon per 2024 Trazo4 field plus the abandoned 2020 fields, layer name `fields`, zoom 9 to 13, 6.36 GB |
-| `SUMMARY_PMTILES` | `.../tiles/summary.pmtiles` | one polygon per H3 cell at two resolutions by zoom band (5 at zooms 3 to 4, 6 at zooms 5 to 9; 23,878 and 144,909 cells), layer name `summary`, zoom 3 to 9 |
+| `SUMMARY_PMTILES` | `.../tiles/summary.pmtiles` | one polygon per H3 resolution 6 cell (144,909 cells, about 6 km across) at every zoom, layer name `summary`, zoom 3 to 9, 92.2 MB |
 | `STATS_URL` | `.../tiles/stats.json` | class counts for Brazil and per state, read by the legend and the Where card |
 | `ECOREGIONS_URL` | `./data/ecoregions.json` (on Pages) | RESOLVE 2017 ecoregion names by `eco_id`, with the class-weighted (`c`, `p`) and per peer class (`k`: class to `[Scale C change, plain change percent]`) context written by `s07_decisions.py lookup` |
 
@@ -58,10 +58,11 @@ analysis GeoParquet but not in the tiles.
 The five compared change classes are thresholds on `D = r_adj_2024 - r_adj_2020` in peer
 standard deviations: large decline below -2, decline -2 to -1, stable -1 to 1, gain 1 to 2,
 large gain above 2. The 0.08 and 0.25 steps in `CHANGE_STEPS` describe the summary cells'
-mean `change` on the ratio scale (tooltip and card) and are not class boundaries. The
-zoomed-out change map colors each cell by `share_decline - share_gain`, the share of its
-fields that declined minus the share that gained, with the `NET_STEPS` breaks at 5 and 15
-percentage points; cells within 5 points, or with fewer than 10 fields, draw at low opacity.
+mean `change` on the ratio scale (tooltip and card) and are not class boundaries. Since 13 November 2026 the
+zoomed-out change map colors each cell by `nat_change` on the continuous `FRONTIER_RAMP`
+(-1.0 to +1.0 national SD, gray at zero; cells with fewer than 10 fields at opacity 0.55). The
+net share `share_decline - share_gain` that colored it before is in the tooltip and the cell
+card, next to `nat_pct_change`.
 
 MapBiomas classes the site names are listed in `CROPS` in `config.js` (the agricultural
 classes 39, 19, 41, 20, 40, 62, 46, 47, 48, 35, 15, 21, 9, 18 and the natural and other
@@ -73,10 +74,11 @@ rather than comparing against null.
 
 ## Summary layer attributes
 
-One feature per H3 cell, over the scored 2024 fields. The layer holds two resolutions in
-zoom bands that do not overlap: resolution 5 (about 15 km across) at zooms 3 to 4 and
-resolution 6 (about 6 km, 36 km²) at zooms 5 to 9. Coarser levels (40 km, 100 km) were
-tried and rejected as too coarse and sparse. Every level aggregates the
+One feature per H3 resolution 6 cell (about 6 km, 36 km²), over the scored 2024 fields, at
+every zoom from 3 to 9 (13 November 2026, at the user's request for a finer map). Coarser
+levels (15 km at zooms 3 to 4, 40 km, 100 km) were used before and rejected as too coarse.
+Resolution 7 (about 2.5 km) at zooms 7 to 9 was built and measured 173.0 MB on its own, over
+the 150 MB budget, so it is not used. Every level aggregates the
 fields directly, so a share is the share of the fields in that cell. The `res` property
 names the level.
 
@@ -96,11 +98,19 @@ names the level.
 | `dominant_crop_2024` | int | most common `crop_2024` |
 | `share_pasture` | float | share of fields with `crop_2024` 15 |
 | `dominant_decision` | string | most common `decision` (version 2), including `none` |
-| `dominant_area_decision` | string | most common `area_decision`; at resolution 5 it is the cell's own call, at resolution 6 the call of the parent resolution 5 cell |
+| `dominant_area_decision` | string | the area call of the parent resolution 5 cell |
 | `share_restore`, `share_improve_yields`, `share_convert_pasture`, `share_switch_failed` | float | share of the cell's fields with that `decision`, 0 to 1 |
 | `share_converted` | float | share with `converted_below` or `converted_ok` |
-| `area_crops_2024`, `area_pasture_2024`, `area_mosaic_2024` | float | pooled cell-within-ecoregion term of the resolution 5 cell (the parent at resolution 6) in 2024, ecoregion SD; absent with under 30 fields of every class of the group |
+| `area_crops_2024`, `area_pasture_2024`, `area_mosaic_2024` | float | pooled `cell_vs_nation` of the parent resolution 5 cell in 2024, national SD of cell medians; the terms of the area call; absent with under 30 fields of every class of the group |
 | `area_crops_change`, `area_pasture_change`, `area_mosaic_change` | float | the same, 2024 minus 2020 |
+| `nat_change` | float | the national frontier value: class-weighted change, 2024 minus 2020, of the cell's class medians against the national class medians, in national SD of cell medians per class (`cell_vs_nation`); the cell's own value where a class has 30 fields, else its resolution 5 parent's; the change view colors the cell on a continuous ramp from -1.0 to +1.0 |
+| `nat_pct_change` | float | class-weighted plain change in weather-adjusted greenness, percent of 2020, over fields valid in both years with the same class |
+| `top_action` | string | the actionable decision (not keep, intensify or none) most over-represented against its national share, among those covering at least 15 percent of the cell's fields and 1.5 times their national share; absent when none qualifies (drawn as "no action stands out") |
+| `top_action_share` | float | the share of the cell's fields with `top_action` |
+| `top_area` | string | the most common `area_decision` other than `area_fine` and `none` among the cell's fields (inherited from the parent resolution 5 cell); absent when there is none; the Area decision view draws it when `top_area_share` is at least 0.15 |
+| `top_area_share` | float | the share of the cell's fields with `top_area` |
+| `top3` | string | the cell's three most common decisions with shares, `key:share|key:share|key:share` |
+| `eco_crops_2024`, `eco_pasture_2024`, `eco_crops_change`, `eco_pasture_change` | float | the same pooled terms as `area_*` against the RESOLVE 2017 ecoregion instead of Brazil (secondary context) |
 | `eco_trend` | string | `declining`, `steady` or `gaining`: class-weighted Scale C change of the ecoregion holding most of the resolution 5 cell's fields, at plus or minus 0.1 national cell SD |
 | `mean_vigor_change` | float | in the original contract; absent in this release |
 

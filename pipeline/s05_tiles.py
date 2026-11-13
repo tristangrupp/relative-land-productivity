@@ -26,10 +26,10 @@ fields simplify to the same edge, `-P` reads the newline-delimited input in para
 per-state PMTiles are joined with tile-join -pk into tiles\\fields.pmtiles. Sizes and times are
 written to tiles\\tiles_log.jsonl.
 
-summary.pmtiles, layer `summary`, zoom 3 to 9: one hexagon per H3 cell, resolution 3 at zoom 3,
-4 at zooms 4 to 5, 5 at zooms 6 to 7 and 6 at zooms 8 to 9 (property `res`); resolution 6 is (about
-36 km²) with the SUMMARY_ATTR means and counts over the scored 2024 fields whose centroid is
-in the cell (h3_6 from the metrics tables); mean_vigor_change is null. share_no_data is added.
+summary.pmtiles, layer `summary`, zoom 3 to 9: one hexagon per H3 cell, resolution 6 at every
+zoom (property `res`; SUMMARY_LEVELS, resolution 7 was measured too large), with the SUMMARY_ATTR
+means, shares, modes, the top three decisions, the top actionable decision, the national
+frontier value and the area terms over the scored 2024 fields whose centroid is in the cell.
 
 stats.json: n_fields, area_ha and counts per change_class, decision, crop_2020 and crop_2024
 for Brazil and per state (two-letter codes). The abandoned 2020 polygons are counted in
@@ -208,6 +208,13 @@ def tile_join(states):
 
 # ---------------------------------------------------------------- summary
 
+def h3_cells_fast(lat, lon, res):
+    import h3
+    f = h3.latlng_to_cell
+    s2i = h3.str_to_int
+    return np.fromiter((s2i(f(a, b, res)) for a, b in zip(lat.tolist(), lon.tolist())), dtype=np.int64, count=len(lat))
+
+
 def build_summary(states, source="modis"):
     import h3
     t0 = time.time()
@@ -219,42 +226,51 @@ def build_summary(states, source="modis"):
             continue
         df = pq.read_table(p, columns=["fid", "area_ha", "crop_2020", "crop_2024", "prod_2020", "prod_2024", "change",
                                        "change_class", "decision", "area_decision"]).to_pandas()
-        h6 = pq.read_table(m, columns=["fid", "h3_6"]).to_pandas().set_index("fid")
-        df = df.join(h6, on="fid")
+        mm = pq.read_table(m, columns=["fid", "h3_5", "h3_6", "lat", "lon"]).to_pandas()
+        assert np.array_equal(mm["fid"].values, df["fid"].values), "metrics order differs"
+        df["h3_5"] = mm["h3_5"].values
+        df["h3_6"] = mm["h3_6"].values
+        if any(r == 7 for r, _, _ in SUMMARY_LEVELS):
+            df["h3_7"] = h3_cells_fast(mm["lat"].values.astype(float), mm["lon"].values.astype(float), 7)
         frames.append(df)
     df = pd.concat(frames, ignore_index=True)
+    log({"step": "summary", "loaded": len(df), "seconds": round(time.time() - t0, 1)})
     for c in ("area_ha", "prod_2020", "prod_2024", "change"):
         df[c] = df[c].astype("float64")
-    df["change_class"] = df["change_class"].astype(str)
-    df["decision"] = df["decision"].astype(str)
-    df["area_decision"] = df["area_decision"].astype(str)
     # The area call is made per H3 resolution 5 cell (s07_decisions.py); its pooled levels and
-    # changes are attached to every summary cell from the resolution 5 cell that holds it.
-    area = pd.read_parquet(os.path.join(C.ANALYSIS, "decisions", "area_cells.parquet")).set_index("cell")
-    # One summary level per zoom band, so the zoomed-out map shows regions rather than a
-    # sub-pixel salt and pepper of resolution 6 cells (145k cells at zoom 4 are under one pixel
-    # each). Each level aggregates the fields directly, not the finer cells, so a share is the
-    # share of fields in that cell. The levels share one tile layer and never overlap in zoom.
-    base = df["h3_6"].astype("int64")
-    uniq = pd.Index(base.unique())
+    # changes are attached to every summary cell from the resolution 5 cell that holds it. The
+    # national frontier value (class-weighted cell_vs_nation change and the plain percent change)
+    # is the cell's own at resolution 5 and 6; a resolution 6 cell without one, and every
+    # resolution 7 cell, takes the value of the finest parent that has one.
+    D = os.path.join(C.ANALYSIS, "decisions")
+    area = pd.read_parquet(os.path.join(D, "area_cells.parquet")).set_index("cell")
+    fr6 = pd.read_parquet(os.path.join(D, "frontier_r6.parquet")).set_index("cell")
     recs = []
     pm_inputs = []
     os.makedirs(GEOJSON, exist_ok=True)
     os.makedirs(TMP, exist_ok=True)
     total_cells = 0
     for res, zmin, zmax in SUMMARY_LEVELS:
-        if res == 6:
-            key = base
-        else:
-            parent = {int(c): h3.str_to_int(h3.cell_to_parent(h3.int_to_str(int(c)), res)) for c in uniq}
-            key = base.map(parent)
+        key = df[f"h3_{res}"].astype("int64")
         out = summarize_cells(df, key)
-        a5 = out.index.map(lambda c: h3.str_to_int(h3.cell_to_parent(h3.int_to_str(int(c)), 5))) if res > 5 else out.index
+        idx = out.index.values
+        p5 = np.array([h3.str_to_int(h3.cell_to_parent(h3.int_to_str(int(c)), 5)) for c in idx]) if res > 5 else idx
+        p6 = idx if res == 6 else (np.array([h3.str_to_int(h3.cell_to_parent(h3.int_to_str(int(c)), 6)) for c in idx]) if res > 6 else None)
         for col, name in (("crops_level", "area_crops_2024"), ("pasture_level", "area_pasture_2024"),
                           ("crops_change", "area_crops_change"), ("pasture_change", "area_pasture_change"),
-                          ("mosaic_level", "area_mosaic_2024"), ("mosaic_change", "area_mosaic_change")):
-            out[name] = area[col].reindex(a5).round(3).values
-        out["eco_trend"] = area["eco_trend"].reindex(a5).values
+                          ("mosaic_level", "area_mosaic_2024"), ("mosaic_change", "area_mosaic_change"),
+                          ("eco_crops_level", "eco_crops_2024"), ("eco_pasture_level", "eco_pasture_2024"),
+                          ("eco_crops_change", "eco_crops_change"), ("eco_pasture_change", "eco_pasture_change")):
+            out[name] = area[col].reindex(p5).round(3).values
+        out["eco_trend"] = area["eco_trend"].reindex(p5).values
+        for col in ("nat_change", "nat_pct_change"):
+            v5 = area[col].reindex(p5).values
+            if p6 is not None:
+                v6 = fr6[col].reindex(p6).values
+                v = np.where(np.isfinite(v6), v6, v5)
+            else:
+                v = v5
+            out[col] = np.round(v, 3 if col == "nat_change" else 1)
         total_cells += len(out)
         src = os.path.join(GEOJSON, f"summary_r{res}.geojsonl")
         write_cells(out, src, res, h3)
@@ -263,7 +279,9 @@ def build_summary(states, source="modis"):
                      "-pk", "-pf", "-ab", "-q", "-t", TMP_WSL, wsl_path(src)]
         r = wsl_run(cmd, outp)
         recs.append({"res": res, "cells": int(len(out)), "zooms": [zmin, zmax], "returncode": r.returncode,
-                     "bytes": os.path.getsize(outp) if os.path.exists(outp) else None})
+                     "geojson_bytes": os.path.getsize(src), "bytes": os.path.getsize(outp) if os.path.exists(outp) else None,
+                     "seconds": round(time.time() - t0, 1)})
+        log({"step": "summary_level", **recs[-1]})
         if r.returncode != 0:
             rec = {"step": "summary", "returncode": r.returncode, "levels": recs, "stderr_tail": r.stderr[-400:],
                    "seconds": round(time.time() - t0, 1)}
@@ -281,41 +299,83 @@ def build_summary(states, source="modis"):
     return rec
 
 
-# H3 resolution per zoom band of the summary tiles. Cell widths: res 4 about 40 km, res 5 about
-# 15 km, res 6 about 6 km. Resolution 3 (100 km) was tried at zoom 3 and dropped: it averages
-# every cell to balanced and reads as a handful of giant hexagons. The user asked for a dense
-# national view, so resolution 5 starts at zoom 4 and resolution 6 at zoom 6.
-SUMMARY_LEVELS = [(5, 3, 4), (6, 5, 9)]
+# H3 resolution per zoom band of the summary tiles. Cell widths: res 5 about 15 km, res 6 about
+# 6 km, res 7 about 2.5 km. Resolution 3 (100 km) and 4 (40 km) were tried and rejected as too
+# coarse; on 13 November 2026 the user found resolution 5 at zooms 3 to 4 still too coarse and
+# asked for resolution 6 from zoom 3 and resolution 7 from zoom 7 if the archive stays under
+# about 150 MB. Measured the same day: resolution 6 at zooms 3 to 6 is 41.7 MB and resolution 7
+# at zooms 7 to 9 is 173.0 MB (862,401 cells), 214.7 MB joined, so resolution 6 runs at every
+# zoom (92.2 MB). RLP_SUMMARY_LEVELS=7 builds the two-level version.
+SUMMARY_LEVELS = [(6, 3, 6), (7, 7, 9)] if os.environ.get("RLP_SUMMARY_LEVELS") == "7" else [(6, 3, 9)]
+
+# Decisions that do not ask anyone to act; the summary's top action ignores them.
+PASSIVE = ["keep", "intensify", "none"]
+ACTION_MIN_SHARE = 0.15
+ACTION_MIN_LIFT = 1.5
+AREA_BACKGROUND = ["area_fine", "none"]
+
+
+def mode_of(key, values):
+    """Most common value per key (ties go to the first in sort order), vectorized."""
+    t = pd.DataFrame({"k": key, "v": values}).dropna()
+    c = t.groupby(["k", "v"], observed=True).size().reset_index(name="n")
+    c = c.sort_values(["k", "n"], ascending=[True, False]).drop_duplicates("k")
+    return c.set_index("k")["v"]
 
 
 def summarize_cells(df, key):
     """Per-cell summary of the scored fields grouped by `key` (an H3 index per row)."""
-    g = df.groupby(key.values)
-    return pd.DataFrame({
+    k = key.values
+    g = df.groupby(k)
+    cc = df["change_class"].astype(str).values
+    d = df["decision"].astype(str).values
+    ind = pd.DataFrame({
+        "share_decline": np.isin(cc, ["decline", "large_decline"]),
+        "share_gain": np.isin(cc, ["gain", "large_gain"]),
+        "share_no_data": cc == "no_data",
+        "share_pasture": df["crop_2024"].values == 15,
+        "share_restore": d == "restore", "share_improve_yields": d == "improve_yields",
+        "share_convert_pasture": d == "convert_pasture",
+        "share_converted": np.isin(d, ["converted_below", "converted_ok"]),
+        "share_switch_failed": d == "switch_failed"}).astype(np.float32)
+    out = pd.DataFrame({
         "n_fields": g.size(),
         "area_ha": g["area_ha"].sum().round(1),
         "mean_change": g["change"].mean().round(4),
-        "share_decline": g["change_class"].apply(lambda s: s.isin(["decline", "large_decline"]).mean()).round(4),
-        "share_gain": g["change_class"].apply(lambda s: s.isin(["gain", "large_gain"]).mean()).round(4),
-        "share_no_data": g["change_class"].apply(lambda s: (s == "no_data").mean()).round(4),
         "mean_prod_2020": g["prod_2020"].mean().round(4),
         "mean_prod_2024": g["prod_2024"].mean().round(4),
-        "dominant_crop_2020": g["crop_2020"].agg(lambda s: int(s.mode().iloc[0]) if s.notna().any() else None),
-        "dominant_crop_2024": g["crop_2024"].agg(lambda s: int(s.mode().iloc[0])),
-        "share_pasture": g["crop_2024"].apply(lambda s: (s == 15).mean()).round(4),
-        "dominant_decision": g["decision"].agg(lambda s: s.mode().iloc[0]),
-        "dominant_area_decision": g["area_decision"].agg(lambda s: s.mode().iloc[0]),
-    }).join(decision_shares(df, key))
-
-
-def decision_shares(df, key):
-    """Share of each cell's fields per version 2 decision of interest, from indicator means."""
-    d = df["decision"].values
-    ind = pd.DataFrame({"share_restore": d == "restore", "share_improve_yields": d == "improve_yields",
-                        "share_convert_pasture": d == "convert_pasture",
-                        "share_converted": np.isin(d, ["converted_below", "converted_ok"]),
-                        "share_switch_failed": d == "switch_failed"}).astype(np.float32)
-    return ind.groupby(key.values).mean().round(4)
+    }).join(ind.groupby(k).mean().round(4))
+    out["dominant_crop_2020"] = mode_of(k, df["crop_2020"].astype("float64").values).reindex(out.index)
+    out["dominant_crop_2024"] = mode_of(k, df["crop_2024"].values).reindex(out.index)
+    out["dominant_decision"] = mode_of(k, d).reindex(out.index)
+    out["dominant_area_decision"] = mode_of(k, df["area_decision"].astype(str).values).reindex(out.index)
+    # top three decisions with shares, and the most common actionable decision with its share
+    cnt = pd.DataFrame({"k": k, "v": d}).groupby(["k", "v"]).size().reset_index(name="n")
+    cnt["share"] = cnt["n"] / cnt["k"].map(out["n_fields"])
+    cnt = cnt.sort_values(["k", "n"], ascending=[True, False])
+    top3 = cnt.groupby("k").head(3)
+    out["top3"] = top3.assign(t=top3["v"] + ":" + top3["share"].round(2).astype(str)).groupby("k")["t"].agg("|".join).reindex(out.index)
+    # The top action is the actionable decision most over-represented against its national share,
+    # among those that cover at least ACTION_MIN_SHARE of the cell's fields and at least
+    # ACTION_MIN_LIFT times their national share. Without the lift rule improve yields, 27 percent
+    # of all fields, is the most common action in 100,538 of 144,909 resolution 6 cells and
+    # paints the map one color.
+    nat = pd.Series(d).value_counts(normalize=True)
+    cnt["lift"] = cnt["share"] / cnt["v"].map(nat)
+    act = cnt[~cnt["v"].isin(PASSIVE) & (cnt["share"] >= ACTION_MIN_SHARE) & (cnt["lift"] >= ACTION_MIN_LIFT)]
+    act = act.sort_values(["k", "lift"], ascending=[True, False]).drop_duplicates("k").set_index("k")
+    out["top_action"] = act["v"].reindex(out.index)
+    out["top_action_share"] = act["share"].reindex(out.index).round(3)
+    # the area view's equivalent: the most common area call other than area fine and no call,
+    # and its share of the cell's fields (a resolution 6 cell inherits its resolution 5 parent's
+    # call, so the share is 1 unless fields sit on a cell edge)
+    a = df["area_decision"].astype(str).values
+    ac = pd.DataFrame({"k": k, "v": a})
+    ac = ac[~np.isin(a, AREA_BACKGROUND)].groupby(["k", "v"]).size().reset_index(name="n")
+    ac = ac.sort_values(["k", "n"], ascending=[True, False]).drop_duplicates("k").set_index("k")
+    out["top_area"] = ac["v"].reindex(out.index)
+    out["top_area_share"] = (ac["n"].reindex(out.index) / out["n_fields"]).round(3)
+    return out
 
 
 def write_cells(out, src, res, h3):

@@ -166,66 +166,95 @@ scale land use tradeoffs ... but its important to also consider the immediate ar
 needs to be a blend of the two."
 
 The decision has two tiers. The area call is made first, per H3 resolution 5 cell (about 15
-km across), from the cell's crops and pasture against the same uses in the RESOLVE 2017
-ecoregion. The field call is made second, inside the area, from the field's own record
+km across), from the cell's crops and pasture against the same uses across Brazil, with the
+RESOLVE 2017 ecoregion as secondary context. The field call is made second, inside the area, from the field's own record
 against its cell peers (section 5). These are screening suggestions from satellite
 greenness, not agronomic advice; every suggestion needs a field visit before any decision.
 
 ### 7.1 Area call
 
-The area term is the cell-within-ecoregion term of `s06_ecoregion_peers.py`: the median of
-the weather-adjusted seasonal integral (`metric_adj`) of a peer class in the cell, inside one
-ecoregion, minus the median of that class in the ecoregion, divided by the robust SD of the
-ecoregion-class field distribution. A (cell, ecoregion, class) value needs 30 valid fields
-of the class. Per cell, the values are pooled into two groups, weighted by the 2024 field
-count of each class:
+The area call uses a national reference (user direction of 13 November 2026, after reading
+the ecoregion results: "lets do brazil as a whole then to get the true frontiers of
+productivity change"). The first build of version 2 the same day used the
+cell-within-ecoregion term as the primary measure; it is kept as secondary context.
+
+The area term is `cell_vs_nation`: for an H3 resolution 5 cell and a peer class, the median of
+the weather-adjusted seasonal integral (`metric_adj`) over the cell's valid fields of the class,
+minus the national median of the class over all its valid fields, divided by 1.4826 times the
+median absolute deviation (MAD) of the national distribution of cell medians of the class
+(cells with at least 30 valid fields). It is computed for 2020 and 2024 and its change is 2024
+minus 2020 (`s07_decisions.py national`, `data/summaries/cell_vs_nation.csv.gz`). A (cell,
+class) value needs 30 valid fields of the class. The national unit, per class, ranges from
+0.20 NDVI-months (oil palm) to 0.80 (other perennials); it is 0.61 for pasture and 0.61 for
+soybean in 2024. The plain weather-adjusted change per cell and class is
+`100 * median(metric_adj_2024 - metric_adj_2020) / median(metric_adj_2020)` over the cell's
+fields valid in both years with the same class, at least 30 such fields.
+
+Per cell, the values are pooled into two groups, weighted by the 2024 field count of each
+class:
 
 - crops: soybean (39), temporary crops (19 and 41), sugarcane (20), rice (40), cotton (62),
   and the perennials coffee (46), citrus (47), other perennials (48) and oil palm (35);
 - pasture (15).
 
-Mosaic of uses (21) is pooled and reported on its own (summary tile attributes
-`area_mosaic_2024` and `area_mosaic_change`) but does not enter the call. Forest plantation
-(9) and the generic agriculture class (18) do not enter either. A group is present in a cell
-when at least one of its classes has a 2024 value, so the minimum is 30 fields of one class.
-The group's level is its pooled 2024 value; its change is the pooled 2024 minus 2020 value
-over the classes that have both years.
+Mosaic of uses (21) is pooled and reported on its own but does not enter the call; forest
+plantation (9) and the generic agriculture class (18) do not enter either. A group is present
+in a cell when at least one of its classes has a 2024 value. The group's level is its pooled
+2024 value; its change is the pooled 2024 minus 2020 value over the classes with both years.
 
-Thresholds, in ecoregion SD:
+Thresholds, in national SD of cell medians:
 
-- below: level under -0.5;
-- declining: change under -0.3.
+- below: level under -0.75;
+- declining: change under -0.4.
 
-The level threshold puts 16.8 percent of crop cells and 23.5 percent of pasture cells below.
-It is more than twice the sampling error of a cell median of 30 fields (1.2533 / sqrt(30) =
-0.23 SD) and about six times that error at the median row size of 210 fields. The change
-threshold puts 20.7 percent of crop cells and 21.6 percent of pasture cells in decline,
-about the lowest fifth; it is 2.5 times the error of a change between two 210-field medians
-(0.12 SD) and is smaller than the level threshold because the same fields are compared in
-both years. The quartiles of the pooled change are -0.24 and +0.26 for crops and -0.25 and
-+0.28 for pasture.
+Over the 18,737 resolution 5 cells with pasture, the level threshold puts 24.4 percent below
+and the change threshold 19.0 percent in decline, about the lowest quarter and fifth. Over
+the 8,601 cells with crops, 5.6 percent are below and 7.2 percent declining: crop cells sit
+mostly above the national crop medians (median pooled crop level +0.38). For a normal
+distribution, -0.75 SD is the 23rd percentile and -0.4 SD of change, with the change SD of
+about 0.5 to 0.7 in these cells, is about the 20th. The neighbor correlation of the change
+at one ring (about 15 km) is 0.79 on the ecoregion term, so changes of this size are spatially
+coherent and not single-cell noise.
 
 | area call | rule | what it means for a planner |
 |---|---|---|
 | restore the area (`restore_area`) | crops and pasture both present, both below, both declining | the land is weak for every use present and getting weaker; restore across the area rather than field by field |
-| good land underused (`good_land_underused`) | crops present and not below, pasture present and below | the land supports crops at the ecoregion level while pasture lags; intensify the pasture or convert it to crops |
-| system misfit (`system_misfit`) | crops present and below, pasture present and not below | pasture does as well as elsewhere but crops do not; the crops may not suit this land |
-| area declining (`area_declining`) | every group present is below, and at least one is declining (and not restore the area) | the only use present, or both uses, sit below the ecoregion and at least one is falling further |
+| good land underused (`good_land_underused`) | crops present and not below, pasture present and below | the land supports crops at the national level while pasture lags; intensify the pasture or convert it to crops |
+| system misfit (`system_misfit`) | crops present and below, pasture present and not below | pasture does as well as the national pasture but crops do not; the crops may not suit this land |
+| area declining (`area_declining`) | every group present is below, and at least one is declining (and not restore the area) | the only use present, or both uses, sit below Brazil and at least one is falling further |
 | area fine (`area_fine`) | at least one group present and none of the above | no area-wide problem; the field call decides |
-| no area call (`none`) | neither crops nor pasture has 30 fields of a class in the cell | the area cannot be compared with its ecoregion |
+| no area call (`none`) | neither crops nor pasture has 30 fields of a class in the cell | the area cannot be compared with Brazil |
 
 The area declining rule extends the user's wording ("one group present, below and
 declining") to cells where both groups are below and only one declines, since those are
 neither fine nor a full restore case.
 
-Context attached to each area and field, not used in the call: the ecoregion's Scale C
+Secondary context, not used in the call: the same pooled terms against the RESOLVE 2017
+ecoregion (`eco_crops_level`, `eco_pasture_level` and their changes in
+`analysis\decisions\area_cells.parquet`; the summary tile attributes `eco_crops_2024`,
+`eco_pasture_2024`, `eco_crops_change`, `eco_pasture_change`), and the ecoregion's Scale C
 change, the change of the ecoregion-class median against the national class median between
-2020 and 2024 in national cell SD (section `s06`), read as losing ground (-0.1 or lower),
-gaining (0.1 or higher) or steady. The 0.1 threshold separates the Amazon frontier rows
-(-0.15 to -0.35 for pasture) from the large ecoregions (Cerrado, Caatinga, Alto Paraná,
-within 0.07). The field has the row of its own class (`eco_trend` in the GeoParquet; the
-site reads it from `docs/data/ecoregions.json` by `eco_id` and crop); the summary cell
-has the class-weighted row of the ecoregion that holds most of the cell's fields.
+2020 and 2024 in national cell SD, read as losing ground (-0.1 or lower), gaining (0.1 or
+higher) or steady. The 0.1 threshold separates the Amazon frontier rows (-0.15 to -0.35 for
+pasture) from the large ecoregions (Cerrado, Caatinga, Alto Paraná, within 0.07). The field
+has the row of its own class (`eco_trend` in the GeoParquet; the site reads it from
+`docs/data/ecoregions.json` by `eco_id` and crop); the summary cell has the class-weighted
+row of the ecoregion that holds most of the resolution 5 cell's fields.
+
+### 7.1a The national frontier map
+
+The zoomed-out change map colors each summary cell by the class-weighted `cell_vs_nation`
+change over every class with 30 fields in the cell (weights: 2024 field counts), on a
+continuous diverging ramp from -1.0 to +1.0 national SD. Resolution 6 cells (about 6 km) use
+their own value, computed the same way with the resolution 6 distribution of cell medians as
+the unit, and take the value of their resolution 5 parent where no class has 30 fields;
+resolution 7 cells (about 2.5 km) take the resolution 6 value. The plain percent change and
+the share of fields declining minus gaining (the previous coloring) are in the tooltip. The
+national SD change was chosen over the plain percent change because it removes each class's
+nationwide shift (pasture lost 2.3 percent nationally, much of it the 2024 drought shared by
+every region) and puts crops with different integral scales on one unit, so a cell of
+sugarcane and a cell of pasture are comparable; the plain percent change mixes the class
+composition of each cell into its value.
 
 ### 7.2 Field call
 

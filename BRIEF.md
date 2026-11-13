@@ -313,3 +313,12 @@ before it ends, in addition to the Decisions entry here.
   design: keep the cell peers for the field term, add the cell-within-ecoregion term as the
   area term and Scale C per ecoregion and class as a region layer. Report:
   `pipeline/EXPLORE_ECOREGIONS.md`.
+- 2026-11-13 decision revamp: decisions version 2 (`pipeline/s07_decisions.py`, report
+  `pipeline/DECISIONS_V2.md`, METHODS.md section 7). The area call per H3 resolution 5 cell
+  comes first, on the national reference `cell_vs_nation` (user: "lets do brazil as a whole
+  then to get the true frontiers of productivity change"), with the ecoregion terms as
+  context; the field call comes second. The per-ecoregion weather refit with mean
+  precipitation raised R squared from 0.15 to 0.19 but did not shrink the change blocks and was
+  not adopted. The site shows the national frontier change map on 6 km cells with a continuous
+  ramp, an Area decision view, a top-action decision summary, and short legends with info
+  tooltips; `decision_v1` keeps the old suggestion.

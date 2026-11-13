@@ -1,9 +1,9 @@
 decision_v1,restore,converted_below,converted_ok,convert_pasture,switch_paid_off,switch_failed,improve_yields,intensify,keep,abandon,abandoned_outline,none
-restore,6746,0,0,29887,0,0,1225939,0,0,0,0,0
-switch_crop,19828,0,0,221596,0,0,4433789,0,0,0,0,0
-change_pattern,13769,0,0,54685,1668338,670859,0,0,0,0,0,16769
+restore,6689,0,0,29193,0,0,1226690,0,0,0,0,0
+switch_crop,16038,0,0,217182,0,0,4441993,0,0,0,0,0
+change_pattern,13417,0,0,52804,1669629,671801,0,0,0,0,0,16769
 abandon,0,0,0,0,0,0,0,0,0,133960,0,0
-intensify,31812,0,0,316289,0,0,0,6712927,0,0,0,0
-improve_yields,5522,0,0,22641,0,0,1045974,0,0,0,0,0
-keep,27092,0,0,0,0,0,0,0,5875414,0,0,0
+intensify,26984,0,0,311653,0,0,0,6722391,0,0,0,0
+improve_yields,4718,0,0,22211,0,0,1047208,0,0,0,0,0
+keep,23230,0,0,0,0,0,0,0,5879276,0,0,0
 none,0,418860,1226786,0,0,0,0,0,0,0,0,375000

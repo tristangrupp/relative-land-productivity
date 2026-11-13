@@ -1,63 +1,63 @@
 {
  "national": {
   "decision": {
-   "restore": 104769,
+   "restore": 91076,
    "converted_below": 418860,
    "converted_ok": 1226786,
-   "convert_pasture": 645098,
-   "switch_paid_off": 1668338,
-   "switch_failed": 670859,
-   "improve_yields": 6705702,
-   "intensify": 6712927,
-   "keep": 5875414,
+   "convert_pasture": 633043,
+   "switch_paid_off": 1669629,
+   "switch_failed": 671801,
+   "improve_yields": 6715891,
+   "intensify": 6722391,
+   "keep": 5879276,
    "abandon": 133960,
    "abandoned_outline": 748022,
    "none": 391769
   },
   "area_decision_fields": {
-   "restore_area": 111673,
-   "good_land_underused": 2970980,
-   "system_misfit": 1369466,
-   "area_declining": 1112908,
-   "area_fine": 18801214,
-   "none": 188241
+   "restore_area": 93244,
+   "good_land_underused": 3096673,
+   "system_misfit": 883479,
+   "area_declining": 1224818,
+   "area_fine": 19072057,
+   "none": 184211
   },
   "abandoned_outlines": 748022,
   "area_decision_cells": {
-   "restore_area": 68,
-   "good_land_underused": 1432,
-   "system_misfit": 735,
-   "area_declining": 1032,
-   "area_fine": 16933,
-   "none": 233
+   "restore_area": 52,
+   "good_land_underused": 1675,
+   "system_misfit": 356,
+   "area_declining": 1189,
+   "area_fine": 16993,
+   "none": 272
   }
  },
  "frontier_total": {
   "fields": 2814635,
   "decision": {
-   "restore": 285,
+   "restore": 0,
    "converted_below": 51422,
    "converted_ok": 225411,
-   "convert_pasture": 25233,
-   "switch_paid_off": 18230,
-   "switch_failed": 9592,
-   "improve_yields": 766797,
-   "intensify": 784444,
-   "keep": 639603,
+   "convert_pasture": 31777,
+   "switch_paid_off": 18211,
+   "switch_failed": 9552,
+   "improve_yields": 763788,
+   "intensify": 781180,
+   "keep": 639676,
    "abandon": 16190,
    "abandoned_outline": 0,
    "none": 277428
   },
   "area_decision": {
-   "restore_area": 301,
-   "good_land_underused": 61837,
-   "system_misfit": 53879,
-   "area_declining": 272172,
-   "area_fine": 2410298,
-   "none": 16148
+   "restore_area": 0,
+   "good_land_underused": 72416,
+   "system_misfit": 22869,
+   "area_declining": 338554,
+   "area_fine": 2365490,
+   "none": 15306
   }
  },
- "v1_to_v2_same_key": 14150021,
+ "v1_to_v2_same_key": 14164524,
  "fields": 24554482,
- "seconds": 20
+ "seconds": 21
 }
