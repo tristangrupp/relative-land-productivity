@@ -183,3 +183,10 @@ Reports: pipeline/PROBE.md, EXTRACT.md, EXTRACT_S2.md, ANALYZE.md, EXPLORE_ECORE
   The summary cells' dominant_decision still says "none" where newly cropped fields are the
   mode; fix when the summary is next rebuilt with the decision revamp. In the revamp,
   recently converted fields are split by their 2024 level against ecoregion peers.
+- 09:25 User asked for an AGENTS.md with standing context and to keep documenting as we
+  work. AGENTS.md at the repo root now holds the read order, the documentation duty (every
+  user decision into this log in the same commit, method changes into METHODS.md, tile and
+  site changes into DATA_CONTRACT.md and README.md), hard rules, writing rules, environment,
+  published data, site workflow, the user's standing map preferences and the caveats.
+  The "newly cropped" row of the METHODS.md decision table now reads "recently converted
+  land" (5b5f7de).

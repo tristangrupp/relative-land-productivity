@@ -1,6 +1,7 @@
 # Relative land productivity, Brazil 2020 to 2024
 
-WORKLOG.md is the running record of state, decisions and open items; read it first when
+AGENTS.md holds the standing instructions for agents; WORKLOG.md is the running record of
+state, decisions and open items. Read both first when
 resuming work.
 
 A public web map that shows, field by field across Brazil, where crop and pasture
