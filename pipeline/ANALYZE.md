@@ -391,8 +391,11 @@ attempt (8,332,870 bytes, 114.6 s, after two "Connection was closed" errors), th
 fields 1,283,571,038 bytes in 290.4 s, abandoned 12,951,897 bytes) and Mato Grosso do Sul
 (scored fields 410,369,771 bytes in 97.1 s, abandoned 1,882,247 bytes). The log had 26 lines
 and no "UPLOAD EXIT" line when this section was written, so the run was still going, with
-Minas Gerais next and the states from Minas Gerais to Tocantins pending. Check the tail of
-that log for "UPLOAD EXIT 0" before treating the GeoParquet set as complete.
+Minas Gerais next and the states from Minas Gerais to Tocantins pending.
+
+The resumed run ended at 00:33 on 2026-11-13 with "UPLOAD EXIT 0": 54 objects (27 scored
+and 27 abandoned tables), 12,926,509,994 bytes under `.../fields/` on S3, two retried
+connection drops in total. The GeoParquet set is complete.
 
 ### Open items
 
