@@ -250,3 +250,13 @@ report because the tables do not exist yet. The watcher prints them.
   ten files projected.
 - Not seen running to the end: the final assembly of the NDVI tables and the last 37
   MapBiomas state-years. Both are the unchanged, resumable commands above.
+
+## MODIS fetch finished, 22:08 on 12 November
+
+The fetch ended with 2,090 files downloaded, 340 skipped and 28.55 GB on disk after 5.97 h.
+Composite 2024225 (12 to 27 August 2024) has no Terra item on Planetary Computer for any of
+the 18 tiles, and `raw\modis\missing.json` records it. The watcher excluded it from the
+pending count but the assembly step did not, so every 2024 state stayed at "waiting".
+`assemble_state` now treats a composite recorded in missing.json as absent: its raw column is
+NaN and the filled series interpolates across it. All 54 tables exist; the 2024 tables have
+22 composites with data and 23 columns.

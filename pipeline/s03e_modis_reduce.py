@@ -220,6 +220,7 @@ def assemble_state(year, state, hvs, comps, partial_ok=False):
     t0 = time.time()
     frames = []
     used = set()
+    missing = load_missing()
     for hv in hvs:
         p_f = os.path.join(WEIGHTS, f"year={year}", f"{hv}_fields.parquet")
         if not os.path.exists(p_f):
@@ -235,7 +236,8 @@ def assemble_state(year, state, hvs, comps, partial_ok=False):
         for c in comps:
             p = partial_path(year, hv, c)
             if not os.path.exists(p):
-                if partial_ok:
+                # a composite the fetch recorded as absent from the archive stays NaN and is interpolated
+                if partial_ok or hv in missing.get(c, []):
                     cols[f"num_{c}"] = np.full(sel.size, np.nan, np.float32)
                     cols[f"den_{c}"] = np.full(sel.size, np.nan, np.float32)
                     continue
