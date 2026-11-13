@@ -83,14 +83,20 @@ Reports: pipeline/PROBE.md, EXTRACT.md, EXTRACT_S2.md, ANALYZE.md, EXPLORE_ECORE
   about 700 of 4,881 tile parquets by 06:30 on 13 Nov. When Mato Grosso assembles, rerun
   metrics with `--source s2` per state. The water downloaders in session grupp-32 stay paused
   until it ends.
-- The ecoregion exploration agent is running (started 13 Nov about 07:15): RESOLVE 2017
-  ecoregions as the peer reference, three scales (field vs cell, field vs ecoregion with the
-  cell-vs-ecoregion term, ecoregion vs nation), report to pipeline/EXPLORE_ECOREGIONS.md.
+- The ecoregion exploration is done (commit a43f8c8, report pipeline/EXPLORE_ECOREGIONS.md):
+  per-field Scale B tables under `analysis\ecoregionsields\<State>.parquet`, the cell term
+  in `data/summaries/cell_vs_ecoregion.csv`, the ecoregion-class Scale C rows in
+  `data/summaries/ecoregions.csv`. Ecoregion peers agree with the cell design on 80.2 percent
+  of fields; the regional call comes from Scale C and the plain change.
 
 ## Open items
 
 1. Decision revamp (agreed in principle 13 Nov, see the log): two-tier rules built on the
-   ecoregion scores, area term plus field term. Blocked on the ecoregion agent's outputs.
+   ecoregion scores, area term plus field term. The inputs now exist: `cell_vs_eco_2020` and
+   `cell_vs_eco_2024` per field in `analysis\ecoregionsields\<State>.parquet` (area term),
+   `r_adj` from the relative tables (field term), Scale C per ecoregion and class in
+   `data/summaries/ecoregions.csv`. Before acting on the area term, refit the weather term per
+   ecoregion and class with the cell's mean precipitation as a regressor (EXPLORE_ECOREGIONS.md).
 2. "Change land use pattern" is a label on crop-switched fields, not advice; it goes away in
    the revamp (crop-switched fields get judged by their 2024 level: switch paid off or failed).
 3. Pasture vigor: user to decide whether to submit the MapBiomas platform jobs.
