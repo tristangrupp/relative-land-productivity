@@ -358,3 +358,60 @@ DECISIONS_V2.md, S2_MATO_GROSSO.md. Methods: methods/METHODS.md. Site contract: 
   determined. IBGE validation on the same municipalities: soybean and maize Spearman between
   -0.24 and +0.17 on both sensors. Recommendation: show both, MODIS default, no switch of the
   change view yet. No tiles, site or upload touched.
+
+- Recorded 14 Nov by the documentation agent, for decisions of 12 Nov that were only in
+  BRIEF.md or METHODS.md: NDVI comes from Planetary Computer Sentinel-2 COGs read locally,
+  the way the agriculture-and-drought repo did it (user). S3 is storage only, through the
+  profile `mfr-datalab` (user). The Sentinel-2 refinement runs tier 1 (MT, PA, AM, AC, RO,
+  RR, AP) then tier 2 (MS, GO, TO, MA); the MODIS national release was the orchestrator's
+  call and the user accepted it. Method: peers are the same MapBiomas class in the same H3
+  resolution 5 cell, at least 30 fields, fallback to resolution 4 then 3; the weather layer
+  is a regression per class by state on CHIRPS and TerraClimate anomalies with a nine-year
+  baseline, agricultural years 2016 to 2024 (METHODS.md first wrote ten years, 2015 to
+  2024); change classes are at plus or minus 1 and 2 peer SD. Every decision is now indexed
+  in DECISIONS.md.
+- 06:00 to 14:00 User answers to the seven questions of the decision review (relayed by the
+  coordinator):
+  1. Declining fields in area-declining cells with pasture only become restore: yes.
+  2. The user asked why "improve yields" replaced "switch crop" for fields below their
+     same-crop neighbors. Answer given: same crop, same weather and similar land within 17
+     km, so a persistent gap points to management, which a crop switch does not fix. A
+     crop-to-land mismatch is the area tier's system misfit.
+  3. The zoomed-out cell coloring rule (at least 15 percent of the cell's fields and 1.5
+     times the national share): approved.
+  4. "if they're productive at the frontier, convert to cropland maybe": inside the Amazon
+     biome, pasture on good cropland gets "conversion to crops possible" only when the
+     pasture itself is at or above its peers, and the note says already-cleared pasture, not
+     new clearing. Otherwise the suggestion is improve pasture.
+  5. "area map looks too homogenous": the area call moves to H3 resolution 6 (about 6 km)
+     with resolution 5 fallback.
+  6. Recently converted fields without a 2024 value move to no data: yes.
+  7. "slowly work through state by state updating modis to sentinel": Mato Grosso switches to
+     Sentinel-2 now with a per-field source attribute, then each state in run order as its
+     extraction completes, through a swap script. This replaces the s2 Mato Grosso agent's
+     recommendation (show both, MODIS default).
+  Then the user said a field below its neighbors and declining could need improve yields or
+  restore, and which one depends on a longer productivity time series and on how much native
+  vegetation is nearby. Decided: a low-confidence MODIS field (small, likely mixing its
+  neighbors' values) is labeled "Low confidence: too small to judge yet" until Sentinel-2
+  arrives for its state; a below-neighbors field not near native vegetation gets improve
+  yields (it spares land elsewhere); one next to remnant native vegetation is a restore
+  candidate. Native vegetation share within 1 km and 250 m from MapBiomas 2024; the user on
+  that source: "sounds like a decent candidate option". Implementation by the decisions
+  round 2 agent.
+- Longer productivity time series (user decision): MODIS agricultural years 2016 to 2019 and
+  2021 to 2023 (2020 and 2024 exist) download now at reduced speed, one file at a time, so
+  the Sentinel-2 extraction keeps priority. The user: "lean towards the first option at
+  reduce download speed and prioritize the Sentinel 2 update but if the Sentinel 2
+  extraction is gonna take like three weeks to do you should let me know and I can
+  evaluate". Detached process pid 44620, `s03c_modis_fetch.py --years 2016 2017 2018 2019
+  2021 2022 2023 --in-flight 1`, logs `F:\relative-land-productivity-data\raw\modis\fetch_long_stdout.log`
+  and `fetch.log`. About 100 GB; F: had 476 GB free.
+- Sentinel-2 timeline, measured 13:49: 41 tiles per hour. Tiers 1 and 2 (4,881 tiles) finish
+  around 17 Nov. Tier 3 (3,126 tiles, not yet queued) would add about 3 days. A Sentinel-2
+  record as long as the MODIS one (8 agricultural years instead of 2) would take roughly 4
+  times as long, about 4 to 5 weeks for all of Brazil at this rate. Open question for the
+  user.
+- DECISIONS.md added at the repo root (commit b50335e): one row per decision, grouped as data
+  and compute rules, method, decision rules, map and site design, and open questions, with
+  date, who decided, reason, commit and status. Linked from AGENTS.md and README.md.
