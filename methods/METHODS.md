@@ -375,6 +375,70 @@ strengthen restore candidates. The user approved it the same day (item 11).
     restoration plan (user: "just a recommendation for the field treatment: what should be
     done, what options are").
 
+### 7.6 Implementation of the 14 November decisions (decisions round 2)
+
+Implemented in `pipeline/s07_decisions.py` (steps `biome`, `native`, `national`, `area`,
+`fields`), `pipeline/s04_change.py`, `pipeline/s08_s2_compare.py` and
+`pipeline/s09_swap_state_to_s2.py`. Numbers from `data/summaries/decisions_v2.json` of 14
+November 2026.
+
+Area call at 6 km (item 1 of 7.5). The rule of 7.1 runs per H3 resolution 6 cell, with
+`cell_vs_nation` in the national SD of resolution 6 cell medians. The same thresholds hold:
+below -0.75 puts 26.2 percent of pasture cells and 21.0 percent of crop cells below at
+resolution 6 (27.7 and 13.3 percent at resolution 5); declining under -0.4 puts 23.5 and 25.3
+percent in decline (22.4 and 18.3 at resolution 5). The minimum stays one class with 30 valid
+fields per group. A resolution 6 cell with no group takes its resolution 5 parent's call
+(`area_level` 5): 100,122 of 144,909 cells use their own call
+(23,260,773 fields), 44,787 the parent's (1,293,709 fields).
+Cells: restore the area 184, good land underused 5,540,
+system misfit 1,712, area declining 9,301,
+area fine 118,675, no call 9,497.
+
+Pasture-only restore (item 2). A cell is pasture only when pasture is present, crops are absent
+and crop-class fields are under 5 percent of its 2024 fields. In an area-declining pasture-only
+cell, a same-crop field that declined is restore: 88,873 fields computed nationally
+(14,508 shown, the rest low confidence), 33,497 on the seven Amazon frontier
+ecoregions (2,173 shown), where restore was 0 before.
+
+Amazon biome (item 4). Biome by field centroid from IBGE Biomas 1:250,000 (2019),
+`raw\biomes\lm_bioma_250.shp`, rasterized at 0.0025 degree. In a good-land-underused cell, an
+Amazon pasture at or above its cell peers (`r_adj_2024` at least -0.5) is `convert_cropland`
+(5,556 computed, 1,912 shown); below them, `improve_pasture` (3,035, 975).
+Outside the Amazon biome `convert_pasture` stays (316,951, 50,599).
+
+Recently converted with no 2024 value (item 5): 30,023 fields moved to no data.
+
+Low confidence (item 6). Every field with `confidence` low and a call other than no data shows
+`low_confidence`; the call is kept in `decision_computed`. 19,464,886 fields, 79.3 percent of the
+2024 outlines. Sentinel-2 fields use the s2 rule (under 0.45 ha or few clear months).
+
+Native vegetation, patch size and regrowth (items 7, 9, 10). From MapBiomas Collection 10
+2020 and 2024 on the 30 m extraction grid (`s07_decisions.py native`): native classes 3, 4, 5,
+6, 11, 12, 49, 50; patches are 8-connected components; bands of 1 km and 250 m around the
+field's bounding box. A large patch is 50 ha or more; the cutoff drops 20.2 percent of the
+native pixels in the 1 km bands and leaves 18.4 percent of fields with no large patch within
+1 km. Regrowth is anthropic (pasture, agriculture, mosaic) in 2020 and native in 2024; the
+2023 confirmation could not be fetched (section 9). Rules, for same-crop fields below their
+cell peers and not gaining: `assisted_regen` when the field is declining (or restore) and
+regrowth covers at least 10 percent of its pixels (about the top 1 percent of fields: 99th
+percentile of `regrowth_share_in` 0.114); `restore_candidate` when the share of the 1 km band
+in large patches is at least 0.30 (the 75th percentile of that share over these fields,
+high confidence, is 0.300); otherwise `improve_spare` (improve yields, spares land elsewhere).
+Computed: assisted natural regeneration 10,756 (1,787 shown), restore candidate
+1,564,599 (296,148), improve yields spares land 4,150,191 (874,731). Frontier: 479 (104),
+144,774 (44,406), 490,577 (124,232).
+
+Sentinel-2 in Mato Grosso (7.5, swap). Mato Grosso's live tables come from s2 since 14
+November 2026 (`analysis\sources.json`). Change classes use D / k with k = 1.2174, the ratio
+of the robust SD of D on s2 (0.910) to MODIS (0.748) over 202,887 fields above 25 ha with high
+confidence on both sensors and the same peer class in both years. On those fields the changing
+share is 22.5 percent on s2 against 22.8 on MODIS (30.0 unscaled); over all 1,021,906
+comparable fields 23.2 against 17.0 (31.1 unscaled); exact class agreement rises from 70.0 to
+76.1 percent. The remaining gap is on small fields, where MODIS reads shared pixels (MODIS
+changing share 14.4 percent under 6.25 ha, 28.9 over 100 ha). The area tier uses the s2
+seasonal integral calibrated to the MODIS scale per peer class and year (S2_MATO_GROSSO.md),
+falling back to MODIS for a class with no calibration.
+
 ### 7.4 Superseded 2026-11-13: version 1 decision table
 
 Version 1 judged each field alone. Level in 2024: below peers (R* < -0.5), at peers, above
@@ -441,6 +505,24 @@ column holds it.
   only in part.
 - Fields are different delineations in 2020 and 2024; the 2020 metric on the 2024 polygon
   can average two 2020 fields.
+- (14 November 2026) The split between restore, assisted natural regeneration, restore
+  candidate and improve yields rests on two agricultural years of greenness (2020 and 2024)
+  and on two MapBiomas maps (2020 and 2024). Two years cannot tell a lasting decline from
+  one bad season; a longer productivity time series is a separate decision for the user and
+  was not used here.
+- Regrowth is seen only as land that was crop, pasture or mosaic in 2020 and native in 2024.
+  Older secondary vegetation, and regrowth on land cleared after 2020, are not seen. The
+  2023 map was meant to confirm each regrowth pixel (native in both 2023 and 2024) so that a
+  one-year flip of the classification does not count; on 14 November 2026 the shared network
+  link fell to about 60 KB/s and the 1.18 GB 2023 map could not be fetched, so a regrowth
+  pixel here can be a single-year misclassification. `s07_decisions.py native` uses the 2023
+  map automatically once `raw\mapbiomas\mapbiomas_brazil_2023.tif` is on disk. MapBiomas
+  publishes a secondary vegetation product, but no public GeoTIFF readable without Earth
+  Engine was found in this round, so the derivation above is used.
+- Native vegetation and patch size are measured in a band around the field's bounding box,
+  not its outline, and patch area is counted inside the processing window (a north to south
+  strip of about 61 km plus 4 km on each side), so the largest patches are capped. A
+  riparian corridor that connects to a large block counts as part of that block.
 
 ## 10. References
 

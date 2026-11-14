@@ -30,8 +30,15 @@ decision, from the 2024 level (r_adj_2024 below -0.5, between, above 0.5) and th
   percentile of the class in the state; change_pattern for crop_switched; none for
   newly_cropped and no_data (METHODS.md gives no suggestion there); restore for abandoned.
 
-confidence is low when the field is under 6.25 ha (one MODIS pixel) or fewer than 75 percent
-of the window composites were observed in either year.
+confidence is low when the field is under 6.25 ha (one MODIS pixel; 0.45 ha, five 30 m pixels, for
+source s2) or fewer than 75 percent of the window composites were observed in either year.
+
+--change-scale k divides D by k before the class thresholds. It is 1 for MODIS. For a state
+swapped to Sentinel-2 (pipeline/s09_swap_state_to_s2.py) k is the ratio of the robust SD of D on
+s2 to the robust SD of D on MODIS, over fields above 25 ha with high confidence on both sensors
+and the same peer class in both years, so the class shares on fields both sensors resolve match
+across a state border (decision of 14 November 2026, WORKLOG.md). Every row has a `source`
+column (modis or s2).
 
 Abandoned layer: 2020 polygons whose MapBiomas 2024 class is not agricultural, with the 2020
 relative value from the 2020 polygons, change_class abandoned and decision restore. The
@@ -63,6 +70,8 @@ import s04_common as C  # noqa: E402
 LEVEL_SD = 0.5
 ABANDON_PCTL = 20
 CONF_SHARE = 0.75
+S2_MIN_HA = 0.45  # five 30 m pixels, the s2 small-field rule (s08_s2_compare.py)
+SOURCES = ["modis", "s2"]
 CHANGE_CLASSES = ["large_decline", "decline", "stable", "gain", "large_gain", "crop_switched", "newly_cropped", "no_data", "abandoned"]
 DECISIONS = ["restore", "switch_crop", "change_pattern", "abandon", "intensify", "improve_yields", "keep", "none"]
 DECISION_TABLE = {("below", "decline"): "restore", ("below", "stable"): "switch_crop", ("below", "gain"): "improve_yields",
@@ -117,7 +126,7 @@ def write_geo(df, path, geo_meta, extra_meta):
     os.replace(path + ".part", path)
 
 
-def score_state(source, state, allow_missing_2020=False, force=False):
+def score_state(source, state, allow_missing_2020=False, force=False, change_scale=1.0):
     t0 = time.time()
     out_path = os.path.join(C.ANALYSIS, "year=2024", f"state={state}", "fields_scored.parquet")
     ab_path = os.path.join(C.ANALYSIS, "abandoned", f"state={state}.parquet")
@@ -162,7 +171,7 @@ def score_state(source, state, allow_missing_2020=False, force=False):
     radj24 = df["r_adj_2024"].values.astype(np.float32)
     with np.errstate(invalid="ignore"):
         D = radj24 - radj20
-    cc = change_class(D)
+    cc = change_class(D / change_scale)
     cc[~ag20] = "newly_cropped"
     cc[ag20 & (grp20 != grp24)] = "crop_switched"
     same = ag20 & (grp20 == grp24)
@@ -180,7 +189,8 @@ def score_state(source, state, allow_missing_2020=False, force=False):
     nv24 = df["n_valid_window_2024"].values.astype(np.float32)
     nw20 = df["n_window_2020"].values.astype(np.float32)
     nv20 = df["n_valid_window_2020"].values.astype(np.float32)
-    low = df["small_field_2024"].values.astype(bool) | (nv24 < CONF_SHARE * nw24)
+    small = (df["area_ha"].values < S2_MIN_HA) if source == "s2" else df["small_field_2024"].values.astype(bool)
+    low = small | (nv24 < CONF_SHARE * nw24)
     low |= np.where(nw20 > 0, nv20 < CONF_SHARE * nw20, False)
     out = pd.DataFrame({
         "fid": df["fid"].values.astype(np.int64),
@@ -200,11 +210,12 @@ def score_state(source, state, allow_missing_2020=False, force=False):
         "confidence": pd.Categorical(np.where(low, "low", "high"), categories=["high", "low"]),
         "r_adj_2020": radj20,
         "r_adj_2024": radj24,
+        "source": pd.Categorical([source] * n, categories=SOURCES),
         "bbox": df["bbox"].values,
         "geometry": df["geometry"].values,
     })
     out.loc[mb20 < 0, "crop_2020"] = pd.NA
-    write_geo(out, out_path, geo_metadata(fp), {"state": state, "source": source, "has_2020": has20,
+    write_geo(out, out_path, geo_metadata(fp), {"state": state, "source": source, "has_2020": has20, "change_scale": change_scale,
                                                  "written": datetime.now().isoformat(timespec="seconds")})
 
     # abandoned layer from the 2020 polygons
@@ -230,7 +241,8 @@ def score_state(source, state, allow_missing_2020=False, force=False):
             f20["small_field"] = f20["area_ha"].values < 6.25
         nw = f20["n_window"].fillna(0).values.astype(np.float32)
         nv = f20["n_valid_window"].fillna(0).values.astype(np.float32)
-        low = f20["small_field"].fillna(True).values.astype(bool) | (nv < CONF_SHARE * nw)
+        small20 = (f20["area_ha"].values < S2_MIN_HA) if source == "s2" else f20["small_field"].fillna(True).values.astype(bool)
+        low = small20 | (nv < CONF_SHARE * nw)
         ab = pd.DataFrame({
             "fid": f20["fid"].values.astype(np.int64),
             "area_ha": np.round(f20["area_ha"].values, 2).astype(np.float32),
@@ -249,6 +261,7 @@ def score_state(source, state, allow_missing_2020=False, force=False):
             "confidence": pd.Categorical(np.where(low, "low", "high"), categories=["high", "low"]),
             "r_adj_2020": f20["r_adj"].values.astype(np.float32),
             "r_adj_2024": np.float32(np.nan),
+            "source": pd.Categorical([source] * len(f20), categories=SOURCES),
             "bbox": f20["bbox"].values,
             "geometry": f20["geometry"].values,
         })
@@ -261,7 +274,7 @@ def score_state(source, state, allow_missing_2020=False, force=False):
               "confidence_low": int(low.sum()) if False else int((out["confidence"] == "low").sum()),
               "crop_2020": {str(int(k)): int(v) for k, v in pd.Series(mb20[mb20 >= 0]).value_counts().items()},
               "crop_2024": {str(int(k)): int(v) for k, v in pd.Series(mb24).value_counts().items()},
-              "abandoned": ab_rows, "has_2020": has20, "seconds": round(time.time() - t0, 1)}
+              "abandoned": ab_rows, "has_2020": has20, "source": source, "change_scale": change_scale, "seconds": round(time.time() - t0, 1)}
     with open(os.path.join(os.path.dirname(out_path), "counts.json"), "w") as fh:
         json.dump(counts, fh, indent=1)
     return {"state": state, "status": "ok", "rows": int(n), "abandoned": ab_rows, "has_2020": has20,
@@ -276,13 +289,14 @@ def main():
     ap.add_argument("--workers", type=int, default=3)
     ap.add_argument("--allow-missing-2020", action="store_true", help="score with the 2024 year only (development)")
     ap.add_argument("--force", action="store_true")
+    ap.add_argument("--change-scale", type=float, default=1.0, help="divide D by this before the class thresholds (s2 states)")
     args = ap.parse_args()
     states = args.states or C.state_dirs(2024)
     sizes = {s: os.path.getsize(C.fields_path(2024, s)) for s in states}
     states = sorted(states, key=lambda s: -sizes[s])
     t0 = time.time()
     with ProcessPoolExecutor(max_workers=args.workers) as ex:
-        futs = {ex.submit(score_state, args.source, s, args.allow_missing_2020, args.force): s for s in states}
+        futs = {ex.submit(score_state, args.source, s, args.allow_missing_2020, args.force, args.change_scale): s for s in states}
         for f in as_completed(futs):
             try:
                 r = f.result()

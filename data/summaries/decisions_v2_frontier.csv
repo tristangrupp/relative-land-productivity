@@ -1,8 +1,8 @@
-eco_name,restore,converted_below,converted_ok,convert_pasture,switch_paid_off,switch_failed,improve_yields,intensify,keep,abandon,abandoned_outline,none,restore_area,good_land_underused,system_misfit,area_declining,area_fine,none_area
-Madeira-Tapajós moist forests,0,12593,47114,13331,2645,1673,282894,296397,241919,5381,0,11777,0,22493,0,80852,809274,3105
-Mato Grosso tropical dry forests,0,9449,23192,6716,11255,5619,145528,153464,126991,3718,0,2779,0,15752,0,48306,422013,2640
-Purus-Madeira moist forests,0,2310,9093,186,15,13,15472,14873,11507,216,0,981,0,213,0,17848,35607,998
-Southwest Amazon moist forests,0,3172,24601,597,19,14,40771,39818,29086,517,0,324,0,1015,0,32652,103984,1268
-Tapajós-Xingu moist forests,0,4450,28760,2815,970,462,39423,37924,31836,830,0,72525,0,9894,0,50885,155204,4012
-Tocantins/Pindare moist forests,0,14570,51953,7113,2561,1357,140997,139479,116943,3311,0,73768,0,21192,22869,22297,485089,605
-Xingu-Tocantins-Araguaia moist forests,0,4878,40698,1019,746,414,98703,99225,81394,2217,0,115274,0,1857,0,85714,354319,2678
+eco_name,restore,assisted_regen,restore_candidate,converted_below,converted_ok,convert_cropland,improve_pasture,convert_pasture,switch_paid_off,switch_failed,improve_spare,improve_yields,intensify,keep,abandon,abandoned_outline,low_confidence,none,restore_area,good_land_underused,system_misfit,area_declining,area_fine,none_area
+Madeira-Tapajós moist forests,835,22,18127,1371,11857,255,162,0,1769,957,67096,16486,113750,78048,1949,0,591043,11997,0,1958,0,77601,833060,3105
+Mato Grosso tropical dry forests,791,62,22725,4487,7964,901,373,500,7619,3507,44154,11429,84199,56530,1803,0,238968,2699,0,6739,0,46515,432817,2640
+Purus-Madeira moist forests,31,0,174,58,424,2,0,0,0,0,80,45,498,393,3,0,51935,1023,0,246,0,16382,37040,998
+Southwest Amazon moist forests,193,0,1386,119,1126,0,0,0,4,1,1683,342,4487,2118,19,0,127075,366,0,1,0,31811,105839,1268
+Tapajós-Xingu moist forests,108,0,507,111,515,8,5,0,97,43,843,293,2025,1425,20,0,134551,79444,0,4317,0,44372,167294,4012
+Tocantins/Pindare moist forests,6,0,53,24,57,1,0,0,1,2,229,62,410,288,4,0,474165,76750,0,7641,4569,32793,506444,605
+Xingu-Tocantins-Araguaia moist forests,209,20,1434,167,829,38,25,1,167,96,10147,1778,14745,9152,270,0,277718,127772,0,258,0,74631,367001,2678

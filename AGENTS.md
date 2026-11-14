@@ -123,11 +123,59 @@ Prefix: `https://wri-datalab-sandbox.s3.amazonaws.com/trazofields/trazo4/relativ
   section 7 for the two-tier design.
 - The zoomed-out decision map must not be one color: it shows the action that stands out in
   each cell, and intensify is a calm color, not orange.
+- (14 November 2026) The area call is made per 6 km cell (H3 resolution 6), with the 15 km
+  parent where the 6 km cell is too thin; `area_level` says which.
+- (14 November 2026) A low-confidence field (MODIS under 6.25 ha or few clear composites;
+  Sentinel-2 under 0.45 ha) shows "Low confidence: too small to judge yet" in a cool light
+  gray distinct from no data; its computed call stays in `decision_computed` and the card
+  shows it as "Computed, not trusted".
+- (14 November 2026) States move from MODIS to Sentinel-2 one by one with
+  `pipeline/s09_swap_state_to_s2.py --state <State>` (see "Switching a state to Sentinel-2"
+  below). Every field has a `source` attribute (modis or s2) shown in the tooltip and card.
+- (14 November 2026) Below-neighbors fields split by native vegetation: native vegetation
+  returning inside the field gives assisted natural regeneration; large native patches
+  (50 ha or more) within 1 km give a restore candidate; otherwise improve yields, which
+  spares land elsewhere. Large patches count more than slivers.
+- (14 November 2026) Each field shows one recommended treatment plus a short list of other
+  options (`options` per class in config.js), never a site plan.
+- (14 November 2026) Restore, assisted natural regeneration, restore candidate and recently
+  converted land are one green family that stays distinguishable (adjacent pairs deltaE 12
+  or more under simulated color vision deficiency): restore #008300, assisted natural
+  regeneration #2e9e82, restore candidate #285c23, recently converted below #7cc24e, at or
+  above #d7f28c.
+- (14 November 2026) Keep the map, legend and tooltip simple: one legend swatch per
+  recommendation; native patch size, regrowth shares and CAR or Forest Code indicators go in
+  the field card details only, never as map layers, legend classes or tooltip rows.
+
+## Switching a state to Sentinel-2
+
+Run order (user, 14 November 2026): Mato Grosso (done 14 November), Pará, Rondônia, Acre,
+Amazonas, Roraima, Amapá, then Mato Grosso do Sul, Goiás, Tocantins, Maranhão. When the
+Sentinel-2 extraction has finished a state's tiles
+(`F:\relative-land-productivity-data\extracted\s2\progress.log`), run
+
+```
+python pipeline\s09_swap_state_to_s2.py --state Para
+```
+
+It assembles the state's s2 tables (refusing under 99 percent of tiles complete), runs metrics
+and relative on s2, runs `s08_s2_compare.py all` (calibration to the MODIS national reference,
+comparison, noise and the change scale k), copies the MODIS tables to
+`analysis\source=modis\`, rewrites the live tables from s2 with `s04_change.py --source s2
+--change-scale k`, records the state in `analysis\sources.json` (and
+`data/summaries/sources.json`), then rebuilds the decisions for all states, the field tiles
+(about 45 minutes), the summary and stats, and uploads. `--no-tiles` and `--no-upload` stop
+earlier; `--revert` puts the MODIS tables back. Afterwards record the state's numbers
+(`data/summaries/s2_<uf>_noise.json`, `decisions_v2.json`) in WORKLOG.md, bump the cache
+busters if the site changed, commit and push.
 
 ## Caveats every output should state where relevant
 
-- MODIS at 250 m: 82.9 percent of fields are low confidence (smaller than one pixel or few
-  clear composites).
+- MODIS at 250 m: most fields are low confidence (smaller than one pixel or few clear
+  composites) and show "too small to judge yet" until their state switches to Sentinel-2.
+- Mato Grosso uses Sentinel-2 since 14 November 2026, with change thresholds scaled by 1.22.
+- The restore versus improve yields split rests on two years of greenness and on the
+  MapBiomas maps of 2020 and 2024.
 - Wet-season cloud removes about a fifth of Pará's fields (no data).
 - The weather regression explains little (median R squared 0.15).
 - Pasture vigor is not implemented.

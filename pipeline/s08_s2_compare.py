@@ -8,6 +8,7 @@
   python s08_s2_compare.py fields      s2 field call (decisions version 2)
   python s08_s2_compare.py compare     field by field agreement with the live MODIS result
   python s08_s2_compare.py validate    s2 and MODIS municipal means against IBGE yields, same municipalities
+  python s08_s2_compare.py noise       year-to-year noise of each sensor on large fields, the change scale of the swap
   python s08_s2_compare.py all
 
 Run after s04_metrics.py --source s2 (polys 2024, ay 2020 and 2024) and s04_relative.py --source s2
@@ -37,6 +38,19 @@ in each group).
 
 s2 confidence: low when fewer than 75 percent of the window months were observed in either
 year, or the field is under S2_MIN_HA hectares (five 30 m pixels).
+
+MODIS reference. Once a state is swapped to s2 (s09_swap_state_to_s2.py) its live
+fields_scored.parquet holds s2 values, so the MODIS values are read from the copy the swap keeps
+at analysis\\source=modis\\year=2024\\state=<State>\\fields_scored.parquet. Summary files are
+named data/summaries/s2_<uf>_*.csv with the state's two-letter code in lower case.
+
+Noise and the change scale (decision of 14 November 2026). On fields above NOISE_MIN_HA with
+high confidence on both sensors, comparable change classes on both and the same s2 peer class in
+both years, the robust SD of D = r_adj_2024 - r_adj_2020 is measured per sensor. The ratio
+k = SD_s2 / SD_modis is the change scale: the swapped state's change classes use D / k against
+the usual thresholds, so on fields both sensors resolve the two sensors call the same share of
+change. Mato Grosso: k = 1.217 on 202,887 fields; the changing share on those fields becomes
+22.5 percent on s2 against 22.8 on MODIS (30.0 percent unscaled).
 """
 import argparse
 import json
@@ -65,7 +79,12 @@ MIN_FIELDS = DV.MIN_FIELDS
 BANDS = [(0, 6.25, "under 6.25 ha"), (6.25, 25, "6.25 to 25 ha"), (25, 100, "25 to 100 ha"), (100, np.inf, "over 100 ha")]
 NEIGHBORS = ["Rondonia", "Amazonas", "Para", "Tocantins", "Goias", "Mato_Grosso_Do_Sul"]
 CC_ORDER = ["large_decline", "decline", "stable", "gain", "large_gain", "crop_switched", "newly_cropped", "no_data"]
-UF = {"Mato_Grosso": "MT"}
+NOISE_MIN_HA = 25.0
+MODIS_COPY = os.path.join(C.ANALYSIS, "source=modis")
+
+
+def uf_of(state):
+    return C.state_uf_map(2024)[state].lower()
 
 
 def log(**kw):
@@ -79,9 +98,21 @@ def p(*a):
     return path
 
 
+STATE = {"name": "Mato_Grosso"}
+
+
 def summ(name):
+    """data/summaries path; names written as s2_mt_* take the current state's code."""
     os.makedirs(C.SUMMARIES, exist_ok=True)
+    if name.startswith("s2_mt_"):
+        name = f"s2_{uf_of(STATE['name'])}_" + name[len("s2_mt_"):]
     return os.path.join(C.SUMMARIES, name)
+
+
+def live_or_copy(state):
+    """The MODIS fields_scored of the state: the copy kept by the swap if the live table is s2."""
+    cp = os.path.join(MODIS_COPY, "year=2024", f"state={state}", "fields_scored.parquet")
+    return cp if os.path.exists(cp) else os.path.join(C.ANALYSIS, "year=2024", f"state={state}", "fields_scored.parquet")
 
 
 def rd(path, cols):
@@ -196,8 +227,12 @@ def change(state):
 
 def modis_fields(state):
     """Live MODIS per-field values for the state (2024 polygons), in fields order."""
-    sc = rd(os.path.join(C.ANALYSIS, "year=2024", f"state={state}", "fields_scored.parquet"),
-            ["fid", "change_class", "decision", "area_decision", "confidence", "r_adj_2020", "r_adj_2024", "prod_2020", "prod_2024"])
+    path = live_or_copy(state)
+    names = pq.ParquetFile(path).schema_arrow.names
+    if "source" in names:
+        src = pq.read_table(path, columns=["source"]).column("source").to_pandas().astype(str)
+        assert (src == "modis").all(), f"{path} is not a MODIS table"
+    sc = rd(path, ["fid", "change_class", "decision", "area_decision", "confidence", "r_adj_2020", "r_adj_2024", "prod_2020", "prod_2024"])
     for ay in (2020, 2024):
         r = rd(C.relative_path("modis", 2024, ay, state), ["fid", "valid", "metric", "metric_adj", "group_level"])
         m = rd(C.metrics_path("modis", 2024, ay, state), ["fid", "peer_cls", "h3_5", "h3_6"])
@@ -352,8 +387,14 @@ def fields(state, s2=None, cal=None, a=None, mo=None):
     with np.errstate(all="ignore"):
         r_eco = np.where(s2["valid_2024"].values, (mcal24 - med) / sd, np.nan).astype(np.float32)
     cc = s2["change_class"].astype(str).values
-    dec = DV.field_call(cc, s2["decision_v1"].astype(str).values, s2["r_adj_2024"].values, r_eco,
-                        s2["crop_2024"].values, area_s2, s2["peer_cls_2024"].values)
+    # comparison only: the call before the low-confidence rule, with the resolution 5 area call of
+    # this stage, no pasture-only restore and no native-vegetation split (the live call is s07's)
+    n = len(cc)
+    bio = DV.load_biome(state, s2["fid"].values) if os.path.exists(os.path.join(DV.OUT, "biome", f"{state}.parquet")) \
+        else np.zeros(n, dtype=np.int8)
+    _, dec = DV.field_call(cc, s2["decision_v1"].astype(str).values, s2["r_adj_2024"].values, r_eco,
+                           s2["crop_2024"].values, area_s2, np.zeros(n, bool), bio, np.full(n, np.nan, np.float32), np.full(n, np.nan, np.float32),
+                           np.zeros(n, bool))
     s2 = s2.copy()
     s2["decision"] = pd.Categorical(dec, categories=DV.DECISIONS)
     s2["area_decision"] = pd.Categorical(area_s2, categories=DV.AREA)
@@ -403,7 +444,7 @@ def compare(state, s2=None, mo=None):
     am.to_csv(summ("s2_mt_area_confusion_fields.csv"))
     res["area_exact_fields"] = float((mo["area_decision"].values == s2["area_decision"].astype(str).values).mean())
     # area calls per cell, over the state's cells in the live MODIS table
-    live = pd.read_parquet(os.path.join(C.ANALYSIS, "decisions", "area_cells.parquet"))
+    live = pd.read_parquet(os.path.join(C.ANALYSIS, "decisions", "area_cells_r5.parquet"))
     a2 = pd.read_parquet(p("decisions", f"area_cells_{state}.parquet"))
     ain = pd.read_parquet(p("decisions", f"area_cells_within_state_{state}.parquet"))
     cells_state = pd.Series(mo["h3_5"].values).value_counts()
@@ -508,6 +549,47 @@ def fit_sensitivity(state, s2):
             "change_class_exact_on_comparable": float((cc[comp] == base[comp]).mean())}
 
 
+# ----------------------------------------------------------------------------- noise
+
+def noise(state, s2=None, mo=None):
+    """Robust SD of D per sensor on large, high-confidence, same-crop fields, and the change scale k."""
+    t0 = time.time()
+    s2 = s2 if s2 is not None else pd.read_parquet(p("year=2024", f"state={state}", "fields_scored.parquet"))
+    mo = mo if mo is not None else modis_fields(state)
+    assert np.array_equal(s2["fid"].values, mo["fid"].values)
+    comp = ["large_decline", "decline", "stable", "gain", "large_gain"]
+    cc_s, cc_m = s2["change_class"].astype(str).values, mo["change_class"].values
+    Ds = s2["r_adj_2024"].values - s2["r_adj_2020"].values
+    Dm = mo["r_adj_2024"].values - mo["r_adj_2020"].values
+    both = np.isin(cc_s, comp) & np.isin(cc_m, comp) & np.isfinite(Ds) & np.isfinite(Dm)
+    sel = (both & (s2["peer_cls_2020"].values == s2["peer_cls_2024"].values)
+           & (s2["confidence"].astype(str).values == "high") & (mo["confidence"].values == "high")
+           & (s2["area_ha"].values > NOISE_MIN_HA))
+    sd_s2, sd_m = float(C.mad_sd(Ds[sel])), float(C.mad_sd(Dm[sel]))
+    k = sd_s2 / sd_m
+    ch = ["large_decline", "decline", "gain", "large_gain"]
+
+    def share(cc, m):
+        return round(100 * float(np.isin(cc[m], ch).mean()), 2)
+    cc_k = CH.change_class(Ds / k)
+    res = {"state": state, "min_ha": NOISE_MIN_HA, "fields": int(sel.sum()), "sd_s2": round(sd_s2, 4), "sd_modis": round(sd_m, 4),
+           "change_scale": round(k, 4), "comparable_fields": int(both.sum()),
+           "changing_share_large": {"modis": share(cc_m, sel), "s2": share(cc_s, sel), "s2_scaled": share(cc_k, sel)},
+           "changing_share_all": {"modis": share(cc_m, both), "s2": share(cc_s, both), "s2_scaled": share(cc_k, both)},
+           "exact_agreement_all": {"s2": round(100 * float((cc_s[both] == cc_m[both]).mean()), 2),
+                                   "s2_scaled": round(100 * float((cc_k[both] == cc_m[both]).mean()), 2)},
+           "by_band": {}}
+    for lo, hi, bn in BANDS:
+        b = both & (s2["area_ha"].values >= lo) & (s2["area_ha"].values < hi)
+        res["by_band"][bn] = {"fields": int(b.sum()), "modis": share(cc_m, b), "s2": share(cc_s, b), "s2_scaled": share(cc_k, b)}
+    with open(p("compare", f"noise_{state}.json"), "w") as fh:
+        json.dump(res, fh, indent=1)
+    with open(summ("s2_mt_noise.json"), "w") as fh:
+        json.dump(res, fh, indent=1)
+    log(step="noise", seconds=round(time.time() - t0), **{k_: v for k_, v in res.items() if k_ != "by_band"})
+    return res
+
+
 # ----------------------------------------------------------------------------- validate
 
 def validate(state):
@@ -551,10 +633,11 @@ def validate(state):
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("step", choices=["border", "change", "calibrate", "area", "fields", "compare", "validate", "all"])
+    ap.add_argument("step", choices=["border", "change", "calibrate", "area", "fields", "compare", "validate", "noise", "all"])
     ap.add_argument("--state", default="Mato_Grosso")
     args = ap.parse_args()
     s = args.state
+    STATE["name"] = s
     if args.step == "all":
         border(s)
         s2 = change(s)
@@ -563,10 +646,11 @@ def main():
         a, _ = area(s, s2, cal)
         s2 = fields(s, s2, cal, a, mo)
         compare(s, s2, mo)
+        noise(s, s2, mo)
         validate(s)
         return
     {"border": border, "change": change, "calibrate": calibrate, "area": lambda st: area(st), "fields": fields,
-     "compare": compare, "validate": validate}[args.step](s)
+     "compare": compare, "validate": validate, "noise": noise}[args.step](s)
 
 
 if __name__ == "__main__":

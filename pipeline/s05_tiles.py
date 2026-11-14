@@ -84,9 +84,15 @@ def wsl_run(cmd, out):
 SIMPLIFY_DEG = 0.0001
 LOG = os.path.join(C.TILES, "tiles_log.jsonl")
 ATTRS = ["fid", "area_ha", "crop_2020", "crop_2024", "prod_2020", "prod_2024", "change", "change_class",
-         "vigor_2020", "vigor_2024", "decision", "area_decision", "eco_id", "n_obs_2020", "n_obs_2024", "muni_code",
-         "confidence"]
-INT_ATTRS = {"fid", "crop_2020", "crop_2024", "vigor_2020", "vigor_2024", "n_obs_2020", "n_obs_2024", "muni_code", "eco_id"}
+         "vigor_2020", "vigor_2024", "decision", "decision_computed", "area_decision", "area_level", "eco_id",
+         "n_obs_2020", "n_obs_2024", "muni_code", "confidence", "source",
+         "native_share_1km", "native_share_250m", "native_share_1km_large", "largest_patch_ha_1km",
+         "regrowth_share_in", "regrowth_share_1km"]
+INT_ATTRS = {"fid", "crop_2020", "crop_2024", "vigor_2020", "vigor_2024", "n_obs_2020", "n_obs_2024", "muni_code", "eco_id",
+             "area_level", "largest_patch_ha_1km"}
+# shares to two decimals keep the field tiles small; everything else to three
+ROUND = {"native_share_1km": 2, "native_share_250m": 2, "native_share_1km_large": 2, "regrowth_share_in": 2,
+         "regrowth_share_1km": 2}
 WSL = ["wsl", "-d", "Ubuntu-22.04", "--"]
 
 
@@ -116,9 +122,9 @@ def props_lines(df):
             if v is None or v is pd.NA or (isinstance(v, float) and v != v):
                 continue
             if k in INT_ATTRS:
-                d[k] = int(v)
+                d[k] = int(round(float(v)))
             elif isinstance(v, (float, np.floating)):
-                d[k] = round(float(v), 3)
+                d[k] = round(float(v), ROUND.get(k, 3))
             else:
                 d[k] = str(v)
         out.append(dumps(d, separators=(",", ":")))
@@ -225,7 +231,7 @@ def build_summary(states, source="modis"):
         if not (os.path.exists(p) and os.path.exists(m)):
             continue
         df = pq.read_table(p, columns=["fid", "area_ha", "crop_2020", "crop_2024", "prod_2020", "prod_2024", "change",
-                                       "change_class", "decision", "area_decision"]).to_pandas()
+                                       "change_class", "decision", "decision_computed", "area_decision", "source"]).to_pandas()
         mm = pq.read_table(m, columns=["fid", "h3_5", "h3_6", "lat", "lon"]).to_pandas()
         assert np.array_equal(mm["fid"].values, df["fid"].values), "metrics order differs"
         df["h3_5"] = mm["h3_5"].values
@@ -242,9 +248,11 @@ def build_summary(states, source="modis"):
     # national frontier value (class-weighted cell_vs_nation change and the plain percent change)
     # is the cell's own at resolution 5 and 6; a resolution 6 cell without one, and every
     # resolution 7 cell, takes the value of the finest parent that has one.
+    # Since 14 November 2026 the area call is made per resolution 6 cell (area_level 6), or taken
+    # from the resolution 5 parent where the 6 km cell is too thin (area_level 5); area_cells.parquet
+    # holds one row per resolution 6 cell with fields, with the values the call used.
     D = os.path.join(C.ANALYSIS, "decisions")
     area = pd.read_parquet(os.path.join(D, "area_cells.parquet")).set_index("cell")
-    fr6 = pd.read_parquet(os.path.join(D, "frontier_r6.parquet")).set_index("cell")
     recs = []
     pm_inputs = []
     os.makedirs(GEOJSON, exist_ok=True)
@@ -254,23 +262,19 @@ def build_summary(states, source="modis"):
         key = df[f"h3_{res}"].astype("int64")
         out = summarize_cells(df, key)
         idx = out.index.values
-        p5 = np.array([h3.str_to_int(h3.cell_to_parent(h3.int_to_str(int(c)), 5)) for c in idx]) if res > 5 else idx
-        p6 = idx if res == 6 else (np.array([h3.str_to_int(h3.cell_to_parent(h3.int_to_str(int(c)), 6)) for c in idx]) if res > 6 else None)
+        p6 = idx if res == 6 else np.array([h3.str_to_int(h3.cell_to_parent(h3.int_to_str(int(c)), 6)) for c in idx])
         for col, name in (("crops_level", "area_crops_2024"), ("pasture_level", "area_pasture_2024"),
                           ("crops_change", "area_crops_change"), ("pasture_change", "area_pasture_change"),
                           ("mosaic_level", "area_mosaic_2024"), ("mosaic_change", "area_mosaic_change"),
                           ("eco_crops_level", "eco_crops_2024"), ("eco_pasture_level", "eco_pasture_2024"),
                           ("eco_crops_change", "eco_crops_change"), ("eco_pasture_change", "eco_pasture_change")):
-            out[name] = area[col].reindex(p5).round(3).values
-        out["eco_trend"] = area["eco_trend"].reindex(p5).values
+            out[name] = area[col].reindex(p6).round(3).values
+        out["eco_trend"] = area["eco_trend"].reindex(p6).values
+        out["area_score"] = area["area_score"].reindex(p6).round(3).values
+        out["area_level"] = area["area_level"].reindex(p6).values
+        out["area_call"] = area["area_decision"].reindex(p6).values
         for col in ("nat_change", "nat_pct_change"):
-            v5 = area[col].reindex(p5).values
-            if p6 is not None:
-                v6 = fr6[col].reindex(p6).values
-                v = np.where(np.isfinite(v6), v6, v5)
-            else:
-                v = v5
-            out[col] = np.round(v, 3 if col == "nat_change" else 1)
+            out[col] = np.round(area[col].reindex(p6).values, 3 if col == "nat_change" else 1)
         total_cells += len(out)
         src = os.path.join(GEOJSON, f"summary_r{res}.geojsonl")
         write_cells(out, src, res, h3)
@@ -309,7 +313,10 @@ def build_summary(states, source="modis"):
 SUMMARY_LEVELS = [(6, 3, 6), (7, 7, 9)] if os.environ.get("RLP_SUMMARY_LEVELS") == "7" else [(6, 3, 9)]
 
 # Decisions that do not ask anyone to act; the summary's top action ignores them.
-PASSIVE = ["keep", "intensify", "none"]
+PASSIVE = ["keep", "intensify", "none", "low_confidence"]
+# The top action is computed over the fields with a trusted call (decision other than low
+# confidence); a cell needs this many of them.
+ACTION_MIN_TRUSTED = 10
 ACTION_MIN_SHARE = 0.15
 ACTION_MIN_LIFT = 1.5
 AREA_BACKGROUND = ["area_fine", "none"]
@@ -334,8 +341,10 @@ def summarize_cells(df, key):
         "share_gain": np.isin(cc, ["gain", "large_gain"]),
         "share_no_data": cc == "no_data",
         "share_pasture": df["crop_2024"].values == 15,
-        "share_restore": d == "restore", "share_improve_yields": d == "improve_yields",
-        "share_convert_pasture": d == "convert_pasture",
+        "share_restore": d == "restore", "share_improve_yields": np.isin(d, ["improve_yields", "improve_spare"]),
+        "share_convert_pasture": np.isin(d, ["convert_pasture", "convert_cropland", "improve_pasture"]),
+        "share_low_confidence": d == "low_confidence",
+        "share_s2": df["source"].astype(str).values == "s2",
         "share_converted": np.isin(d, ["converted_below", "converted_ok"]),
         "share_switch_failed": d == "switch_failed"}).astype(np.float32)
     out = pd.DataFrame({
@@ -349,18 +358,23 @@ def summarize_cells(df, key):
     out["dominant_crop_2024"] = mode_of(k, df["crop_2024"].values).reindex(out.index)
     out["dominant_decision"] = mode_of(k, d).reindex(out.index)
     out["dominant_area_decision"] = mode_of(k, df["area_decision"].astype(str).values).reindex(out.index)
-    # top three decisions with shares, and the most common actionable decision with its share
-    cnt = pd.DataFrame({"k": k, "v": d}).groupby(["k", "v"]).size().reset_index(name="n")
-    cnt["share"] = cnt["n"] / cnt["k"].map(out["n_fields"])
+    # top three trusted decisions with shares of the trusted fields, and the top action. Since
+    # 14 November 2026 low-confidence fields show "too small to judge yet", so the summary is
+    # computed over the fields with a trusted call.
+    trusted = d != "low_confidence"
+    out["n_trusted"] = pd.Series(trusted).groupby(k).sum().reindex(out.index).fillna(0).astype(int).values
+    cnt = pd.DataFrame({"k": k[trusted], "v": d[trusted]}).groupby(["k", "v"]).size().reset_index(name="n")
+    cnt["share"] = cnt["n"] / cnt["k"].map(out["n_trusted"])
     cnt = cnt.sort_values(["k", "n"], ascending=[True, False])
     top3 = cnt.groupby("k").head(3)
     out["top3"] = top3.assign(t=top3["v"] + ":" + top3["share"].round(2).astype(str)).groupby("k")["t"].agg("|".join).reindex(out.index)
+    cnt = cnt[cnt["k"].map(out["n_trusted"]) >= ACTION_MIN_TRUSTED]
     # The top action is the actionable decision most over-represented against its national share,
     # among those that cover at least ACTION_MIN_SHARE of the cell's fields and at least
     # ACTION_MIN_LIFT times their national share. Without the lift rule improve yields, 27 percent
     # of all fields, is the most common action in 100,538 of 144,909 resolution 6 cells and
     # paints the map one color.
-    nat = pd.Series(d).value_counts(normalize=True)
+    nat = pd.Series(d[trusted]).value_counts(normalize=True)
     cnt["lift"] = cnt["share"] / cnt["v"].map(nat)
     act = cnt[~cnt["v"].isin(PASSIVE) & (cnt["share"] >= ACTION_MIN_SHARE) & (cnt["lift"] >= ACTION_MIN_LIFT)]
     act = act.sort_values(["k", "lift"], ascending=[True, False]).drop_duplicates("k").set_index("k")
@@ -388,7 +402,7 @@ def write_cells(out, src, res, h3):
             for k, v in row.items():
                 if v is None or (isinstance(v, float) and v != v):
                     continue
-                props[k] = int(v) if k in ("n_fields", "dominant_crop_2020", "dominant_crop_2024") else (float(v) if isinstance(v, (float, np.floating)) else v)
+                props[k] = int(v) if k in ("n_fields", "n_trusted", "area_level", "dominant_crop_2020", "dominant_crop_2024") else (float(v) if isinstance(v, (float, np.floating)) else v)
             fh.write(json.dumps({"type": "Feature", "properties": props, "geometry": {"type": "Polygon", "coordinates": [ring]}},
                                 separators=(",", ":")) + "\n")
 
@@ -397,13 +411,13 @@ def write_cells(out, src, res, h3):
 
 def build_stats(states):
     uf = C.state_uf_map(2024)
-    blank = lambda: {"n_fields": 0, "area_ha": 0.0, "change_class": {}, "decision": {}, "decision_v1": {}, "area_decision": {},  # noqa: E731
-                     "crop_2020": {}, "crop_2024": {}}
+    blank = lambda: {"n_fields": 0, "area_ha": 0.0, "change_class": {}, "decision": {}, "decision_computed": {}, "decision_v1": {},  # noqa: E731
+                     "area_decision": {}, "area_level": {}, "crop_2020": {}, "crop_2024": {}}
 
     def add(dst, counts, ab_counts):
         dst["n_fields"] += counts["n_fields"]
         dst["area_ha"] += counts["area_ha"]
-        for key in ("change_class", "decision", "decision_v1", "area_decision", "crop_2020", "crop_2024"):
+        for key in ("change_class", "decision", "decision_computed", "decision_v1", "area_decision", "area_level", "crop_2020", "crop_2024"):
             for k, v in counts.get(key, {}).items():
                 dst[key][k] = dst[key].get(k, 0) + v
         # the abandoned 2020 outlines: their own change class and decision, and the area call of their cell
@@ -415,6 +429,7 @@ def build_stats(states):
 
     brazil = blank()
     per_state = {}
+    sources = {}
     for s in states:
         p = os.path.join(C.ANALYSIS, "year=2024", f"state={s}", "counts.json")
         if not os.path.exists(p):
@@ -425,12 +440,16 @@ def build_stats(states):
         add(st, counts, counts.get("abandoned", 0))
         st["area_ha"] = round(st["area_ha"], 1)
         st["confidence_low"] = counts.get("confidence_low", 0)
+        st["source"] = counts.get("source", "modis")
+        sources[uf[s]] = st["source"]
         per_state[uf[s]] = st
         add(brazil, counts, counts.get("abandoned", 0))
         brazil["confidence_low"] = brazil.get("confidence_low", 0) + counts.get("confidence_low", 0)
     brazil["area_ha"] = round(brazil["area_ha"], 1)
     stats = {"placeholder": False, "generated": datetime.now().strftime("%Y-%m-%d"), "years": [2020, 2024],
-             "source": "MODIS MOD13Q1 16-day NDVI, 250 m", "brazil": brazil, "states": per_state}
+             "source": "MODIS MOD13Q1 16-day NDVI, 250 m; Sentinel-2 L2A monthly NDVI, 30 m, in "
+             + (", ".join(k for k, v in sorted(sources.items()) if v == "s2") or "no state"),
+             "sources": sources, "brazil": brazil, "states": per_state}
     os.makedirs(C.TILES, exist_ok=True)
     with open(os.path.join(C.TILES, "stats.json"), "w") as fh:
         json.dump(stats, fh, indent=1)

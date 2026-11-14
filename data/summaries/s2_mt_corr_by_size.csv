@@ -31,26 +31,26 @@ prod,2024,over 100 ha,67480,0.8213,0.7705
 prod,2024,all,1145969,0.6351,0.6348
 change_D,2024-2020,under 6.25 ha,529821,0.5091,0.5122
 change_class_exact,2024-2020,under 6.25 ha,505022,0.6672,
-decision_exact,,under 6.25 ha,580733,0.5416,
+decision_exact,,under 6.25 ha,580733,0.5401,
 change_D_sd_s2,2024-2020,under 6.25 ha,529983,0.9971,1.2114
 change_D_sd_modis,2024-2020,under 6.25 ha,531657,0.6395,0.8102
 change_D,2024-2020,6.25 to 25 ha,288643,0.7237,0.7009
 change_class_exact,2024-2020,6.25 to 25 ha,276380,0.7408,
-decision_exact,,6.25 to 25 ha,302268,0.6176,
+decision_exact,,6.25 to 25 ha,302268,0.6151,
 change_D_sd_s2,2024-2020,6.25 to 25 ha,288752,0.9210,1.1423
 change_D_sd_modis,2024-2020,6.25 to 25 ha,290308,0.6614,0.8496
 change_D,2024-2020,25 to 100 ha,192547,0.7539,0.7349
 change_class_exact,2024-2020,25 to 100 ha,179622,0.7465,
-decision_exact,,25 to 100 ha,200790,0.6586,
+decision_exact,,25 to 100 ha,200790,0.6551,
 change_D_sd_s2,2024-2020,25 to 100 ha,192689,0.9307,1.1768
 change_D_sd_modis,2024-2020,25 to 100 ha,193629,0.7521,0.9831
 change_D,2024-2020,over 100 ha,65234,0.6534,0.6247
 change_class_exact,2024-2020,over 100 ha,60882,0.6549,
-decision_exact,,over 100 ha,67715,0.6349,
+decision_exact,,over 100 ha,67715,0.6314,
 change_D_sd_s2,2024-2020,over 100 ha,65336,1.0237,1.2213
 change_D_sd_modis,2024-2020,over 100 ha,65386,0.9160,1.1103
 change_D,2024-2020,all,1076245,0.6204,0.6094
 change_class_exact,2024-2020,all,1021906,0.7003,
-decision_exact,,all,1151506,0.5874,
+decision_exact,,all,1151506,0.5852,
 change_D_sd_s2,2024-2020,all,1076760,0.9654,1.1880
 change_D_sd_modis,2024-2020,all,1080980,0.6766,0.8745

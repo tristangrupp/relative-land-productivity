@@ -1,0 +1,13 @@
+{
+ "Mato_Grosso": {
+  "source": "s2",
+  "change_scale": 1.2174,
+  "noise_fields": 202887,
+  "changing_share_large": {
+   "modis": 22.79,
+   "s2": 30.01,
+   "s2_scaled": 22.45
+  },
+  "swapped": "2026-11-14T13:59:16"
+ }
+}

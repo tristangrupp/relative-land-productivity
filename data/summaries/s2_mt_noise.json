@@ -1,0 +1,49 @@
+{
+ "state": "Mato_Grosso",
+ "min_ha": 25.0,
+ "fields": 202887,
+ "sd_s2": 0.9103,
+ "sd_modis": 0.7478,
+ "change_scale": 1.2174,
+ "comparable_fields": 1021906,
+ "changing_share_large": {
+  "modis": 22.79,
+  "s2": 30.01,
+  "s2_scaled": 22.45
+ },
+ "changing_share_all": {
+  "modis": 17.0,
+  "s2": 31.13,
+  "s2_scaled": 23.17
+ },
+ "exact_agreement_all": {
+  "s2": 70.03,
+  "s2_scaled": 76.09
+ },
+ "by_band": {
+  "under 6.25 ha": {
+   "fields": 505022,
+   "modis": 14.41,
+   "s2": 32.42,
+   "s2_scaled": 24.21
+  },
+  "6.25 to 25 ha": {
+   "fields": 276380,
+   "modis": 16.14,
+   "s2": 29.09,
+   "s2_scaled": 21.3
+  },
+  "25 to 100 ha": {
+   "fields": 179622,
+   "modis": 21.54,
+   "s2": 29.68,
+   "s2_scaled": 22.17
+  },
+  "over 100 ha": {
+   "fields": 60882,
+   "modis": 28.9,
+   "s2": 34.01,
+   "s2_scaled": 25.89
+  }
+ }
+}

@@ -39,6 +39,14 @@ plus `fields/abandoned/state=<State>.parquet` (54 objects, 12.9 GB). AWS profile
   change 2020 vs 2024; the national view must be dense (many small cells, not a few large
   ones); crop names must show on hover in every view; crop switched, newly cropped and
   abandoned draw at 50 percent opacity.
+- Rules of 14 Nov 2026 (decisions round 2): area call per 6 km cell with 15 km fallback;
+  low-confidence fields labeled "too small to judge yet" with the computed call kept; states
+  switch to Sentinel-2 one by one through pipeline/s09_swap_state_to_s2.py, with a `source`
+  attribute per field (Mato Grosso first); native vegetation near a field weighted by patch
+  size, regrowth inside it giving assisted natural regeneration; each field shows one
+  treatment plus other options, never a site plan; restore, assisted natural regeneration,
+  restore candidate and recently converted land in one distinguishable green family; native,
+  regrowth and CAR details in the field card only, not on the map, legend or tooltip.
 
 ## Pipeline, in order
 
@@ -463,3 +471,68 @@ DECISIONS_V2.md, S2_MATO_GROSSO.md. Methods: methods/METHODS.md. Site contract: 
   recommendation for the field treatment: what should be done, what options are." Each
   field shows a recommended treatment plus alternative options, never a site plan. In force.
   DECISIONS.md C19, C20, E8; METHODS.md 7.5 items 11 and 12.
+- Decisions round 2 agent, 14 Nov afternoon. Answers recorded here, numbers in the next entry.
+  Question 2, the user asked why "improve yields" replaced "switch crop" for fields below
+  their same-crop neighbors and stable. Answer given by the orchestrator, no change: a field
+  compared with the same crop within about 17 km (the H3 resolution 5 peer cell), under the
+  same weather, that stays behind points first to management (inputs, sowing date, variety,
+  field condition), which a crop switch does not fix. A crop or system mismatch shows when
+  the whole area's crop lags the national median, which is the area tier's "system misfit"
+  call. Caveat: soils vary within a cell, and MODIS mixes small fields with their neighbors.
+  Question 3, the user on the 15 percent plus 1.5 times national share rule for coloring the
+  zoomed-out decision cells: "great". Kept as it is.
+  Coordinator direction on colors: "Assisted Natural Regeneration should look different than
+  restoration on the map because those are 2 different recommendations but they still
+  should have some color similarity." Restore #008300, assisted natural regeneration
+  #2e9e82, restore candidate #285c23, recently converted below peers #7cc24e, at or above
+  #d7f28c: adjacent pairs of this green family separate by deltaE 12.1 or more under
+  simulated protan, deutan and tritan vision (Machado 2009 matrices, CIEDE2000), found by a
+  search around the suggested hexes. #2a9d8f and a mid green for the candidate failed the
+  check under tritan vision (6.4), so the candidate is a dark forest green. Low confidence
+  takes #cfd8e3, a cool light gray 11 deltaE from no data and from keep.
+  User direction on CAR and on the map: "please don't make the legend or the map
+  visualization super extra complicated ... I really don't want to see it on the main map
+  layers for the main land use recommendations". Native vegetation, patch size and regrowth
+  shares are in the field card details only; the legend keeps one swatch per recommendation.
+  The treatment-with-options direction is implemented as `options` per class in config.js,
+  listed in the field card under the recommended treatment.
+- Decisions round 2, numbers (14 Nov, 13:40 to 15:30). Item 1, pasture-only restore: in an
+  area-declining cell where pasture is the only use (crops absent, crop fields under 5 percent
+  of the cell), a declining same-crop field is restore. 88,873 fields computed nationally,
+  33,497 on the seven Amazon frontier ecoregions (0 before); after the low-confidence rule
+  14,508 and 2,173 are shown. Item 4, Amazon biome (IBGE Biomas 1:250,000, downloaded to
+  `raw\biomes\`): convert_cropland 5,556 computed (1,912 shown), improve_pasture
+  3,035 (975); convert_pasture outside the Amazon 316,951 (50,599). Item 5, area
+  call at 6 km: 100,122 of 144,909 resolution 6 cells make their own call (23,260,773
+  fields), 44,787 take the 15 km parent's (1,293,709 fields); cells: restore the area
+  184, good land underused 5,540, system misfit 1,712, area declining 9,301,
+  area fine 118,675, no call 9,497. The categorical area colors on 6 km cells
+  show real variation at zoom 4 (checked locally), so the continuous area score was added to
+  the summary tiles (`area_score`) but not drawn. Item 6: 30,023 recently converted fields
+  with no 2024 value moved to no data. Item 7: Mato Grosso is on Sentinel-2 (see the next
+  entry). Low confidence ("too small to judge yet"): 19,464,886 fields, per state MG 3,348,634, BA 2,038,481, RS 2,033,570, PR 1,549,023, SP 1,374,435, SC 1,307,926, PA 895,663, PE 787,800, GO 780,769, CE 647,556, ES 552,145, RO 523,616, MA 490,577, PB 476,673, PI 474,802, TO 319,133, RN 290,285, AL 275,159, MS 257,557, RJ 224,053, MT 223,502, SE 209,557, AC 157,389, AM 139,517, RR 56,267, DF 29,305, AP 1,492.
+  Native vegetation: large patch 50 ha (removes 20.2 percent of native pixels in the 1 km
+  bands); restore candidate at 30 percent of the 1 km band in large patches (the 75th
+  percentile, 0.300, of fields below peers and not gaining with high confidence); assisted
+  natural regeneration at regrowth on 10 percent of the field (99th percentile of all fields
+  0.114). Computed and shown: assisted natural regeneration 10,756 / 1,787, restore
+  candidate 1,564,599 / 296,148, improve yields spares land 4,150,191 / 874,731, restore
+  145,940 / 27,981; frontier 479 / 104, 144,774 / 44,406, 490,577 / 124,232, 33,497 / 2,173.
+  Regrowth uses MapBiomas 2020 and 2024 only: the 2023 map download was corrupted by two
+  curl runs writing into one file, and a retry measured 60 KB/s on the shared link, so 2023
+  was dropped (METHODS.md section 9); the code uses it automatically once on disk. No public
+  MapBiomas secondary vegetation GeoTIFF readable without Earth Engine was found.
+- Mato Grosso switched to Sentinel-2 (user: "slowly work through state by state updating
+  modis to sentinel"). Choice: normalize, not label only. k = 1.2174, the ratio of the robust
+  SD of D on s2 (0.910) to MODIS (0.748) on 202,887 fields over 25 ha, high confidence on
+  both sensors, same peer class in both years. Changing share on those fields 22.5 percent s2
+  scaled, 22.8 MODIS, 30.0 s2 unscaled; on all 1,021,906 comparable fields 23.2, 17.0, 31.1;
+  exact class agreement 76.1 percent scaled against 70.0 unscaled. The leftover gap is on
+  small fields, where MODIS reads shared pixels (MODIS changing share 14.4 percent under
+  6.25 ha and 28.9 over 100 ha; s2 scaled 24.2 and 25.9). The change view caveat says Mato
+  Grosso uses Sentinel-2 and states the scale; every field has `source` (tooltip and card).
+  Mato Grosso low confidence falls from 684,199 (MODIS) to 228,320 (s2). The swap runner is
+  `pipeline/s09_swap_state_to_s2.py --state <State>` (AGENTS.md, "Switching a state to
+  Sentinel-2"); its first run (assemble 177 s, metrics 71 s, relative 11 s, compare 45 s,
+  swap 39 s) produced the live Mato Grosso tables; the MODIS tables are kept under
+  `analysis\source=modis\`.
