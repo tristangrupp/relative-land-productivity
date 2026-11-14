@@ -430,3 +430,16 @@ DECISIONS_V2.md, S2_MATO_GROSSO.md. Methods: methods/METHODS.md. Site contract: 
 - DECISIONS.md added at the repo root (commit b50335e): one row per decision, grouped as data
   and compute rules, method, decision rules, map and site design, and open questions, with
   date, who decided, reason, commit and status. Linked from AGENTS.md and README.md.
+- Two more user decisions, implemented by the decisions round 2 agent. (1) Native vegetation
+  near a field is weighted by patch size, so large patches count more than slivers ("make
+  the larger patch more important than the small sliver vegetation"). (2) Secondary
+  vegetation and regrowth enter the rules: a declining or below-peer field with native
+  vegetation already returning inside it gets "Assisted natural regeneration" instead of
+  active restoration ("if there is natural regeneration within a declining productivity
+  field that could actually be assisted natural regeneration rather than active
+  restoration"). Regrowth is derived from the MapBiomas annual maps 2019 to 2024 (an
+  anthropic class earlier, native in 2023 and 2024), unless a public MapBiomas secondary
+  vegetation product readable without Earth Engine is found. Recommended by the
+  orchestrator, not yet decided by the user: use the CAR parcels (legal reserve and
+  riverside protection deficits under the Forest Code) to strengthen restore candidates.
+  DECISIONS.md C17, C18 and E7; METHODS.md 7.5 items 9 and 10.

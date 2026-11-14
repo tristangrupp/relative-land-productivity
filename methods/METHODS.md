@@ -353,6 +353,17 @@ tables in 7.1 and 7.2 do not yet show a rule below, the rule below governs.
    same choice.
 8. The zoomed-out cell coloring rule of the decision view (15 percent of the cell's fields and
    1.5 times the national share) is approved.
+9. Native vegetation near a field is weighted by patch size: large patches count more than
+   slivers (user: "make the larger patch more important than the small sliver vegetation").
+10. A declining or below-peer field with native vegetation already returning inside it gets
+    "Assisted natural regeneration" instead of active restoration. Regrowth is a pixel with
+    an anthropic MapBiomas class in an earlier year of 2019 to 2022 and a native class in
+    both 2023 and 2024, from the MapBiomas annual maps, unless a public MapBiomas secondary
+    vegetation product readable without Earth Engine is found.
+
+Recommended by the orchestrator on 14 November, not yet decided by the user: use the CAR
+parcels (legal reserve and riverside protection deficits under the Forest Code) to
+strengthen restore candidates.
 
 ### 7.4 Superseded 2026-11-13: version 1 decision table
 
