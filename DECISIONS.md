@@ -1,0 +1,96 @@
+# Decision register
+
+One entry per decision made on this project: the user's decisions and the method decisions. It
+is an index: the reasons in full and the numbers behind them are in WORKLOG.md (dated Log),
+methods/METHODS.md and the pipeline reports named in each entry. Created 14 November 2026.
+
+How to read the columns. "Who" says who made the decision: the user, or an agent. An agent
+decision says whether the user later approved it ("accepted"), saw it without objecting
+("not objected"), or has not been asked. "Commit" is the first commit that records or
+implements the decision, where known. "Status" is in force, superseded (with what replaced
+it), or pending.
+
+When you add a decision, add a row here and the dated Log entry in WORKLOG.md in the same
+commit. Do not rewrite a row; mark it superseded and add the new one.
+
+## (a) Data and compute rules
+
+| # | date | decision | who | reason | commit | status |
+|---|---|---|---|---|---|---|
+| A1 | 12 Nov | No Earth Engine in any form, and never the Google Cloud project tkt-tristan. Scripts must not import `ee`. | user | The user forbade tkt-tristan, then chose no Earth Engine at all. | 125d7cd | in force |
+| A2 | 12 Nov | NDVI comes from Planetary Computer Sentinel-2 L2A COGs read locally, the way the agriculture-and-drought repo did it (`field_response.py`). | user | Replaces the Earth Engine plan dropped the same day. | 125d7cd | in force (Sentinel-2 path); see A5 for the national release |
+| A3 | 12 Nov | Local compute only. No AWS compute. S3 is storage only, through the profile `mfr-datalab` (SSO). Peak memory about 20 GB at most. | user | The user's standing compute rule. | 125d7cd | in force |
+| A4 | 12 Nov | Fields come from `E:\trazo4_master_parquet_seamfix`, read only. Nothing under `E:\` is modified. Bulk data lives under `F:\relative-land-productivity-data`. | user | The seamfix copy is the best all-country Trazo4 release. | 125d7cd | in force |
+| A5 | 12 Nov | The national release runs on MODIS MOD13Q1 (250 m, 16-day NDVI, Terra only). Sentinel-2 at 30 m monthly is a refinement, tier 1 first (MT, PA, AM, AC, RO, RR, AP), then tier 2 (MS, GO, TO, MA). | agent (orchestrator), accepted by the user | The probe measured 0.37 Sentinel-2 tiles per minute on the shared network link: tier 1 alone was 38 to 80 times a 48 hour budget (pipeline/PROBE.md). | f94bf73 | in force; partly superseded for Mato Grosso by C14 |
+| A6 | 12 Nov | Extraction grid from the header of the S3 coverage GeoTIFF `brazil_coverage_<YYYY>.tif`: EPSG:4326, 0.000269 degree pixels, 1024 pixel tiles, 8,007 tiles touch fields. | agent (fields), not objected | The Earth Engine asset grid differs by about 1 pixel in longitude and 110 in latitude. | 6d079e7 | in force |
+| A7 | 12 Nov | Sentinel-2 day rule: the three least cloudy days per month (four when all three exceed 60 percent cloud), `--min-days 2`. | agent (extract-s2), not asked | Keeps Mato Grosso near 29 to 45 hours on the shared link; thinning lowered the January soybean median by 0.025 on one test tile (pipeline/EXTRACT_S2.md). | b441102 | in force; see E4 |
+| A8 | 12 Nov | Do not stop the detached Sentinel-2 extraction (`s03g_s2_fetch_reduce.py`, pid 36992) unless the user asks. Other downloaders on the machine stay paused until it ends. | user | The link is shared; the extraction is the bottleneck. | c973ef4 | in force |
+| A9 | 13 Nov | Publish only to this repo, its Pages site and the S3 prefix `trazofields/trazo4/relative-land-productivity/`. Anything else needs the user. | user | Standing rule. | c973ef4 | in force |
+
+## (b) Method
+
+| # | date | decision | who | reason | commit | status |
+|---|---|---|---|---|---|---|
+| B1 | 12 Nov | Agricultural year runs 1 September to 31 August ("2020" is 2019-09-01 to 2020-08-31). | agent (methods), not objected | Keeps September soybean sowing and the August end of second-season maize inside one year. | bf26caa | in force |
+| B2 | 12 Nov | Headline metric: seasonal NDVI integral above the field's own annual minimum, summed inside the CONAB state by class calendar window. Perennials and pasture use the 5th percentile of the class in the state as the floor. | agent (methods), not objected | The integral sums green canopy over the season and ranks dense canopies better than peak NDVI. | bf26caa | in force |
+| B3 | 12 Nov | Peers: same MapBiomas class, same H3 resolution 5 cell (about 17 km), same year, at least 30 fields; fallback to resolution 4, then 3. Classes 19 and 41 pool. | agent (methods), not objected | Near equal area cells small enough that weather varies little inside one; municipalities range from under 100 km² to 159,000 km². | bf26caa | in force |
+| B4 | 12 Nov | MODIS cadence: 23 composites per agricultural year instead of 12 monthly ones; a field is low confidence under 6.25 ha (one MODIS pixel) or with under 75 percent of window composites observed. | agent (orchestrator, analyze), accepted with A5 | MOD13Q1 is a 16-day product. | f94bf73, ab7aa80 | in force |
+| B5 | 12 Nov | Composite 2024225 has no Terra item on Planetary Computer; it is recorded missing and interpolated. | agent (extract), not asked | No source exists for it. | f5e9b86 | in force |
+| B6 | 12 Nov | Weather layer: regression per class by state of peer group medians on CHIRPS and TerraClimate anomalies, nine-year baseline 2016 to 2024. Fitted where at least 30 groups exist over both years, capped at half the intercept. 134 of 176 pairs fitted, median R squared 0.15. | agent (methods, analyze), not objected | Removes weather that varies between peer groups. METHODS.md first wrote a ten-year 2015 to 2024 baseline; the code uses nine complete years. | ab7aa80 | in force |
+| B7 | 13 Nov | Weather refit per ecoregion and class with mean annual CHIRPS rainfall as an extra regressor: tested, not adopted. Median R squared rose from 0.150 to 0.188, but the block pattern in the area term did not shrink (Moran's I 0.616 to 0.626). | agent (decision revamp), reported to the user | The refit did not remove what it was meant to remove. | 7440292 | not adopted; B6 stays |
+| B8 | 12 Nov | Change classes at plus or minus 1 and 2 peer SD of `D = R*_2024 - R*_2020`; crop switched, newly cropped and no data come first. | agent (methods), not objected | Under no change D has about one peer SD of noise. | bf26caa | in force |
+| B9 | 12 Nov | Abandoned and newly cropped use the MapBiomas class rule only; the METHODS.md overlay rules (50 percent cover between 2020 and 2024 polygons) are not applied. | agent (analyze), not asked | An overlay of 21.6 million by 24.6 million polygons was not affordable. | ab7aa80 | in force |
+| B10 | 12 Nov | Pasture vigor is not implemented. The MapBiomas platform jobs that would supply it need the user's approval. | agent (extract), user asked | No public GeoTIFF was found. | 2982c59 | pending (E1) |
+| B11 | 12 Nov, explained 13 Nov | The map unit is the 2024 polygon. The 2020 crop is the MapBiomas 2020 mode inside it, so fields cleared after 2020 show forest or savanna as their 2020 crop (forest formation 2.7 percent, savanna formation 3.0 percent of fields). | user (brief); explained to the user 13 Nov | The change map needs one geometry for both years. | 125d7cd, a6dcfdb | in force |
+| B12 | 13 Nov | Ecoregion peers (RESOLVE 2017) tested as a peer scale. Field against ecoregion agrees with field against cell on 80.2 percent of fields, and a peer-relative score cannot judge a region because it subtracts the region's own mean. | agent (ecoregions), reported to the user | Answer to the user's question whether ecoregions work as peers (pipeline/EXPLORE_ECOREGIONS.md). | a43f8c8 | finding; leads to B13 |
+| B13 | 13 Nov | Scale of comparison: field term = field against its 17 km cell peers; area term = cell against the national median of the same crop (`cell_vs_nation`); ecoregion scores stay as context. User: "we keep the ecoregion reference scores, those are good ... there needs to be a blend of the two", then "lets do brazil as a whole then to get the true frontiers of productivity change". | user | Regional calls (restore the frontier) need a reference larger than the region. | 8116abb | in force |
+| B14 | 13 Nov | First version 2 build used the cell against its ecoregion (`cell_vs_eco`, 0.5 and 0.3 ecoregion SD) as the area term. | agent (decision revamp) | Design agreed at 07:50. | 7440292 | superseded by B13 the same morning |
+| B15 | 13 Nov | Area thresholds in national SD of cell medians: below under -0.75, declining under -0.4. | agent (decision revamp), not objected | About the lowest quarter and fifth of pasture cells (METHODS.md 7.1). | 8116abb | in force |
+| B16 | 14 Nov | Sentinel-2 area tier is calibrated to the MODIS national reference per class and year (median and robust SD matched on fields over 25 ha with high MODIS confidence). | agent (s2 Mato Grosso), not asked | A within-state reference called 24 restore areas against MODIS's 0 and agreed on 80.9 percent of cells instead of 93.3. | e164686 | in force |
+
+## (c) Decision rules for the map's suggestions
+
+| # | date | decision | who | reason | commit | status |
+|---|---|---|---|---|---|---|
+| C1 | 12 Nov | Version 1 decision table: each field judged alone from its 2024 level and its trend (restore, switch crop, improve yields, intensify, keep, abandon, change land use pattern). | agent (methods) | First release. | bf26caa | superseded by C4 (kept as `decision_v1`) |
+| C2 | 13 Nov | "Change land use pattern" removed as a suggestion. | user ("meaningless") | It was only a label on 2,424,420 crop-switched fields. | 0e0ddea, 8116abb | in force |
+| C3 | 13 Nov | Newly cropped fields get their own suggestion, "Recently converted land", in a green near restore (restore #008300, recently converted #7cc24e). Later split into below and at-or-above ecoregion peers (`converted_below` at `r_eco_2024` under -0.5, `converted_ok`). | user; split by agent (decision revamp), not objected | Newly cropped fields have no 2020 productivity to compare. | a6dcfdb, 8116abb | in force; see C10 |
+| C4 | 13 Nov | Two tiers: the area call first, the field call second. Area labels: restore the area, good land underused, system misfit, area declining, area fine, no call. | user direction, agent design | User: decline with a crop switch, decline on the same crop, low pasture next to high soy, and an area low and declining everywhere are different stories. | 8116abb | in force |
+| C5 | 13 Nov | Field call table of METHODS.md 7.2: no data, abandon, recently converted below or at peers, restore, improve or convert pasture, switch paid off, switch failed, improve yields, intensify, keep, abandoned since 2020. | agent (decision revamp) | Implements C4. | 8116abb | in force, amended by C7 to C16 |
+| C6 | 13 Nov | Zoomed-out decision map: a cell shows its top action, the actionable decision covering at least 15 percent of the cell's fields and at least 1.5 times its national share; else gray "no action stands out". | 15 percent: orchestrator; 1.5 lift: agent; approved by the user 14 Nov | The most common action alone colored 100,538 of 144,909 cells improve yields. | 8116abb | in force |
+| C7 | 14 Nov | Declining fields in area-declining cells with pasture only become restore. | user (answer 1) | Restore was absent from the Amazon frontier. | pending | in force, implementation in progress (decisions round 2) |
+| C8 | 14 Nov | A field below its same-crop cell peers gets "improve yields", not "switch crop". Same crop, same weather and similar land within 17 km means a persistent gap points to management, which a crop switch does not fix; a crop-to-land mismatch is the area tier's system misfit. | agent design, explained to the user 14 Nov (answer 2) | The user asked why improve yields replaced switch crop. | 8116abb | in force |
+| C9 | 14 Nov | In the Amazon biome, pasture on good cropland gets "conversion to crops possible" only when the pasture itself is at or above its peers, with a note that this means already-cleared pasture, not new clearing; otherwise improve pasture. | user (answer 4: "if they're productive at the frontier, convert to cropland maybe") | Avoids suggesting conversion where pasture is weak and the frontier is active. | pending | in force, implementation in progress (decisions round 2) |
+| C10 | 14 Nov | Recently converted fields without a 2024 value become no data. | user (answer 6) | No basis for the below or at-peers split. | pending | in force, implementation in progress (decisions round 2) |
+| C11 | 14 Nov | The area call moves to H3 resolution 6 (about 6 km) with resolution 5 fallback. | user (answer 5: "area map looks too homogenous") | 15 km area calls looked uniform. | pending | in force, implementation in progress (decisions round 2); supersedes the resolution 5 area call |
+| C12 | 14 Nov | A field below its neighbors and declining may need improve yields or restore. Which one depends on a longer productivity time series and on how much native vegetation is nearby. | user | Two seasons do not separate a bad year from degradation. | pending | in force as direction; see C13, E2 |
+| C13 | 14 Nov | Below-neighbors fields not near native vegetation get improve yields (spares land elsewhere); one next to remnant native vegetation is a restore candidate. Native vegetation share within 1 km and 250 m from MapBiomas 2024. | user rule; buffers by agent | Restoration next to remnants is more likely to succeed and connect habitat. | pending | in progress (decisions round 2) |
+| C14 | 14 Nov | Mato Grosso switches to Sentinel-2 now, with a per-field source attribute; each further state switches in run order as its extraction completes, through a swap script. | user (answer 7: "slowly work through state by state updating modis to sentinel") | Supersedes the s2 agent's recommendation of 14 Nov (show both, MODIS default). | pending | in force, implementation in progress (decisions round 2) |
+| C15 | 14 Nov | A low-confidence MODIS field (small, likely mixing its neighbors' values) is labeled "Low confidence: too small to judge yet" until Sentinel-2 arrives for its state. | user | Its value is mostly its neighbors'. | pending | in force, implementation in progress (decisions round 2) |
+| C16 | 14 Nov | Cell coloring rule of C6 approved. | user (answer 3) | | 8116abb | in force |
+
+## (d) Map and site design
+
+| # | date | decision | who | reason | commit | status |
+|---|---|---|---|---|---|---|
+| D1 | 13 Nov | Default view: productivity change 2020 vs 2024. | user | | a9c6cf9 | in force |
+| D2 | 13 Nov | Crop names from the MapBiomas mode codes on hover in every view, 2020 and 2024; legend from the source.coop mapbiomas-brazil collection. | user | | a9c6cf9 | in force |
+| D3 | 13 Nov | Crop switched, newly cropped and abandoned draw at 50 percent opacity. | user | | 2d6754d | in force |
+| D4 | 13 Nov | The national view must be dense. 100 km and 40 km cells rejected ("way too huge"), a faded balanced color rejected ("too sparse"), 15 km cells rejected as too coarse. 6 km (H3 resolution 6) cells at every zoom from 3. Resolution 7 measured 173.0 MB, over the 150 MB budget. | user | | d9dc0ee, 6d05208, 8116abb | in force |
+| D5 | 13 Nov | Balanced cells in a gray that shows on the basemap. | user | | 6d05208 | in force |
+| D6 | 13 Nov | Change view: continuous diverging ramp of the class-weighted `cell_vs_nation` change, -1.0 to +1.0 national SD (the national frontier map). The earlier coloring by net share declining minus gaining, in steps of 5 and 15 points, moved to the tooltip. | user ("too coarse and oversimplified"), agent design | | 8116abb | in force |
+| D7 | 13 Nov | Legend rows show swatch, label and count; explanatory notes open from an info marker on hover, focus or tap. | user ("way too long for a legend") | | 8116abb | in force |
+| D8 | 13 Nov | Intensify in khaki #c4b38f instead of orange #eb6834. | user ("the whole thing is orange") | | 8116abb | in force |
+| D9 | 13 Nov | The Area decision view must not look coarser than the decision view: 6 km cells colored by the same rule. | user ("too coarse and not as nice as the suggested decision") | | 8116abb | in force; C11 changes the call itself to 6 km |
+| D10 | 13 Nov | Keep the look of the national-reference update. | user ("very good ... in the right direction") | | 8116abb | in force |
+| D11 | 13 Nov | Ecoregion scores shown as secondary context in the field tooltip and card and the cell card. | user (B13) | | 8116abb | in force |
+
+## (e) Open questions
+
+| # | raised | question | waiting on |
+|---|---|---|---|
+| E1 | 12 Nov | Pasture vigor: submit the MapBiomas platform jobs for the Collection 11 vigor GeoTIFFs? | user approval |
+| E2 | 14 Nov | A longer productivity time series for C12. MODIS 2016 to 2024 is about 9 years of composites: roughly 27 hours of download and 130 GB at the rates of the first fetch, competing with the Sentinel-2 extraction for the shared link. | user (cost) |
+| E3 | 14 Nov | Should conversion to crops ever show inside the Amazon beyond productive pasture (C9)? | user |
+| E4 | 14 Nov | Sentinel-2 composites from every clear day instead of the three least cloudy (A7), to find why the s2 peer score is less persistent between years than MODIS (0.25 against 0.40 over 100 ha). Test not run. | agent, when the link allows |
+| E5 | 13 Nov | A slimmer resolution 7 summary layer (fewer attributes) could fit the 150 MB budget. | user, if wanted |

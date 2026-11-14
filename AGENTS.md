@@ -17,6 +17,7 @@ says so.
 
 1. AGENTS.md (this file): rules and duties.
 2. WORKLOG.md: current state, open items, resume steps, and the dated log of every decision.
+   DECISIONS.md: the register of every decision, one row each, with who made it and its status.
 3. BRIEF.md: the agent contract, the folder contract, and the Decisions section.
 4. methods/METHODS.md: the method, including the decision table in section 7.
 5. pipeline/ANALYZE.md and the other pipeline reports for the stage you touch.
