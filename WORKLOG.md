@@ -116,23 +116,38 @@ DECISIONS_V2.md, S2_MATO_GROSSO.md. Methods: methods/METHODS.md. Site contract: 
   and test unthinned composites before any switch of the change view.
 - The Sentinel-2 extraction (pid 36992) keeps running for the other tier 1 and tier 2 states.
 
+## Current state, 14 November 2026, afternoon
+
+- The user answered the seven decision questions and set the native vegetation and low
+  confidence rules (Log, 14 Nov; METHODS.md 7.5; DECISIONS.md C7 to C16). The decisions round 2
+  agent is implementing them: area call at H3 resolution 6 with resolution 5 fallback, restore
+  in pasture-only area-declining cells, conversion to crops in the Amazon only for productive
+  pasture, recently converted without a 2024 value as no data, the low confidence label,
+  native vegetation share within 1 km and 250 m from MapBiomas 2024, and the Mato Grosso swap
+  to Sentinel-2 with a per-field source attribute.
+- Sentinel-2 extraction (pid 36992) runs at 41 tiles per hour (13:49); tiers 1 and 2 finish
+  around 17 Nov. Tier 3 is not queued.
+- MODIS agricultural years 2016 to 2019 and 2021 to 2023 download one file at a time (pid
+  44620), about 100 GB, logs under `F:elative-land-productivity-dataaw\modis\`.
+- DECISIONS.md indexes every decision with who made it and its status.
+
 ## Open items
 
-1. Decisions version 2 is built (see the log). Questions for the user, from DECISIONS_V2.md:
-   restore is rare (91,076 fields, none on the Amazon frontier); should area declining with
-   pasture alone lead to restore for its declining fields? Is "improve yields" right for
-   below-and-stable fields that version 1 called switch crop? Is the 1.5 lift in the
-   zoomed-out top-action rule acceptable?
-2. Resolution 7 summary cells (about 2.5 km) at zooms 7 to 9 measured 173.0 MB, over the
-   150 MB budget; resolution 6 is used at every zoom. A slimmer resolution 7 layer (fewer
-   attributes) could fit if the user wants it.
-3. Pasture vigor: user to decide whether to submit the MapBiomas platform jobs.
-4. Sentinel-2 refinement: Mato Grosso analyzed (14 Nov, pipeline/S2_MATO_GROSSO.md). User to
-   decide whether s2 goes on the map and how (recommended: show both, MODIS default). Open
-   test: unthinned s2 composites on sample tiles, to find why the s2 peer score is less
-   persistent between years than MODIS even on fields over 100 ha. Then tier 1, then tier 2.
-5. The user may want conversion of pasture to crop never suggested inside the Amazon biome
-   (asked, not yet answered).
+1. Decisions round 2 (in progress): implement the 14 Nov user decisions, rebuild the tiles and
+   publish. Then swap each further state to Sentinel-2 in run order as its extraction
+   completes.
+2. Longer productivity time series: MODIS 2016 to 2019 and 2021 to 2023 downloading; then
+   extract, reduce and use it in the improve yields or restore choice (METHODS.md 7.5 item 7).
+3. Sentinel-2 timing: tell the user if the extraction approaches three weeks. A Sentinel-2
+   record as long as the MODIS one (8 agricultural years) would take about 4 to 5 weeks for
+   all of Brazil; the user has not decided. Whether to queue tier 3 (3,126 tiles, about 3
+   more days) is also open.
+4. Pasture vigor: user to decide whether to submit the MapBiomas platform jobs.
+5. Conversion to crops inside the Amazon beyond productive pasture: user has not said.
+6. Sentinel-2 composites from every clear day instead of the three least cloudy: test not
+   run. It may explain why the s2 peer score is less persistent between years than MODIS
+   (0.25 against 0.40 over 100 ha).
+7. A slimmer resolution 7 summary layer could fit the 150 MB budget if the user wants it.
 
 ## How to resume after a context reset
 
@@ -370,7 +385,7 @@ DECISIONS_V2.md, S2_MATO_GROSSO.md. Methods: methods/METHODS.md. Site contract: 
   baseline, agricultural years 2016 to 2024 (METHODS.md first wrote ten years, 2015 to
   2024); change classes are at plus or minus 1 and 2 peer SD. Every decision is now indexed
   in DECISIONS.md.
-- 06:00 to 14:00 User answers to the seven questions of the decision review (relayed by the
+- User answers to the seven questions of the decision review (relayed by the
   coordinator):
   1. Declining fields in area-declining cells with pasture only become restore: yes.
   2. The user asked why "improve yields" replaced "switch crop" for fields below their

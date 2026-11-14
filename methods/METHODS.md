@@ -58,6 +58,20 @@ value. Quality flag per field and year: `q_fy` = number of valid field-months ou
 the field's calendar window, kept in the output and shown on the map; fields with `q_fy <
 50 percent of the window` get no class.
 
+Note added 2026-11-14 (documentation agent), on the national release. The release of 13
+November 2026 runs on MODIS MOD13Q1 (Planetary Computer `modis-13Q1-061`, Terra only, 250 m),
+not on Sentinel-2, because the shared network link made national Sentinel-2 infeasible (0.37
+tiles per minute; pipeline/PROBE.md). The orchestrator decided this on 12 November and the user
+accepted it. Cadence is 16 days: 23 composites per agricultural year, from day 241 of the year
+before to day 225. Composite 2024225 has no Terra item on Planetary Computer; it is recorded
+missing and interpolated like any missing composite. A field is low confidence when it is
+under 6.25 ha (one MODIS pixel) or fewer than 75 percent of its window composites were
+observed in either year. The Sentinel-2 monthly method above applies to the refinement, tier
+1 (MT, PA, AM, AC, RO, RR, AP) then tier 2 (MS, GO, TO, MA); since 14 November each state's
+fields switch to Sentinel-2 as its extraction completes (user decision, DECISIONS.md C14). A
+longer MODIS record, agricultural years 2016 to 2019 and 2021 to 2023, is downloading since 14
+November (DECISIONS.md A10).
+
 ## 4. Per-field metrics
 
 Window: `[s, e]` is the state x class window from `data/calendars/class_window_lookup.csv`,
@@ -132,6 +146,14 @@ switch inside the same MapBiomas class. The map says this in the legend and in t
 popup: "relative greenness, weather-corrected; irrigation, planting date and cultivar are not
 separated".
 
+Superseded 2026-11-14 note (documentation agent): the code (`s04_metrics.py`) uses a
+nine-year baseline, the complete agricultural years 2016 to 2024, not the ten years 2015 to
+2024 written above. Layer 2 is fitted only for a class and state with at least 30 peer groups
+over both years, evaluated inside the fitted anomaly range, and the weather term is capped at
+half the intercept. On the national MODIS run 134 of 176 class by state pairs were fitted,
+median R squared 0.15. A per-ecoregion refit was tested on 13 November and not adopted
+(section 7.3).
+
 ## 6. Change measure and classes
 
 `D_f = R*_f,2024 - R*_f,2020` on the 2024 polygon, in peer standard deviations, where the
@@ -153,6 +175,14 @@ separated".
 The thresholds are provisional; under no change, D has about one peer standard deviation of
 noise, so ±1 marks one-sigma change. The analyze agent reports the share of fields per class
 and checks the thresholds against the validation in section 8.
+
+Note added 2026-11-14 (documentation agent), on what the release implements. The overlay
+rules for newly cropped and abandoned (more than 50 percent cover between 2020 and 2024
+polygons) are not applied; only the MapBiomas class rules are, because an overlay of 21.6
+million by 24.6 million polygons was not affordable (pipeline/ANALYZE.md). The pasture vigor
+row is not implemented: no public GeoTIFF was found, and the MapBiomas platform jobs that
+would supply it wait for the user's approval. Newly cropped fields are named "recently
+converted land" on the map (user decision of 13 November 2026).
 
 ## 7. Decision framing
 
@@ -297,6 +327,32 @@ neighbors 0.616 on the state fit and 0.626 on the refit, neighbor correlation at
 120 km) 0.23 and 0.35. The correlation of the cell's change with its change in precipitation
 anomaly fell from 0.13 to 0.04, so the blocks are not the precipitation anomaly the fit can
 see. The refit was not adopted; the state-class fit of section 5 stays.
+
+### 7.5 User decisions of 14 November 2026
+
+Recorded by the documentation agent. The decisions round 2 agent implements them; where the
+tables in 7.1 and 7.2 do not yet show a rule below, the rule below governs.
+
+1. Area call resolution: the area call is made per H3 resolution 6 cell (about 6 km), with the
+   resolution 5 cell as fallback where resolution 6 lacks the fields (user: "area map looks
+   too homogenous").
+2. Declining fields in area-declining cells with pasture only become restore.
+3. A field below its same-crop cell peers gets improve yields, not switch crop: same crop,
+   same weather and similar land within 17 km point to management. A crop-to-land mismatch is
+   the area tier's system misfit.
+4. Inside the Amazon biome, pasture on good cropland gets "conversion to crops possible" only
+   when the pasture itself is at or above its peers, with a note that this means
+   already-cleared pasture, not new clearing. Otherwise the suggestion is improve pasture.
+5. Recently converted fields without a 2024 value become no data.
+6. A low-confidence MODIS field is labeled "Low confidence: too small to judge yet" until
+   Sentinel-2 arrives for its state.
+7. A field below its neighbors and declining may need improve yields or restore. A field not
+   near native vegetation gets improve yields; one next to remnant native vegetation is a
+   restore candidate. Native vegetation share within 1 km and 250 m comes from MapBiomas
+   2024. A longer productivity time series (MODIS 2016 to 2023, downloading) is to inform the
+   same choice.
+8. The zoomed-out cell coloring rule of the decision view (15 percent of the cell's fields and
+   1.5 times the national share) is approved.
 
 ### 7.4 Superseded 2026-11-13: version 1 decision table
 
