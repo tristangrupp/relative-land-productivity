@@ -124,7 +124,10 @@ DECISIONS_V2.md, S2_MATO_GROSSO.md. Methods: methods/METHODS.md. Site contract: 
   in pasture-only area-declining cells, conversion to crops in the Amazon only for productive
   pasture, recently converted without a 2024 value as no data, the low confidence label,
   native vegetation share within 1 km and 250 m from MapBiomas 2024, and the Mato Grosso swap
-  to Sentinel-2 with a per-field source attribute.
+  to Sentinel-2 with a per-field source attribute. Also patch-size weighting of nearby
+  native vegetation, "Assisted natural regeneration" for fields with regrowth inside them,
+  and a recommended treatment with alternatives per field (DECISIONS.md C17, C18, C20).
+- A CAR agent computes per-field Forest Code deficit indicators (DECISIONS.md C19).
 - Sentinel-2 extraction (pid 36992) runs at 41 tiles per hour (13:49); tiers 1 and 2 finish
   around 17 Nov. Tier 3 is not queued.
 - MODIS agricultural years 2016 to 2019 and 2021 to 2023 download one file at a time (pid
@@ -148,6 +151,8 @@ DECISIONS_V2.md, S2_MATO_GROSSO.md. Methods: methods/METHODS.md. Site contract: 
    run. It may explain why the s2 peer score is less persistent between years than MODIS
    (0.25 against 0.40 over 100 ha).
 7. A slimmer resolution 7 summary layer could fit the 150 MB budget if the user wants it.
+8. CAR-derived indicators for MT, MA, TO and GO: user to say whether the Restoration
+   Explorer local-only rule applies. Held local until then.
 
 ## How to resume after a context reset
 
@@ -443,3 +448,18 @@ DECISIONS_V2.md, S2_MATO_GROSSO.md. Methods: methods/METHODS.md. Site contract: 
   orchestrator, not yet decided by the user: use the CAR parcels (legal reserve and
   riverside protection deficits under the Forest Code) to strengthen restore candidates.
   DECISIONS.md C17, C18 and E7; METHODS.md 7.5 items 9 and 10.
+- User approved the CAR parcel recommendation: "I think your recommendation with the car
+  parcel data is a good one. Again like please document this really well and the decisions
+  behind doing it". What it does: a restore candidate inside a property with a Forest Code
+  legal reserve deficit (art. 12 of Law 12.651/2012: 80 percent of the property in forest,
+  35 percent in Cerrado inside the Legal Amazon, 20 percent elsewhere) or a riverside
+  protection deficit is a stronger restore case. Why: the owner already has a legal duty to
+  restore on that property, so restoration there is more likely to happen and to find
+  funding. The indicator is screening, not a legal finding, because CAR is self-declared.
+  A CAR agent computes per-field indicators now. The property code `cod_imovel` is never
+  published. CAR-derived indicators for MT, MA, TO and GO stay local until the user says
+  whether the Restoration Explorer local-only rule applies here (open question).
+- User: "I don't want to have a restoration plan done for the particular field site, just a
+  recommendation for the field treatment: what should be done, what options are." Each
+  field shows a recommended treatment plus alternative options, never a site plan. In force.
+  DECISIONS.md C19, C20, E8; METHODS.md 7.5 items 11 and 12.

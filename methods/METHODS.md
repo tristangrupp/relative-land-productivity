@@ -363,7 +363,17 @@ tables in 7.1 and 7.2 do not yet show a rule below, the rule below governs.
 
 Recommended by the orchestrator on 14 November, not yet decided by the user: use the CAR
 parcels (legal reserve and riverside protection deficits under the Forest Code) to
-strengthen restore candidates.
+strengthen restore candidates. The user approved it the same day (item 11).
+
+11. CAR parcels: a restore candidate inside a CAR property with a Forest Code legal reserve
+    deficit (art. 12 of Law 12.651/2012: 80 percent of the property in forest, 35 percent in
+    Cerrado inside the Legal Amazon, 20 percent elsewhere) or a riverside protection deficit
+    is a stronger restore case. The indicator is screening, not a legal finding. The property
+    code `cod_imovel` is never published. CAR-derived indicators for MT, MA, TO and GO stay
+    local until the user says whether the Restoration Explorer local-only rule applies.
+12. Each field shows a recommended treatment and alternative options, never a site
+    restoration plan (user: "just a recommendation for the field treatment: what should be
+    done, what options are").
 
 ### 7.4 Superseded 2026-11-13: version 1 decision table
 
