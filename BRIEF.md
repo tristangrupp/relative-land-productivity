@@ -331,3 +331,7 @@ before it ends, in addition to the Decisions entry here.
   the change class on 70.0 percent of comparable fields, and s2 flags 1.7 times as many
   changing fields. Recommended to the user: show both, MODIS default. Report:
   `pipeline/S2_MATO_GROSSO.md`.
+- 2026-11-14 documentation: DECISIONS.md at the repo root is the register of every decision
+  (data and compute, method, decision rules, map and site, open questions), with date, who
+  decided, reason, commit and status. Add a row there with every new decision, alongside the
+  dated WORKLOG.md entry.
