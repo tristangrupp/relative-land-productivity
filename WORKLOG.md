@@ -128,7 +128,7 @@ DECISIONS_V2.md, S2_MATO_GROSSO.md. Methods: methods/METHODS.md. Site contract: 
 - Sentinel-2 extraction (pid 36992) runs at 41 tiles per hour (13:49); tiers 1 and 2 finish
   around 17 Nov. Tier 3 is not queued.
 - MODIS agricultural years 2016 to 2019 and 2021 to 2023 download one file at a time (pid
-  44620), about 100 GB, logs under `F:elative-land-productivity-dataaw\modis\`.
+  44620), about 100 GB, logs under `F:\relative-land-productivity-data\raw\modis\`.
 - DECISIONS.md indexes every decision with who made it and its status.
 
 ## Open items
