@@ -322,3 +322,12 @@ before it ends, in addition to the Decisions entry here.
   not adopted. The site shows the national frontier change map on 6 km cells with a continuous
   ramp, an Area decision view, a top-action decision summary, and short legends with info
   tooltips; `decision_v1` keeps the old suggestion.
+- 2026-11-14 s2 Mato Grosso: the Sentinel-2 chain runs per state with `s04_metrics.py --source
+  s2`, `s04_relative.py --source s2 --no-summary-copy` (weather fit refitted on s2) and
+  `s08_s2_compare.py all`, which writes only under `analysis\source=s2\` and never the live
+  MODIS fields_scored. The s2 area tier uses the MODIS national reference after a linear
+  calibration per class and year (median and robust SD matched on fields over 25 ha with high
+  MODIS confidence). In Mato Grosso the area call matches MODIS on 93.3 percent of cells and
+  the change class on 70.0 percent of comparable fields, and s2 flags 1.7 times as many
+  changing fields. Recommended to the user: show both, MODIS default. Report:
+  `pipeline/S2_MATO_GROSSO.md`.

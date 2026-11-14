@@ -64,9 +64,10 @@ plus `fields/abandoned/state=<State>.parquet` (54 objects, 12.9 GB). AWS profile
 | ecoregions | s06_ecoregion_peers.py | analysis\ecoregions, data/summaries/ecoregions*.csv |
 | weather refit test | s07_weather_refit.py (not adopted) | analysis\weather_refit, data/summaries/weather_refit_compare.json |
 | decisions v2 | s07_decisions.py national, area, fields, report, lookup (after s04_change and s06 score, before s05) | analysis\decisions, columns in fields_scored, data/summaries/decisions_v2*, docs/data/ecoregions.json |
+| s2 comparison | s08_s2_compare.py all --state <State> (after s04_metrics and s04_relative --source s2 --no-summary-copy) | analysis\source=s2\, data/summaries/s2_mt_*.csv; never writes the live MODIS tables |
 
 Reports: pipeline/PROBE.md, EXTRACT.md, EXTRACT_S2.md, ANALYZE.md, EXPLORE_ECOREGIONS.md,
-DECISIONS_V2.md. Methods: methods/METHODS.md. Site contract: docs/DATA_CONTRACT.md.
+DECISIONS_V2.md, S2_MATO_GROSSO.md. Methods: methods/METHODS.md. Site contract: docs/DATA_CONTRACT.md.
 
 ## Current state, 13 November 2026, 08:30
 
@@ -101,6 +102,20 @@ DECISIONS_V2.md. Methods: methods/METHODS.md. Site contract: docs/DATA_CONTRACT.
   MB/s), summary.pmtiles (92.4 MB), stats.json and the 54 GeoParquet files on S3, site at
   commit 8116abb and later on Pages, checked live.
 
+## Current state, 14 November 2026, 04:45
+
+- Sentinel-2 Mato Grosso analysis done (report pipeline/S2_MATO_GROSSO.md); nothing on the map
+  changed. s2 metrics and relative tables for Mato Grosso are under `analysis\metrics\source=s2`
+  and `analysis\relative\source=s2`; change classes, decisions and the comparison under
+  `analysis\source=s2\`. Area call the same as MODIS on 93.3 percent of the state's 3,132
+  resolution 5 cells; change class the same on 70.0 percent of comparable fields; decision the
+  same on 58.7 percent; s2 calls 1.7 times as many fields declining or gaining as MODIS;
+  682,147 of 684,199 MODIS low-confidence fields get an s2 change class. Validation against
+  IBGE does not separate the sensors. Recommendation to the user: show both (s2 values as
+  extra attributes on Mato Grosso fields), keep MODIS as the default and for the area calls,
+  and test unthinned composites before any switch of the change view.
+- The Sentinel-2 extraction (pid 36992) keeps running for the other tier 1 and tier 2 states.
+
 ## Open items
 
 1. Decisions version 2 is built (see the log). Questions for the user, from DECISIONS_V2.md:
@@ -112,7 +127,10 @@ DECISIONS_V2.md. Methods: methods/METHODS.md. Site contract: docs/DATA_CONTRACT.
    150 MB budget; resolution 6 is used at every zoom. A slimmer resolution 7 layer (fewer
    attributes) could fit if the user wants it.
 3. Pasture vigor: user to decide whether to submit the MapBiomas platform jobs.
-4. Sentinel-2 refinement for Mato Grosso, then tier 1, then tier 2.
+4. Sentinel-2 refinement: Mato Grosso analyzed (14 Nov, pipeline/S2_MATO_GROSSO.md). User to
+   decide whether s2 goes on the map and how (recommended: show both, MODIS default). Open
+   test: unthinned s2 composites on sample tiles, to find why the s2 peer score is less
+   persistent between years than MODIS even on fields over 100 ha. Then tier 1, then tier 2.
 5. The user may want conversion of pasture to crop never suggested inside the Amazon biome
    (asked, not yet answered).
 
@@ -311,3 +329,32 @@ DECISIONS_V2.md. Methods: methods/METHODS.md. Site contract: docs/DATA_CONTRACT.
   decision values, area_decision and eco_id, the field card shows the area call and the
   ecoregion line, and the legend counts are the version 2 ones (restore 91,076). Console:
   only errors from a browser extension.
+
+### 2026-11-14
+
+- 04:35 to 04:45 Sentinel-2 Mato Grosso agent (report pipeline/S2_MATO_GROSSO.md). Inputs
+  checked: s2 2024 layer 1,151,506 fields, 2020 layer 978,055, both 1,011 of 1,013 tiles
+  complete; 4,567 fields of the 2024 layer have no valid 2024 month. `s04_metrics.py` now takes
+  area_ha and mbmode from the prepared fields when the NDVI table lacks them (the s2 tables
+  hold fid and the series only). Metrics and relative ran for Mato Grosso on s2 (polys 2024
+  for both years, polys 2020 for 2020) with `--no-summary-copy`, so the live weather_fit.csv
+  is unchanged. Weather fit refitted on s2 (the code refits for polys 2024, and the fit is in
+  the sensor's units); median R squared 0.054 against 0.074 for MODIS Mato Grosso; the MODIS
+  fit applied instead changes the change class of 0.35 percent of fields. Border: with Mato
+  Grosso alone, 112 fields lose their peer group, 1,145 move to a coarser H3 level and 26,103
+  keep their group with fewer peers (27,360, 2.4 percent). New stage `s08_s2_compare.py`
+  reproduces s04_change and s07_decisions in memory and writes under `analysis\source=s2\`,
+  because those two scripts write fields_scored.parquet at a path with no source and would
+  overwrite the live tables. Area tier: s2 calibrated to the MODIS national reference per
+  class and year on fields over 25 ha with high MODIS confidence (median and robust SD
+  matched; Pearson from 0.58 for soybean 2020 to 0.96 for forest plantation 2024). This was
+  chosen over a within-state reference, which called 24 restore areas and 313 area-declining
+  cells against MODIS's 0 and 40 and agreed on 80.9 percent of cells instead of 93.3.
+  Comparison: change class exact on 70.0 percent of 1,021,906 comparable fields, same
+  direction on 73.6, opposite on 0.46; 2024 integral correlation 0.67 (under 6.25 ha) to 0.87
+  (25 to 100 ha); decisions 58.7 percent; area call per field 94.7 percent. The robust SD of
+  the s2 change is 0.97 against 0.68 for MODIS, and the 2020 to 2024 correlation of the peer
+  score is lower on s2 in every size band (0.25 against 0.40 over 100 ha); cause not
+  determined. IBGE validation on the same municipalities: soybean and maize Spearman between
+  -0.24 and +0.17 on both sensors. Recommendation: show both, MODIS default, no switch of the
+  change view yet. No tiles, site or upload touched.

@@ -180,7 +180,8 @@ def compute_state(source, polys, ay, state, ndvi_root=None, force=False):
     fill_cols = [s[1] for s in spec]
     mids = [s[2] for s in spec]
     dt = np.array([s[3] for s in spec], dtype=np.float64)
-    base_cols = ["fid", "area_ha", "mbmode"]
+    # the Sentinel-2 tables hold fid and the series only; area_ha and mbmode then come from the prepared fields
+    base_cols = ["fid"] + [c for c in ("area_ha", "mbmode") if c in pf.schema_arrow.names]
     extra = [c for c in ("n_cells", "dominant_share", "small_field") if c in pf.schema_arrow.names]
     nvy = [c for c in (f"n_valid_{ay}", "n_valid") if c in pf.schema_arrow.names][:1]
     tab = pf.read(columns=base_cols + extra + nvy + raw_cols + fill_cols)
@@ -192,9 +193,12 @@ def compute_state(source, polys, ay, state, ndvi_root=None, force=False):
 
     # attributes from the prepared fields
     fp = pq.ParquetFile(C.fields_path(polys, state))
-    attrs = fp.read(columns=["fid", "muni_code", "state_uf", "centroid_lon", "centroid_lat", "area_ha"]).to_pandas()
+    attrs = fp.read(columns=["fid", "muni_code", "state_uf", "centroid_lon", "centroid_lat", "area_ha", "mbmode"]).to_pandas()
     attrs = attrs.set_index("fid")
     df = df.join(attrs[["muni_code", "state_uf", "centroid_lon", "centroid_lat"]], on="fid")
+    for c in ("area_ha", "mbmode"):
+        if c not in df:
+            df[c] = attrs[c].reindex(df["fid"].values).values
     uf = attrs["state_uf"].iloc[0]
     if "small_field" not in df:
         df["small_field"] = df["area_ha"].values < 6.25

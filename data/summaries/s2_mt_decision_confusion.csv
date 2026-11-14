@@ -1,0 +1,13 @@
+modis,restore,converted_below,converted_ok,convert_pasture,switch_paid_off,switch_failed,improve_yields,intensify,keep,abandon,abandoned_outline,none
+restore,0,0,0,0,0,0,0,0,0,0,0,0
+converted_below,0,8880,3126,0,0,0,0,0,0,0,0,0
+converted_ok,0,10282,46877,0,0,0,0,0,0,0,0,0
+convert_pasture,0,0,0,10250,100,21,1519,1327,2302,200,0,0
+switch_paid_off,0,0,0,205,29376,6802,0,0,0,0,0,137
+switch_failed,0,0,0,116,6871,10754,0,0,0,0,0,62
+improve_yields,0,0,0,5092,0,0,211868,88913,22999,8414,0,1799
+intensify,0,0,0,4441,0,0,91344,176596,86754,1496,0,1515
+keep,0,0,0,3979,0,0,43981,73152,178915,629,0,1130
+abandon,0,0,0,190,0,0,4857,584,211,2133,0,52
+abandoned_outline,0,0,0,0,0,0,0,0,0,0,0,0
+none,0,0,0,0,4,4,224,148,124,5,0,746
