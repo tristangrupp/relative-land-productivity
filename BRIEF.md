@@ -335,3 +335,11 @@ before it ends, in addition to the Decisions entry here.
   (data and compute, method, decision rules, map and site, open questions), with date, who
   decided, reason, commit and status. Add a row there with every new decision, alongside the
   dated WORKLOG.md entry.
+- 2026-11-14 decisions round 2: the area call is per H3 resolution 6 cell with the resolution
+  5 parent as fallback (`area_level`); Mato Grosso's live tables come from Sentinel-2 with
+  change thresholds scaled by 1.2174, and `pipeline/s09_swap_state_to_s2.py --state <State>`
+  switches the next states in the agreed order (AGENTS.md); every field has `source`,
+  `decision_computed` (the call before the low-confidence label), native vegetation, patch
+  size and regrowth columns from MapBiomas 2020 and 2024, and the IBGE biome; new field
+  calls `assisted_regen`, `restore_candidate`, `improve_spare`, `convert_cropland`,
+  `improve_pasture`, `low_confidence`. Rules and numbers: METHODS.md 7.6, DECISIONS.md.

@@ -288,3 +288,17 @@ Data, under `F:\relative-land-productivity-data\analysis\`:
 `source=s2\compare\` (border and comparison JSON), `source=s2\validation\`, `source=s2\logs\`.
 Summaries: `data/summaries/s2_mt_*.csv` (seven files). Peak memory of every step was under
 3 GB; the whole chain runs in under two minutes.
+
+## Addendum, 14 November 2026: Mato Grosso switched to Sentinel-2
+
+The user chose to move the map to Sentinel-2 state by state ("slowly work through state by
+state updating modis to sentinel"), which replaces the recommendation above. Mato Grosso's
+live tables now come from s2 (`pipeline/s09_swap_state_to_s2.py --state Mato_Grosso`). The
+change classes divide D by a change scale k = 1.2174, the ratio of the robust SD of D on s2
+(0.910) to MODIS (0.748) over 202,887 fields above 25 ha with high confidence on both sensors
+and the same peer class in both years (`s08_s2_compare.py noise`,
+`data/summaries/s2_mt_noise.json`). On those fields s2 then calls 22.5 percent of fields
+changing against 22.8 for MODIS; over all comparable fields 23.2 against 17.0, with the gap on
+small fields. Low confidence in the state falls from 684,199 fields on MODIS to 228,320 on s2.
+The MODIS tables are kept under `analysis\source=modis\`. Details in METHODS.md 7.6 and
+WORKLOG.md.

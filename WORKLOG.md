@@ -142,11 +142,24 @@ DECISIONS_V2.md, S2_MATO_GROSSO.md. Methods: methods/METHODS.md. Site contract: 
   44620), about 100 GB, logs under `F:\relative-land-productivity-data\raw\modis\`.
 - DECISIONS.md indexes every decision with who made it and its status.
 
+## Current state, 14 November 2026, evening
+
+- Decisions round 2 is built (commit e617096 and later; METHODS.md 7.6; DECISIONS.md C7 to C20,
+  D12 to D14). Area call per 6 km cell with 15 km fallback; Mato Grosso on Sentinel-2 (change
+  scale 1.2174); low-confidence fields show "too small to judge yet" (19,464,886 fields);
+  native vegetation, patch size and regrowth split the fields below their neighbors into
+  assisted natural regeneration, restore candidate and improve yields; each field shows one
+  treatment plus options. `pipeline/s09_swap_state_to_s2.py --state <State>` switches the
+  next state (AGENTS.md). Publication status: see the last log entry.
+- Sentinel-2 extraction (pid 36992) and the MODIS long-series download (pid 44620) keep
+  running and fill the network link: uploads ran at about 1 MB/s on 14 Nov afternoon.
+
 ## Open items
 
-1. Decisions round 2 (in progress): implement the 14 Nov user decisions, rebuild the tiles and
-   publish. Then swap each further state to Sentinel-2 in run order as its extraction
-   completes.
+1. Swap each further state to Sentinel-2 with `pipeline/s09_swap_state_to_s2.py --state
+   <State>` in run order (Pará next) as its extraction completes; each run rebuilds the field
+   tiles (about 50 minutes) and uploads them. The GeoParquet upload of decisions round 2 may
+   still be pending (last log entry).
 2. Longer productivity time series: MODIS 2016 to 2019 and 2021 to 2023 downloading; then
    extract, reduce and use it in the improve yields or restore choice (METHODS.md 7.5 item 7).
 3. Sentinel-2 timing: tell the user if the extraction approaches three weeks. A Sentinel-2
@@ -154,13 +167,16 @@ DECISIONS_V2.md, S2_MATO_GROSSO.md. Methods: methods/METHODS.md. Site contract: 
    all of Brazil; the user has not decided. Whether to queue tier 3 (3,126 tiles, about 3
    more days) is also open.
 4. Pasture vigor: user to decide whether to submit the MapBiomas platform jobs.
-5. Conversion to crops inside the Amazon beyond productive pasture: user has not said.
+5. Conversion to crops inside the Amazon: answered 14 Nov (DECISIONS.md C9), implemented.
 6. Sentinel-2 composites from every clear day instead of the three least cloudy: test not
    run. It may explain why the s2 peer score is less persistent between years than MODIS
    (0.25 against 0.40 over 100 ha).
 7. A slimmer resolution 7 summary layer could fit the 150 MB budget if the user wants it.
 8. CAR-derived indicators for MT, MA, TO and GO: user to say whether the Restoration
    Explorer local-only rule applies. Held local until then.
+9. Regrowth confirmation with MapBiomas 2023: fetch `mapbiomas_brazil_2023.tif` (1.18 GB,
+   source.coop) into `raw\mapbiomas\` when the link allows, then rerun `s07_decisions.py
+   native` (about 30 minutes) and the decisions and tiles.
 
 ## How to resume after a context reset
 
