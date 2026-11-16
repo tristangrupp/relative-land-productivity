@@ -467,7 +467,9 @@ def ensure_weights(tile_id):
         return "cached"
     t0 = time.time()
     r = subprocess.run([WCI_PY, os.path.join(os.path.dirname(os.path.abspath(__file__)), "s03g_weights.py"),
-                        "build", tile_id], capture_output=True, text=True, timeout=1800)
+                        "build", tile_id], capture_output=True, text=True, timeout=1800,
+                       # no console window per tile (user, 16 Nov 2026: the E: windows must not show)
+                       creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0))
     if r.returncode != 0 or not os.path.exists(p):
         raise RuntimeError(f"weights build failed: {r.stderr[-400:]}")
     return f"built {time.time() - t0:.0f}s"

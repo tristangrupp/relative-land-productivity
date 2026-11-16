@@ -56,6 +56,16 @@ The work must survive a context reset of whoever runs it. So, as you work:
 - Do not submit forms, send messages or publish anywhere other than this repo, its Pages site
   and the S3 prefix below without asking the user.
 
+## Working rules from the user (16 November 2026)
+
+- Prioritize work that can be committed, pushed and made live on GitHub Pages soon.
+- Do not occupy the machine indefinitely; stop or hand back long jobs that are not needed.
+- Launch every long job hidden: no console windows (`pipeline/launch_detached.py`, or WMI
+  with ShowWindow 0; subprocesses with `creationflags=CREATE_NO_WINDOW`).
+- Commit and save work before context compaction, and record what remains to be done in
+  WORKLOG.md (Open items).
+- Keep methods/METHODS.md current on GitHub as the work progresses.
+
 ## Writing rules
 
 Apply to prose, code comments, commit messages, identifiers and JSON keys.

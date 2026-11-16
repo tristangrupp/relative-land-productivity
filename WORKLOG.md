@@ -596,3 +596,20 @@ DECISIONS_V2.md, S2_MATO_GROSSO.md. Methods: methods/METHODS.md. Site contract: 
   round 2 tile join twice. The fields step now joins in longitude strips of 400,000 fields,
   but it was not seen finishing; check peak memory on one state and keep it under 8 GB, one
   worker at a time, launched only through `pipeline/launch_detached.py` via WMI.
+- 16 Nov 15:05, the E: windows the user kept seeing came from the Sentinel-2 extraction:
+  `s03g_s2_fetch_reduce.py` (pid 12272) starts `s03g_weights.py build <tile>` with the E:
+  venv Python for every new tile, each in its own console window. Fixed in the code
+  (`creationflags=CREATE_NO_WINDOW`); the running extraction keeps the old code until it is
+  restarted, so the windows continue until then. The CAR jobs had also shown windows.
+- 16 Nov, user directions on how agents work: "prioritize things that can be pushed ASAP and
+  commited and made live on the github pages"; "i dont want my machine permanently occupied
+  by this session"; "make sure agents commit and save work before autocompact and record
+  things to be done"; "make sure the methodology md on the github stays up to date as things
+  progress"; "keep going since we've already done 16/27 states" (the CAR parcels). Added to
+  AGENTS.md.
+- 16 Nov 15:10, publication of decisions round 2: summary.pmtiles (103,301,045 bytes) and
+  stats.json uploaded and answer range requests with 206; the site pushed with them, so the
+  zoomed-out views and legend counts are the new ones. fields.pmtiles (7,047,407,349 bytes,
+  joined in WSL on 16 Nov after two joins were killed when the CAR job filled memory) is
+  uploading in a hidden process; until it lands, field zoom shows the 13 Nov field tiles.
+  GeoParquet upload (13 GB) still to do.
