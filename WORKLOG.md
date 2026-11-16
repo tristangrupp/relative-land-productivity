@@ -167,13 +167,13 @@ DECISIONS_V2.md, S2_MATO_GROSSO.md. Methods: methods/METHODS.md. Site contract: 
    all of Brazil; the user has not decided. Whether to queue tier 3 (3,126 tiles, about 3
    more days) is also open.
 4. Pasture vigor: user to decide whether to submit the MapBiomas platform jobs.
-5. Conversion to crops inside the Amazon: answered 14 Nov (DECISIONS.md C9), implemented.
+5. Closed: conversion to crops inside the Amazon was answered 14 Nov (DECISIONS.md C9) and is implemented.
 6. Sentinel-2 composites from every clear day instead of the three least cloudy: test not
    run. It may explain why the s2 peer score is less persistent between years than MODIS
    (0.25 against 0.40 over 100 ha).
 7. A slimmer resolution 7 summary layer could fit the 150 MB budget if the user wants it.
-8. CAR-derived indicators for MT, MA, TO and GO: user to say whether the Restoration
-   Explorer local-only rule applies. Held local until then.
+8. Answered: the user said on 14 Nov "We can just publish this to the github pages map, I
+   don't care", so CAR-derived indicators for MT, MA, TO and GO are not held local.
 9. Regrowth confirmation with MapBiomas 2023: fetch `mapbiomas_brazil_2023.tif` (1.18 GB,
    source.coop) into `raw\mapbiomas\` when the link allows, then rerun `s07_decisions.py
    native` (about 30 minutes) and the decisions and tiles.
