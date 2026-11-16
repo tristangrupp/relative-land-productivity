@@ -75,6 +75,15 @@ Apply to prose, code comments, commit messages, identifiers and JSON keys.
   copy to F:, because writing through /mnt/f is about 100 times slower (pipeline/s05_tiles.py
   does this).
 - GitHub in Git Bash: `export GH_TOKEN=$(printf 'protocol=https\nhost=github.com\n' | git credential fill | sed -n 's/^password=//p')`.
+- Long runs (16 November 2026): start them with `pipeline/launch_detached.py`, itself
+  launched through WMI, so they survive the end of the Claude session and console Ctrl-C.
+  Processes started from a Claude shell, with Start-Process, or through WMI with a `cmd`
+  console all died in November. In PowerShell:
+  `Invoke-CimMethod -ClassName Win32_Process -MethodName Create -Arguments @{ CurrentDirectory = 'C:\Users\grupp\src\relative-land-productivity'; CommandLine = '"<python>" C:\Users\grupp\src\relative-land-productivity\pipeline\launch_detached.py <log> <err> -- "<python>" -u pipeline\<script>.py <args>' }`,
+  with `<python>` the interpreter above. Wait for such a run inside your turn with cheap
+  periodic checks of its log; do not hand back while it runs. Run one heavy worker at a
+  time unless the orchestrator says otherwise, and keep each under about 8 GB: on 16 Nov two
+  CAR workers and a fields test filled memory and killed the tile join twice.
 - Several agents may work in the clone at once. Commit only your own files, pull with
   rebase (or `git rebase --autostash origin/main`) before pushing, and leave other agents'
   unstaged files alone.

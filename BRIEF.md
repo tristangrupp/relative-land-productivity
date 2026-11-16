@@ -343,3 +343,9 @@ before it ends, in addition to the Decisions entry here.
   size and regrowth columns from MapBiomas 2020 and 2024, and the IBGE biome; new field
   calls `assisted_regen`, `restore_candidate`, `improve_spare`, `convert_cropland`,
   `improve_pasture`, `low_confidence`. Rules and numbers: METHODS.md 7.6, DECISIONS.md.
+- 2026-11-16 CAR: `pipeline/s10_car_forest_code.py` builds Forest Code legal reserve
+  indicators per 2024 field from the source.coop CAR parcels (user choice), MapBiomas 2024 on a
+  90 m count grid, IBGE biomes and the Legal Amazon limit. Screening, not a legal finding;
+  `cod_imovel` is never published; APP not done. The indicators only tip the treatment and
+  order the options (METHODS.md 7.7, proposed). Run incomplete: 16 of 27 parcel states;
+  fields and summary not run. Report: `pipeline/CAR_FOREST_CODE.md`.

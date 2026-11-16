@@ -558,3 +558,41 @@ DECISIONS_V2.md, S2_MATO_GROSSO.md. Methods: methods/METHODS.md. Site contract: 
 - 16 Nov, user asked that pipeline jobs run with hidden windows. Long runs of this project go
   through `pipeline/launch_detached.py` (no console) started by WMI; the visible windows of
   16 Nov 14:26 came from two `s10_car_forest_code.py parcels` runs of the CAR agent.
+- 14 to 16 Nov, CAR agent (Forest Code legal reserve per field; DECISIONS.md A11, A12, B17,
+  B18, C21, E8; METHODS.md 7.5 items 13 to 15 and proposed section 7.7; report
+  pipeline/CAR_FOREST_CODE.md; script pipeline/s10_car_forest_code.py). The user's words:
+  "I think your recommendation with the car parcel data is a good one. Again like please
+  document this really well and the decisions behind doing it, and I don't want to have a
+  restoration plan done for the particular field site, just a recommendation for the field
+  treatment: what should be done, what options are." Then: "I don't want the forest code
+  policy and the CAR data to be super obviously incorporated onto the map ... but do let it
+  inform how the restoration is recommended so it's grounded in Brazilian policy ... please
+  don't make the legend or the map visualization super extra complicated. If you really want
+  to do that we could make a separate toggle to view a different map and show that nuance".
+  The preferred CAR dataset is the source.coop cadastral catalog (brazil-car-area-imovel,
+  8,453,552 polygons, SICAR snapshot of 16 July 2026), downloaded to
+  `F:\relative-land-productivity-data\raw\car\` and checked against its sha256. On
+  publication: "We can just publish this to the github pages map, I don't care", so nothing
+  is held from publication except `cod_imovel`, which never leaves `analysis\car\`.
+  Why CAR and the legal reserve: a below-peer field near native vegetation could be restored
+  or farmed better; if its property owes legal reserve under art. 12 of Law 12.651/2012, the
+  owner has a legal duty to add native vegetation there, so restoration is more likely to
+  happen and be funded. Simplifications: requirement by the IBGE biome under the property's
+  interior point and the IBGE Legal Amazon limit (0.80, 0.35, 0.20); native share from
+  MapBiomas 2024 on a 90 m grid of 3 by 3 blocks; no art. 67 small-property exemption,
+  consolidation, compensation or state zoning (flagged, not modeled); riverside protection
+  (APP) not done because no fine national stream map is usable locally. The proposal in
+  METHODS.md 7.7 changes only which treatment a field gets (improve_spare to
+  restore_candidate when the property over 4 fiscal modules has a deficit of 5 points or
+  more and large native patches cover at least 15 percent within 1 km) and the order of the
+  options; no class, color, legend row or tooltip row.
+  Status at 16 Nov 14:50, stopped at the orchestrator's request: parcel indicators are
+  written for 16 of 27 states under `analysis\car\parcels\` (AC AL AP BA DF MG MT PA PB PE
+  RJ RO RR RS SE SP); Mato Grosso took 113 s once repeated vertices were removed
+  (exactextract 0.3 hung on them). Remaining: the parcels step for CE ES GO MA MS PI PR RN
+  SC TO AM, then `fields` for all 27 field states, then `summary`, then the numbers in
+  CAR_FOREST_CODE.md. Before resuming, bound memory: a fields test on Mato Grosso and two
+  parcel workers filled the machine on 16 Nov (one process at 92 GB virtual) and killed the
+  round 2 tile join twice. The fields step now joins in longitude strips of 400,000 fields,
+  but it was not seen finishing; check peak memory on one state and keep it under 8 GB, one
+  worker at a time, launched only through `pipeline/launch_detached.py` via WMI.

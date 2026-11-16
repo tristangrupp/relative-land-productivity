@@ -14,6 +14,7 @@ input. No Earth Engine is used anywhere.
 | pasture vigor | MapBiomas Collection 10 pasture vigor, per-year GeoTIFF from the MapBiomas platform download (plataforma.brasil.mapbiomas.org, pasture quality theme); no direct public URL was found | 30 m | class per pixel: 1 low, 2 medium, 3 high, as the Pará pipeline reads them; verify with a histogram before use |
 | precipitation | CHIRPS v2.0 monthly GeoTIFFs, `https://data.chc.ucsb.edu/products/CHIRPS-2.0/global_monthly/tifs/chirps-v2.0.<YYYY>.<MM>.tif.gz` (the listing answered 429 on 2026-11-12; confirm the names) | 0.05 degree | mm per month |
 | temperature | TerraClimate monthly `tmax` and `tmin`, yearly files `https://climate.northwestknowledge.net/TERRACLIMATE-DATA/TerraClimate_<var>_<YYYY>.nc`. The Planetary Computer `terraclimate` collection ends 2021-12 and `era5-pds` ends 2020-12, so neither holds 2024, and the Idaho host did not answer from this machine on 2026-11-12. Fallback: NASA POWER monthly regional `T2M_MAX` and `T2M_MIN`, 0.5 degree, no account needed | 4 km or 0.5 degree | degrees C per month |
+| rural property outlines (CAR) | source.coop `tristangruppwri/cadastral`, collection `brazil-car-area-imovel` (SICAR snapshot of 16 July 2026, 8,453,552 polygons, GeoParquet), local copy `F:\relative-land-productivity-data\raw\car\`; IBGE biomes 1:250,000 and IBGE Legal Amazon limit 2024 for the legal reserve requirement (section 7.7, `pipeline/CAR_FOREST_CODE.md`) | vector | property outline, status, fiscal modules; `cod_imovel` is never published |
 | yields for validation | IBGE (the Brazilian statistics institute) SIDRA table 5457, see section 8 | municipality | kg per ha |
 
 ## 2. The agricultural year
@@ -375,6 +376,24 @@ strengthen restore candidates. The user approved it the same day (item 11).
     restoration plan (user: "just a recommendation for the field treatment: what should be
     done, what options are").
 
+13. CAR source (user, 14 November 2026): the preferred CAR dataset is the source.coop
+    cadastral catalog, collection brazil-car-area-imovel
+    (`https://data.source.coop/tristangruppwri/cadastral/brazil-car-area-imovel/brazil_car_area_imovel.parquet`,
+    8,453,552 rows, SICAR snapshot of 16 July 2026), not the local GeoPackage on E:.
+14. The Forest Code and CAR inform the recommendation without showing on the map (user, 14
+    November 2026: "I don't want the forest code policy and the CAR data to be super
+    obviously incorporated onto the map ... but do let it inform how the restoration is
+    recommended so it's grounded in Brazilian policy ... please don't make the legend or the
+    map visualization super extra complicated"). No legend class, color or tooltip row comes
+    from CAR; the policy reasoning goes into this file, docs/methods.html and
+    pipeline/CAR_FOREST_CODE.md. A separate policy context map view is allowed later if
+    wanted (user: "we could make a separate toggle to view a different map and show that
+    nuance").
+15. Publication (user, 14 November 2026: "We can just publish this to the github pages map, I
+    don't care"): CAR-derived indicators for every state may feed the published map. This
+    replaces the hold for MT, MA, TO and GO in item 11. `cod_imovel` stays out of every
+    published file.
+
 ### 7.6 Implementation of the 14 November decisions (decisions round 2)
 
 Implemented in `pipeline/s07_decisions.py` (steps `biome`, `native`, `national`, `area`,
@@ -438,6 +457,87 @@ comparable fields 23.2 against 17.0 (31.1 unscaled); exact class agreement rises
 changing share 14.4 percent under 6.25 ha, 28.9 over 100 ha). The area tier uses the s2
 seasonal integral calibrated to the MODIS scale per peer class and year (S2_MATO_GROSSO.md),
 falling back to MODIS for a class with no calibration.
+
+### 7.7 Proposed: CAR parcels and the Forest Code in the recommendations
+
+Status: proposed by the CAR agent on 14 November 2026 for the orchestrator to apply. Not yet
+in `s07_decisions.py`. Indicators: `pipeline/s10_car_forest_code.py`, report
+`pipeline/CAR_FOREST_CODE.md`, per-field table
+`F:\relative-land-productivity-data\analysis\car\state=<State>.parquet`.
+
+Principle. The CAR and legal reserve indicators change only which treatment a field gets
+among the existing classes and the order of its options. They add no decision class, no
+color, no legend row and no tooltip row (item 14). The field card may show the indicators
+in its details section, in plain words (for example "The property this field sits in has
+less native vegetation than the Forest Code requires"), as AGENTS.md allows.
+
+A property deficit counts only when all of these hold (a "usable deficit"):
+
+- the field's parcel is active or pending (`car_status` AT or PE), of type IRU (a rural
+  property; settlements and traditional territories are registered as one perimeter around
+  many holdings);
+- the parcel covers at least half of the field (`car_overlap_share` 0.5 or more) and at most
+  two registered parcels overlap the field (`car_overlap_count` 2 or less);
+- the property is over 4 fiscal modules (`small_property` false), because smaller
+  properties owe no restoration for deficits from before 22 July 2008 (art. 67);
+- `lr_deficit_share` is at least 0.05 (5 percentage points), so that map error near the
+  threshold does not decide the call.
+
+A "property surplus" is `native_share_property` at least 0.10 above `lr_required_share` on
+the same parcel conditions, any property size.
+
+Proposed rules, applied after the field call of 7.2 and 7.5:
+
+1. Tip toward restore. A field the field call makes `improve_spare` (same crop, below
+   neighbors, not gaining, little large native vegetation nearby) becomes
+   `restore_candidate` when its property has a usable deficit and the native share in
+   patches of 50 ha or more within 1 km is at least half the restore candidate threshold
+   (15 percent instead of 30). The reason: the field is still near native vegetation, and
+   the owner has a legal duty to add native vegetation on this property.
+2. A `restore_candidate` in a property with a surplus stays a restore candidate, but its
+   first option becomes "Improve yields if the land stays in production", ahead of
+   restoration alternatives, because the property owes nothing and restoration there is
+   voluntary.
+3. No other call changes. Restore of a whole area, recently converted land, abandon,
+   pasture, switch and keep calls do not depend on the property. Only their option order
+   does, as listed below.
+4. Fields with no registered parcel, with only a canceled or suspended parcel, or that fail
+   the parcel conditions keep their call and their default options.
+
+Option sets per decision class. "Default" is the list when CAR does not apply. "With
+deficit" applies when the property has a usable deficit, "with surplus" when it has a
+surplus. The labels stay plain; none mentions the law.
+
+| decision | recommended treatment | default options | with deficit | with surplus |
+|---|---|---|---|---|
+| restore | Restore | assisted natural regeneration where native vegetation is returning; improve yields if the land stays in production | assisted natural regeneration where native vegetation is returning (improve yields dropped) | default |
+| assisted_regen | Assisted natural regeneration | active restoration if the regrowth stalls; improve yields on the rest of the field | default | default |
+| restore_candidate | Restore | improve yields if the land stays in production; assisted natural regeneration if native vegetation starts to return | assisted natural regeneration if native vegetation starts to return; improve yields if the land stays in production | improve yields first (rule 2) |
+| restore_candidate (tipped by rule 1) | Restore | improve yields (the call without CAR); assisted natural regeneration if native vegetation starts to return | as default | not applicable |
+| converted_below | Restore or let native vegetation return | improve the new use if it stays | default, with restoration listed first | default |
+| converted_ok | Keep the new use and stop further clearing | restore if the clearing broke the law or a commitment | add "restore part of the property" | default |
+| convert_cropland | Convert this pasture to crops | intensify the pasture; keep as it is | add "restore part of the property" after the conversion options | default |
+| improve_pasture | Improve pasture | rotate grazing; restore if the pasture keeps falling behind | restore moves ahead of rotate grazing | default |
+| convert_pasture | Improve or convert pasture | convert to crops; integrated crop and livestock | add "restore if the pasture keeps falling behind" | default |
+| switch_paid_off | Keep the new crop | intensify the new crop | default | default |
+| switch_failed | Reconsider the switch | return to the former crop; improve how the new crop is managed | add "restore if the land keeps falling behind" | default |
+| improve_spare | Improve yields: spares land elsewhere | improve management; switch crop if the area's crop lags Brazil | add "restore if native vegetation is near" | default |
+| improve_yields | Improve yields | improve management; keep watching the trend | default | default |
+| intensify | Intensify | keep as it is | default | default |
+| keep | Keep | none | default | default |
+| abandon | Abandon or change use | restore; another use suited to the land | restore first | another use first |
+| abandoned_outline | Let native vegetation return | assisted natural regeneration if native vegetation is coming back; active restoration if it is not | default | default |
+| low_confidence | Too small to judge yet | the options of the computed call, marked as not trusted | as the computed call | as the computed call |
+| none | No data | none | default | default |
+
+Implementation note for the orchestrator. `s07_decisions.py` would read
+`analysis\car\state=<State>.parquet` by `fid` (columns `car_status`, `car_type`,
+`car_overlap_share`, `car_overlap_count`, `small_property`, `lr_deficit_share`,
+`native_share_property`, `lr_required_share`), apply rule 1 before the decision is final,
+and write one categorical column `car_context` (usable deficit, surplus, neither, no
+parcel) that config.js uses to pick the option list. `car_cod` must never be read into a
+published table. A separate "policy context" map view, if the user asks for it later, would
+draw `car_context` on its own toggle and is out of scope here.
 
 ### 7.4 Superseded 2026-11-13: version 1 decision table
 
