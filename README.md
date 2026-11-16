@@ -104,9 +104,6 @@ page on `docs/data/`; it is `false` in the released site.
 | s09 | `pipeline/s09_swap_state_to_s2.py --state <State>` | switches one state of the live map from MODIS to Sentinel-2 (assemble, metrics, relative, compare and calibrate, swap, decisions, tiles, upload); keeps the MODIS tables under `analysis\source=modis\`; records the state in `analysis\sources.json` and `data/summaries/sources.json`. Mato Grosso since 14 November 2026 |
 | site | `docs/` | the map, wired to the tiles through `docs/config.js` |
 
-No Google Earth Engine is used anywhere. Every raster is downloaded or streamed and reduced
-to fields on one machine.
-
 ## Writing rules
 
 Plain prose, active voice, short sentences. No em dashes or en dashes anywhere, including

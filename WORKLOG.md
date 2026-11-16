@@ -552,3 +552,9 @@ DECISIONS_V2.md, S2_MATO_GROSSO.md. Methods: methods/METHODS.md. Site contract: 
   Sentinel-2"); its first run (assemble 177 s, metrics 71 s, relative 11 s, compare 45 s,
   swap 39 s) produced the live Mato Grosso tables; the MODIS tables are kept under
   `analysis\source=modis\`.
+- 16 Nov, user: "Cut this from the readme: 'No Google Earth Engine is used anywhere. Every
+  raster is downloaded or streamed and reduced to fields on one machine.'" Removed from
+  README.md. The no-Earth-Engine rule itself stays in AGENTS.md.
+- 16 Nov, user asked that pipeline jobs run with hidden windows. Long runs of this project go
+  through `pipeline/launch_detached.py` (no console) started by WMI; the visible windows of
+  16 Nov 14:26 came from two `s10_car_forest_code.py parcels` runs of the CAR agent.
