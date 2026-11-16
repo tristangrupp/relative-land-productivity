@@ -35,6 +35,10 @@ from datetime import datetime
 import numpy as np
 import pandas as pd
 import pyarrow as pa
+
+# The system allocator hands freed Arrow memory back to Windows; the default pool kept it
+# (16 Nov 2026: resident memory stayed near 8 GB after the parcel load on Minas Gerais).
+pa.set_memory_pool(pa.system_memory_pool())
 import pyarrow.parquet as pq
 import shapely
 from pyproj import Transformer
@@ -68,9 +72,20 @@ FRONTIER = ["Madeira-Tapajós moist forests", "Xingu-Tocantins-Araguaia moist fo
             "Southwest Amazon moist forests"]  # same list as s07_decisions.py
 
 
+MEM_CAP_GB = float(os.environ.get("CAR_MEM_CAP_GB", "10"))  # stop the run above this, other jobs share the machine
+
+
 def log(**kw):
+    """One JSON line per event, with the process's current and peak memory in GB; stops the run
+    when private memory passes MEM_CAP_GB (16 Nov 2026: a run reached 92 GB and starved the tile join)."""
+    import psutil
+    mi = psutil.Process().memory_info()
+    kw["rss_gb"] = round(mi.rss / 1e9, 2)
+    kw["peak_gb"] = round(getattr(mi, "peak_wset", mi.rss) / 1e9, 2)
     kw["t"] = datetime.now().isoformat(timespec="seconds")
     print(json.dumps(kw, ensure_ascii=False, default=str), flush=True)
+    if getattr(mi, "private", mi.rss) / 1e9 > MEM_CAP_GB:
+        raise MemoryError(f"private memory over CAR_MEM_CAP_GB={MEM_CAP_GB}")
 
 
 def state_uf_map():
@@ -293,30 +308,41 @@ def load_parcels(bounds):
     for p in sorted(glob.glob(os.path.join(OUT_PARCELS, "*.parquet"))):
         t = pq.read_table(p, columns=PARCEL_COLS, filters=flt)
         if t.num_rows:
-            parts.append(t.to_pandas())
-    return pd.concat(parts, ignore_index=True)
+            parts.append(t)
+    # one Arrow table (compact); rows go to pandas and shapely only per strip
+    t = pa.concat_tables(parts)  # chunked, not combined: no copy, no 2 GB offset limit
+    pa.default_memory_pool().release_unused()
+    return t
 
 
 def join_chunk(fg_alb, f_area, par, pg_alb, tree):
     fi, pj = tree.query(fg_alb, predicate="intersects")
-    inter = np.empty(len(fi))
+    # A field inside its parcel overlaps it completely: a prepared containment test replaces the
+    # intersection for those pairs, which are most of them.
+    shapely.prepare(pg_alb)
+    inside = shapely.contains(pg_alb[pj], fg_alb[fi])
+    inter = np.where(inside, f_area[fi], np.nan)
+    todo = np.nonzero(~inside)[0]
     step = 200_000
-    for k in range(0, len(fi), step):
-        a = fg_alb[fi[k:k + step]]
-        bgeom = pg_alb[pj[k:k + step]]
+    log(step="join", pairs=len(fi), inside=int(inside.sum()))
+    for k in range(0, len(todo), step):
+        t = todo[k:k + step]
+        a = fg_alb[fi[t]]
+        bgeom = pg_alb[pj[t]]
         try:
-            inter[k:k + step] = shapely.area(shapely.intersection(a, bgeom, grid_size=None))
+            inter[t] = shapely.area(shapely.intersection(a, bgeom, grid_size=None))
         except shapely.errors.GEOSException:
             for m in range(len(a)):
                 try:
-                    inter[k + m] = shapely.intersection(a[m], bgeom[m]).area
+                    inter[t[m]] = shapely.intersection(a[m], bgeom[m]).area
                 except shapely.errors.GEOSException:
-                    inter[k + m] = shapely.intersection(shapely.make_valid(a[m]), shapely.make_valid(bgeom[m])).area
+                    inter[t[m]] = shapely.intersection(shapely.make_valid(a[m]), shapely.make_valid(bgeom[m])).area
+        log(step="join", intersected=int(k + len(t)), of=len(todo))
     pairs = pd.DataFrame({"fi": fi, "pj": pj, "share": inter / f_area[fi]})
     return pairs[pairs["share"] >= MIN_OVERLAP]
 
 
-def step_fields(state, chunk=400_000):
+def step_fields(state, chunk=200_000, zone=800_000):
     """Fields in strips sorted by longitude, so each strip decodes only the parcels near it.
     Parcel geometries stay as WKB until a strip needs them, which bounds memory on large states."""
     os.makedirs(OUT, exist_ok=True)
@@ -325,26 +351,60 @@ def step_fields(state, chunk=400_000):
     lon = ft.column("centroid_lon").to_numpy()
     forder = np.argsort(lon, kind="stable")
     fid_all = ft.column("fid").to_numpy()
-    fwkb_all = ft.column("geometry").to_numpy(zero_copy_only=False)
+    fwkb_all = ft.column("geometry")  # chunked Arrow binary, decoded per strip
     del ft
     meta = pq.read_table(C.fields_path(2024, state), columns=["bbox"]).column("bbox").combine_chunks()
     fb = np.column_stack([meta.field(k).to_numpy() for k in ("xmin", "ymin", "xmax", "ymax")])
     del meta
-    par_all = load_parcels((fb[:, 0].min(), fb[:, 1].min(), fb[:, 2].max(), fb[:, 3].max()))
-    log(step="fields", state=state, parcels_in_state_box=len(par_all), s=round(time.time() - t0))
     outs = []
-    for k in range(0, len(forder), chunk):
-        idx = forder[k:k + chunk]
+    for z in range(0, len(forder), zone):
+        zidx = forder[z:z + zone]
+        zb = fb[zidx]
+        par_all = load_parcels((zb[:, 0].min(), zb[:, 1].min(), zb[:, 2].max(), zb[:, 3].max()))
+        px = {c: par_all.column(c).to_numpy() for c in ("xmin", "ymin", "xmax", "ymax")}
+        log(step="fields", state=state, zone_start=z, parcels_in_zone_box=par_all.num_rows, s=round(time.time() - t0))
+        outs += fields_zone(state, zidx, fb, fid_all, fwkb_all, par_all, px, chunk, t0)
+        del par_all, px
+        gc.collect()
+    out = pd.concat(outs, ignore_index=True).sort_values("fid").reset_index(drop=True)
+    out["small_property"] = out["small_property"].astype("boolean")
+    out["car_in_legal_amazon"] = out["car_in_legal_amazon"].astype("boolean")
+    path = os.path.join(OUT, f"state={state}.parquet")
+    out.to_parquet(path, index=False, compression="zstd")
+    log(step="fields", state=state, fields=len(out), in_registered=int(out["car_status"].isin(REGISTERED).sum()),
+        written=path, s=round(time.time() - t0))
+
+
+def take_chunked(chunked, idx):
+    """Rows idx of a chunked binary column as a numpy object array, taken chunk by chunk, because
+    ChunkedArray.take concatenates the whole column first and overflows 2 GB of binary offsets."""
+    out = np.empty(len(idx), dtype=object)
+    start = 0
+    for ch in chunked.chunks:
+        n = len(ch)
+        sel = np.nonzero((idx >= start) & (idx < start + n))[0]
+        if len(sel):
+            out[sel] = ch.take(pa.array(idx[sel] - start)).to_numpy(zero_copy_only=False)
+        start += n
+    return out
+
+
+def fields_zone(state, zidx, fb, fid_all, fwkb_all, par_all, px, chunk, t0):
+    """Join one zone of fields (sorted by longitude) to the parcels loaded for it, in strips."""
+    outs = []
+    for k in range(0, len(zidx), chunk):
+        idx = zidx[k:k + chunk]
         bx = fb[idx]
-        m = ((par_all["xmin"].values <= bx[:, 2].max()) & (par_all["xmax"].values >= bx[:, 0].min())
-             & (par_all["ymin"].values <= bx[:, 3].max()) & (par_all["ymax"].values >= bx[:, 1].min()))
-        par = par_all[m].reset_index(drop=True)
-        pg_alb = to_albers(shapely.from_wkb(par["geometry"].values))
-        par = par.drop(columns="geometry")
+        m = ((px["xmin"] <= bx[:, 2].max()) & (px["xmax"] >= bx[:, 0].min())
+             & (px["ymin"] <= bx[:, 3].max()) & (px["ymax"] >= bx[:, 1].min()))
+        pt = par_all.filter(pa.array(m))
+        par = pt.drop(["geometry"]).to_pandas()
+        pg_alb = to_albers(shapely.from_wkb(pt.column("geometry").to_numpy(zero_copy_only=False)))
+        del pt
         tree = shapely.STRtree(pg_alb)
         reg = par["ind_status"].isin(REGISTERED).values
         fid = fid_all[idx]
-        fg_alb = to_albers(shapely.from_wkb(fwkb_all[idx]))
+        fg_alb = to_albers(shapely.from_wkb(take_chunked(fwkb_all, idx)))
         f_area = shapely.area(fg_alb)
         pairs = join_chunk(fg_alb, f_area, par, pg_alb, tree)
         pairs["reg"] = reg[pairs["pj"].values]
@@ -379,17 +439,11 @@ def step_fields(state, chunk=400_000):
             o.loc[nonreg, col] = np.nan
         o.loc[nonreg, "small_property"] = None
         outs.append(o)
-        log(step="fields", state=state, done=min(k + chunk, len(forder)), of=len(forder), parcels=len(par),
+        log(step="fields", state=state, done=int(k + len(idx)), zone_of=len(zidx), parcels=len(par),
             matched=int(has.sum()), s=round(time.time() - t0))
         del fg_alb, pairs, best, sel, pg_alb, tree, par
         gc.collect()
-    out = pd.concat(outs, ignore_index=True).sort_values("fid").reset_index(drop=True)
-    out["small_property"] = out["small_property"].astype("boolean")
-    out["car_in_legal_amazon"] = out["car_in_legal_amazon"].astype("boolean")
-    path = os.path.join(OUT, f"state={state}.parquet")
-    out.to_parquet(path, index=False, compression="zstd")
-    log(step="fields", state=state, fields=len(out), in_registered=int(out["car_status"].isin(REGISTERED).sum()),
-        written=path, s=round(time.time() - t0))
+    return outs
 
 
 # ---------------------------------------------------------------- summary

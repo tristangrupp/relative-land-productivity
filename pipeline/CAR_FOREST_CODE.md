@@ -1,9 +1,7 @@
 # CAR parcels and the Forest Code legal reserve, per field
 
-Status, 16 November 2026: incomplete. Parcel indicators exist for 16 of 27 states (AC AL AP
-BA DF MG MT PA PB PE RJ RO RR RS SE SP). The parcels step for the other 11, the fields step
-and the summary have not run, so this report has no coverage or deficit numbers yet. The runs
-were stopped because they filled the machine's memory (see WORKLOG.md, 16 Nov).
+Status, 16 November 2026: complete for all 27 states and all 24,554,482 fields of 2024.
+The numbers are in the section "Numbers" and in `data/summaries/car_forest_code_by_state.csv`.
 
 Stage `pipeline/s10_car_forest_code.py`, written 14 November 2026 by the CAR agent. It adds
 Forest Code indicators to every 2024 field. It does not change the decision rules, the tiles
@@ -94,12 +92,83 @@ protection" below.
    suspended (SU) parcel with the largest overlap, but only its status and code: CA and SU
    parcels get no Forest Code indicators. `car_overlap_count` is the number of AT or PE
    parcels that each cover at least 20 percent of the field.
+   To bound memory, the fields are sorted by longitude and processed in zones of 800,000
+   fields, with the parcels of each zone's bounding box loaded from disk, and in strips of
+   200,000 fields inside a zone. Geometries stay as Arrow binary until a strip decodes them.
+   A field inside its parcel (a prepared containment test) gets an overlap of 1 without an
+   intersection. Every log line states the resident and peak memory, and the run stops above
+   10 GB. Minas Gerais, the largest state (4,078,771 fields), peaked at 8.75 GB.
 4. Summary per state, nationally and for the seven Amazon frontier ecoregions of
    `s07_decisions.py`, in `data/summaries/car_forest_code_by_state.csv`. Property hectares
    of deficit are summed once per property touched by a field, not per field.
 
 Run: `python pipeline\s10_car_forest_code.py all` (or the steps `split`, `parcels --uf MT`,
 `fields --state Mato_Grosso`, `summary`).
+
+## Numbers
+
+Run of 16 November 2026. Per state in `data/summaries/car_forest_code_by_state.csv`, which
+has no property codes.
+
+Parcels. After dropping duplicate codes, 8,437,938 parcels remain: 7,654,808 active (AT,
+553.1 Mha of outline area), 596,386 pending (PE, 113.5 Mha), 143,390 canceled (CA, 102.5 Mha)
+and 43,354 suspended (SU, 46.9 Mha). Outline areas overlap, so they do not add up to a land
+area. Of the 8,251,194 active or pending parcels, 4,415,506 (53.5 percent) have less native
+vegetation in 2024 than the screen requires, for a summed deficit of 63.3 Mha. Of that,
+28.2 Mha lies in properties over 4 fiscal modules, where the art. 67 exemption does not
+apply. Because outlines overlap, the same land can count toward two properties' deficits.
+
+Fields, Brazil (24,554,482 fields):
+
+| measure | value |
+|---|---|
+| in an active or pending parcel (at least 20 percent overlap) | 86.1 percent |
+| only in a canceled or suspended parcel | 1.3 percent |
+| in no parcel | 12.7 percent |
+| 2 or more registered parcels each covering 20 percent or more of the field | 16.9 percent |
+| median share of the field covered by its parcel | 1.00 |
+| in a property with a legal reserve deficit | 47.1 percent of all fields, 54.7 percent of fields in a registered parcel |
+| in a deficit property over 4 fiscal modules | 14.8 percent |
+| properties touched by fields / of them in deficit | 4,588,035 / 2,655,897 |
+| deficit of those properties | 54.0 Mha, of which 26.8 Mha in properties over 4 fiscal modules |
+| median native share of those properties | 17.6 percent |
+
+Fields on the seven Amazon frontier ecoregions (2,814,635 fields):
+
+| measure | value |
+|---|---|
+| in an active or pending parcel | 85.7 percent |
+| only in a canceled or suspended parcel | 4.0 percent |
+| in no parcel | 10.3 percent |
+| 2 or more registered parcels overlap | 29.4 percent |
+| in a property with a legal reserve deficit | 79.8 percent of all fields, 93.1 percent of fields in a registered parcel |
+| in a deficit property over 4 fiscal modules | 28.4 percent |
+| properties touched / in deficit | 375,290 / 346,757 |
+| deficit of those properties | 35.3 Mha, of which 16.7 Mha over 4 fiscal modules |
+| median native share of those properties | 17.0 percent |
+
+The frontier holds 65 percent of the national deficit hectares of properties touched by
+fields, from 11.5 percent of the fields. Its properties sit mostly under the 80 percent
+requirement of the Amazon biome, so almost every registered frontier field is in a deficit
+property. The states with the largest deficits are Pará (15.9 Mha), Mato Grosso (13.7 Mha),
+Rondônia (6.1 Mha) and Maranhão (4.3 Mha). The highest shares of fields in a deficit property
+are Rondônia (86.7 percent), Pará (82.1), Acre (70.7), São Paulo (69.8) and Roraima (69.6).
+The lowest are Piauí (11.4), Ceará (19.9) and Distrito Federal (22.1).
+
+Coverage gaps. Amazonas has the lowest registered coverage (51.0 percent of fields; 24.9
+percent only in canceled or suspended parcels). Bahia has the most fields in no parcel (29.1
+percent), followed by Rio de Janeiro (20.6), Piauí (20.6) and Alagoas (20.1).
+
+Amapá check against the earlier test on the E: GeoPackage (2024 vintage, native share at
+30 m): fields in a registered parcel 83.2 percent against 79.8, overlapping parcels 22.2
+against 17.2 percent, fields in a deficit property 51.5 against 48.4 percent, properties
+touched 1,277 against 1,110, of them in deficit 503 against 442, deficit 67,595 ha against
+66,853 ha, median native share 85.4 against 85.5 percent. The source.coop snapshot (July 2026)
+has more parcels than the 2024 GeoPackage, which explains the higher coverage; the 90 m
+native share agrees with the 30 m one on the median.
+
+Memory. Parcels peaked at 2.98 GB. Fields peaked at 8.75 GB on Minas Gerais and at most 6.95 GB on
+the other states.
 
 ## Output columns
 

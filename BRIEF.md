@@ -349,3 +349,8 @@ before it ends, in addition to the Decisions entry here.
   `cod_imovel` is never published; APP not done. The indicators only tip the treatment and
   order the options (METHODS.md 7.7, proposed). Run incomplete: 16 of 27 parcel states;
   fields and summary not run. Report: `pipeline/CAR_FOREST_CODE.md`.
+- 2026-11-16 CAR, completed: indicators for all 27 states and 24,554,482 fields in
+  `analysis\car\state=<State>.parquet`; summary `data/summaries/car_forest_code_by_state.csv`.
+  86.1 percent of fields in a registered parcel; 47.1 percent in a property with a legal
+  reserve deficit (79.8 percent on the Amazon frontier). Proposal for the recommendations in
+  METHODS.md 7.7, not yet applied.

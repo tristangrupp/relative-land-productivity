@@ -90,7 +90,9 @@ Apply to prose, code comments, commit messages, identifiers and JSON keys.
   Processes started from a Claude shell, with Start-Process, or through WMI with a `cmd`
   console all died in November. In PowerShell:
   `Invoke-CimMethod -ClassName Win32_Process -MethodName Create -Arguments @{ CurrentDirectory = 'C:\Users\grupp\src\relative-land-productivity'; CommandLine = '"<python>" C:\Users\grupp\src\relative-land-productivity\pipeline\launch_detached.py <log> <err> -- "<python>" -u pipeline\<script>.py <args>' }`,
-  with `<python>` the interpreter above. Wait for such a run inside your turn with cheap
+  with `<python>` the interpreter above. Add `ProcessStartupInformation = (New-CimInstance
+  -ClassName Win32_ProcessStartup -ClientOnly -Property @{ ShowWindow = [uint16]0 })` to the
+  arguments so no window opens (the user asked for no console windows). Wait for such a run inside your turn with cheap
   periodic checks of its log; do not hand back while it runs. Run one heavy worker at a
   time unless the orchestrator says otherwise, and keep each under about 8 GB: on 16 Nov two
   CAR workers and a fields test filled memory and killed the tile join twice.

@@ -613,3 +613,28 @@ DECISIONS_V2.md, S2_MATO_GROSSO.md. Methods: methods/METHODS.md. Site contract: 
   joined in WSL on 16 Nov after two joins were killed when the CAR job filled memory) is
   uploading in a hidden process; until it lands, field zoom shows the 13 Nov field tiles.
   GeoParquet upload (13 GB) still to do.
+- 16 Nov, CAR agent, run completed after the user said "keep going since we've already done
+  16/27 states". Parcels for the other 11 states, then fields for all 27 states, then the
+  summary (`data/summaries/car_forest_code_by_state.csv`, no property codes; report
+  pipeline/CAR_FOREST_CODE.md, section "Numbers"). One worker at a time, launched through
+  `pipeline/launch_detached.py` via WMI with no window. Memory: the fields step now works in
+  longitude zones of 800,000 fields with the zone's parcels loaded from disk, keeps
+  geometries as Arrow binary, skips the intersection when a field lies inside its parcel,
+  logs resident and peak memory on every line and stops above 10 GB; peak 8.75 GB on Minas
+  Gerais, at most 6.95 GB elsewhere (parcels 2.98 GB).
+  Numbers, Brazil, 24,554,482 fields: 86.1 percent in an active or pending CAR parcel, 1.3
+  percent only in a canceled or suspended one, 12.7 percent in none; 16.9 percent have 2 or
+  more registered parcels overlapping; 47.1 percent of all fields (54.7 percent of fields in
+  a registered parcel) sit in a property with less native vegetation than the legal reserve
+  screen requires, 14.8 percent in such a property over 4 fiscal modules. The 2,655,897
+  deficit properties touched by fields owe 54.0 Mha by the screen, 26.8 Mha of it in
+  properties over 4 fiscal modules. Amazon frontier (7 ecoregions, 2,814,635 fields): 85.7
+  percent in a registered parcel, 29.4 percent with overlapping parcels, 79.8 percent of
+  fields (93.1 percent of registered ones) in a deficit property, 28.4 percent in one over 4
+  fiscal modules; 35.3 Mha of deficit, 65 percent of the national figure from 11.5 percent
+  of the fields. Amapá against the earlier GeoPackage test: 83.2 against 79.8 percent in a
+  registered parcel, 51.5 against 48.4 percent in a deficit property, 67,595 against 66,853
+  ha of deficit. The test folders `analysis\car_test\` and `analysis\car\test\` are deleted.
+  The Forest Code subsection is back in docs/methods.html (marked in preparation); nothing
+  else in docs/ changed. Next for the orchestrator: apply METHODS.md 7.7 in
+  `s07_decisions.py` and the option lists in config.js.
