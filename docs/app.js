@@ -14,8 +14,8 @@
 
 import {
 	CONFIG, ATTR, SUMMARY_ATTR, VIEWS, CROPS, VIGOR, VIGOR_CHANGE, DECISIONS, AREA_DECISIONS,
-	CHANGE_CLASSES, STATES, NODATA_COLOR, CONFIDENCE, ECO_TREND, SOURCES
-} from './config.js?v=9';
+	CHANGE_CLASSES, STATES, NODATA_COLOR, CONFIDENCE, ECO_TREND
+} from './config.js?v=8';
 
 const $ = (id) => document.getElementById(id);
 const NA = 'n/a';
@@ -339,7 +339,7 @@ function showTip(e, layerId) {
 		const c24 = p[ATTR.crop_2024];
 		if (v.id !== 'crop_2020') rows.push(['Crop 2020', cropName(c20)]);
 		if (v.id !== 'crop_2024') rows.push(['Crop 2024', cropName(c24) + (c20 != null && c24 != null && c20 !== c24 ? ' (switched)' : '')]);
-		if (v.id !== 'area_decision' && p[ATTR.area_decision] != null) rows.push([areaLabel(p[ATTR.area_level]), areaName(p[ATTR.area_decision])]);
+		if (v.id !== 'area_decision' && p[ATTR.area_decision] != null) rows.push(['Area call (15 km)', areaName(p[ATTR.area_decision])]);
 		if (v.id === 'area_decision' || v.id === 'decision') {
 			if (v.id !== 'decision') rows.push(['Field call', decisionName(p[ATTR.decision])]);
 			const eco = ecoLine(p);
@@ -347,7 +347,6 @@ function showTip(e, layerId) {
 		}
 		rows.push(['Area', `${fmt(p[ATTR.area_ha], 1)} ha`]);
 		if (p[ATTR.confidence] != null) rows.push(['Confidence', confidenceName(p[ATTR.confidence])]);
-		if (p[ATTR.source] != null) rows.push(['Satellite', sourceName(p[ATTR.source])]);
 	} else {
 		title = 'Summary cell';
 		rows = [[v.summary.label, summaryValueText(v, p)], ['Fields', fmtInt(p[SUMMARY_ATTR.n_fields])]];
@@ -360,8 +359,7 @@ function showTip(e, layerId) {
 			for (const [k, sh] of top3(p)) rows.push([decisionName(k), pct(sh)]);
 		}
 		if (v.id === 'area_decision' || v.id === 'decision') {
-			if (v.id === 'decision') rows.push([areaLabel(p[SUMMARY_ATTR.area_level]), areaName(p[SUMMARY_ATTR.area_call] || p[SUMMARY_ATTR.dominant_area_decision])]);
-			if (v.id === 'area_decision' && p[SUMMARY_ATTR.area_level] === 5) rows.push(['Call made on', 'the 15 km parent cell (too few fields at 6 km)']);
+			if (v.id === 'decision') rows.push(['Area call (15 km)', areaName(p[SUMMARY_ATTR.dominant_area_decision])]);
 			rows.push(['Crops vs Brazil', areaTermText(p[SUMMARY_ATTR.area_crops_2024], p[SUMMARY_ATTR.area_crops_change])]);
 			rows.push(['Pasture vs Brazil', areaTermText(p[SUMMARY_ATTR.area_pasture_2024], p[SUMMARY_ATTR.area_pasture_change])]);
 			rows.push(['Crops / pasture vs ecoregion', `${areaShort(p[SUMMARY_ATTR.eco_crops_2024])} / ${areaShort(p[SUMMARY_ATTR.eco_pasture_2024])}`]);
@@ -383,10 +381,6 @@ function hideTip() { $('tip').style.opacity = 0; }
 function cropName(k) { return k == null ? NA : (cropByKey[k] ? cropByKey[k].label : `class ${k}`); }
 function decisionName(k) { return k == null ? NA : (decisionByKey[k] ? decisionByKey[k].label : k); }
 function areaName(k) { return k == null ? NA : (areaByKey[k] ? areaByKey[k].label : k); }
-/** The area call is made per 6 km cell, or per 15 km cell where the 6 km cell is too thin. */
-function areaLabel(level) { return level === 5 ? 'Area call (15 km)' : 'Area call (6 km)'; }
-function sourceName(k) { return k == null ? NA : (SOURCES[k] ? SOURCES[k].label : String(k)); }
-function share100(x) { return x == null ? NA : `${Math.round(x * 100)}%`; }
 
 /** The area term of a summary cell: the use's median against the ecoregion median in 2024, in
     ecoregion SD, and its change since 2020. */
@@ -601,7 +595,7 @@ function renderScope() {
 			<div class="stat"><span class="v">${fmtInt(abandoned)}</span><span class="k">abandoned, 2020 outlines</span></div>
 		</div>
 		<p class="ctxNote">Shares are of the 2024 outlines. Abandoned fields are 2020 outlines, listed on their own and not in the shares; in the legend counts they add to the abandoned class and to the abandoned-since-2020 suggestion.</p>
-		${src ? `<p class="ctxNote">Source: ${src}${gen ? `, built ${gen}` : ''}. Low confidence means the field is under ${CONFIDENCE.LOW_AREA_HA} ha (one MODIS pixel; 0.45 ha where Sentinel-2 is the source) or fewer than 75 percent of its growing-season composites were observed. Low-confidence fields are labeled too small to judge in the decision view.</p>` : ''}`;
+		${src ? `<p class="ctxNote">Source: ${src}${gen ? `, built ${gen}` : ''}. Low confidence means the field is under ${CONFIDENCE.LOW_AREA_HA} ha (one MODIS pixel) or fewer than 75 percent of its growing-season composites were observed.</p>` : ''}`;
 }
 
 function setView(id, push = true) {
@@ -691,10 +685,7 @@ function renderPick() {
 		];
 		if (has(SUMMARY_ATTR.mean_vigor_change)) rows.push(['Mean vigor change', fmt(p[SUMMARY_ATTR.mean_vigor_change])]);
 		rows.push(['Main suggestion', decisionName(p[SUMMARY_ATTR.dominant_decision])]);
-		rows.push([areaLabel(p[SUMMARY_ATTR.area_level]), areaName(p[SUMMARY_ATTR.area_call] || p[SUMMARY_ATTR.dominant_area_decision])]);
-		rows.push(['Fields with a trusted call', fmtInt(p[SUMMARY_ATTR.n_trusted])]);
-		rows.push(['Share too small to judge', pct(p[SUMMARY_ATTR.share_low_confidence])]);
-		if (p[SUMMARY_ATTR.share_s2]) rows.push(['Share measured by Sentinel-2', pct(p[SUMMARY_ATTR.share_s2])]);
+		rows.push(['Area call (15 km)', areaName(p[SUMMARY_ATTR.dominant_area_decision])]);
 		rows.push(['Crops vs Brazil', areaTermText(p[SUMMARY_ATTR.area_crops_2024], p[SUMMARY_ATTR.area_crops_change])]);
 		rows.push(['Pasture vs Brazil', areaTermText(p[SUMMARY_ATTR.area_pasture_2024], p[SUMMARY_ATTR.area_pasture_change])]);
 		rows.push(['Mosaic vs Brazil (not in the call)', areaTermText(p[SUMMARY_ATTR.area_mosaic_2024], p[SUMMARY_ATTR.area_mosaic_change])]);
@@ -732,23 +723,11 @@ function renderPick() {
 		rows.push(['Pasture vigor 2024', vigorName(p[ATTR.vigor_2024])]);
 	}
 	const decKey = derivedKey(VIEWS.find((x) => x.id === 'decision'), p) || p[ATTR.decision];
-	rows.push(['Recommended treatment', decisionName(decKey)]);
-	const dOpt = decisionByKey[decKey];
-	if (dOpt && dOpt.options && dOpt.options.length) rows.push(['Other options', dOpt.options.join('; ')]);
-	if (decKey === 'low_confidence' && p[ATTR.decision_computed] != null) {
-		rows.push(['Computed, not trusted', decisionName(p[ATTR.decision_computed])]);
-	}
-	rows.push([areaLabel(p[ATTR.area_level]), areaName(p[ATTR.area_decision])]);
+	rows.push(['Suggested decision', decisionName(decKey)]);
+	rows.push(['Area call (15 km)', areaName(p[ATTR.area_decision])]);
 	const eco = ecoLine(p);
 	if (eco) rows.push(['Ecoregion', eco]);
 	rows.push(['Confidence', confidenceName(p[ATTR.confidence])]);
-	rows.push(['Satellite', sourceName(p[ATTR.source])]);
-	if (has(ATTR.native_share_1km)) {
-		rows.push(['Native vegetation within 1 km / 250 m', `${share100(p[ATTR.native_share_1km])} / ${share100(p[ATTR.native_share_250m])}`]);
-		rows.push(['Native within 1 km, patches of 50 ha or more', share100(p[ATTR.native_share_1km_large])]);
-		rows.push(['Largest native patch within 1 km', p[ATTR.largest_patch_ha_1km] == null ? NA : `${fmtInt(p[ATTR.largest_patch_ha_1km])} ha`]);
-		rows.push(['Regrowth inside the field / within 1 km', `${share100(p[ATTR.regrowth_share_in])} / ${share100(p[ATTR.regrowth_share_1km])}`]);
-	}
 	rows.push(['Clear composites 2020 / 2024', `${fmtInt(p[ATTR.n_obs_2020])} / ${fmtInt(p[ATTR.n_obs_2024])}`]);
 	rows.push(['Municipality (IBGE)', p[ATTR.muni_code] == null ? NA : String(p[ATTR.muni_code])]);
 	$('pickRows').innerHTML = rows.map(row).join('');
@@ -757,8 +736,7 @@ function renderPick() {
 	const ad = areaByKey[p[ATTR.area_decision]];
 	if (ad) note += ` Area call, ${ad.label.toLowerCase()}: ${ad.note}`;
 	if (p[ATTR.confidence] === CONFIDENCE.LOW) {
-		const lim = (SOURCES[p[ATTR.source]] || SOURCES.modis).lowAreaHa;
-		note += ` Low confidence: the field is under ${lim} ha or had few clear composites, so its greenness is shared with neighboring land.`;
+		note += ` Low confidence: the field is under ${CONFIDENCE.LOW_AREA_HA} ha or had few clear composites, so its greenness is shared with neighboring land.`;
 	}
 	$('pickNote').textContent = note.trim();
 	$('pickChart').innerHTML = prodBars(p[ATTR.prod_2020], p[ATTR.prod_2024]);

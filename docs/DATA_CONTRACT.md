@@ -40,18 +40,10 @@ is dropped or merged. Outlines are simplified with a 0.0001 degree tolerance and
 | `prod_2024` | float | the same for 2024 | not cropped or not measured in 2024 |
 | `change` | float | `prod_2024` minus `prod_2020`, on the ratio scale, only when both exist and the crop group is the same | not comparable |
 | `change_class` | string | one of `large_decline`, `decline`, `stable`, `gain`, `large_gain` (set on the change in peer standard deviations, thresholds 1 and 2), `crop_switched`, `newly_cropped`, `abandoned`, `no_data` | never absent |
-| `decision` | string | the recommended treatment (methods section 7.2 and 7.6, rules of 14 November 2026): one of `restore`, `assisted_regen`, `restore_candidate`, `converted_below`, `converted_ok`, `convert_cropland` (Amazon biome only), `improve_pasture` (Amazon biome only), `convert_pasture` (outside the Amazon biome), `switch_paid_off`, `switch_failed`, `improve_spare`, `improve_yields`, `intensify`, `keep`, `abandon`, `abandoned_outline` (the abandoned 2020 outlines), `low_confidence` (too small to judge yet), `none` (no data) | never absent |
-| `decision_computed` | string | the call before the low-confidence rule; equal to `decision` except on `low_confidence` fields, where the card shows it as "Computed, not trusted" | absent on abandoned 2020 outlines |
-| `area_decision` | string | area call of the field's H3 resolution 6 cell, or of its resolution 5 parent where the 6 km cell has no class with 30 valid fields (methods section 7.1): `restore_area`, `good_land_underused`, `system_misfit`, `area_declining`, `area_fine`, `none` (no area call); abandoned 2020 outlines take the call of the cell of their centroid | never absent |
-| `area_level` | int | 6 when the area call was made on the field's 6 km cell, 5 when it came from the 15 km parent | never absent |
-| `source` | string | the satellite of the field's values: `modis` (MOD13Q1, 250 m) or `s2` (Sentinel-2 L2A monthly composites, 30 m); a state is `s2` once `pipeline/s09_swap_state_to_s2.py` has switched it (Mato Grosso since 14 November 2026) | never absent |
-| `native_share_1km`, `native_share_250m` | float | share of MapBiomas 2024 native vegetation pixels (classes 3, 4, 5, 6, 11, 12, 49, 50) in a band 1 km (250 m) wide around the field's bounding box, two decimals | no observed pixel in the band; abandoned outlines |
-| `native_share_1km_large` | float | the same counting only native patches (8-connected) of at least 50 ha | as above |
-| `largest_patch_ha_1km` | int | area in hectares of the largest native patch with a pixel within 1 km of the field's bounding box; a patch is measured inside the processing window (a strip of about 61 km north to south plus 4 km), so very large patches are capped | as above |
-| `regrowth_share_in` | float | share of the pixels inside the 2024 outline that were crop, pasture or mosaic in MapBiomas 2020 and native in 2024 (2023 was not available to confirm, see METHODS.md section 9) | the outline holds no pixel center |
-| `regrowth_share_1km` | float | the same share in the 1 km band | as above |
+| `decision` | string | version 2 field call (methods section 7.2): one of `restore`, `converted_below`, `converted_ok`, `convert_pasture`, `switch_paid_off`, `switch_failed`, `improve_yields`, `intensify`, `keep`, `abandon`, `abandoned_outline` (the abandoned 2020 outlines), `none` (no data) | never absent |
+| `area_decision` | string | area call of the field's H3 resolution 5 cell (methods section 7.1): `restore_area`, `good_land_underused`, `system_misfit`, `area_declining`, `area_fine`, `none` (no area call); abandoned 2020 outlines take the call of the cell of their centroid | never absent |
 | `eco_id` | int | RESOLVE 2017 `ECO_ID` of the field centroid; the key into `ecoregions.json` | 0 for the 3 unassigned fields |
-| `confidence` | string | `low` when the field is under 6.25 ha (one MODIS pixel; 0.45 ha, five 30 m pixels, when `source` is `s2`) or fewer than 75 percent of its window composites were observed in either year, else `high`; a `low` field's `decision` is `low_confidence` | never absent |
+| `confidence` | string | `low` when the field is under 6.25 ha (one MODIS pixel) or fewer than 75 percent of its window composites were observed in either year, else `high` | never absent |
 | `n_obs_2020` | int | observed (not interpolated) 16-day composites inside the 2020 growing season window, 0 to 23 | not measured |
 | `n_obs_2024` | int | the same for 2024, 0 to 22 (composite 2024225 is missing from the source and always interpolated) | not measured |
 | `muni_code` | int | IBGE 7-digit municipality code of the field centroid | outside coverage |
@@ -65,8 +57,7 @@ analysis GeoParquet but not in the tiles.
 
 The five compared change classes are thresholds on `D = r_adj_2024 - r_adj_2020` in peer
 standard deviations: large decline below -2, decline -2 to -1, stable -1 to 1, gain 1 to 2,
-large gain above 2. In a state with `source` `s2`, D is divided by the state's change scale
-before these thresholds (Mato Grosso 1.2174, `analysis\sources.json`). The 0.08 and 0.25 steps in `CHANGE_STEPS` describe the summary cells'
+large gain above 2. The 0.08 and 0.25 steps in `CHANGE_STEPS` describe the summary cells'
 mean `change` on the ratio scale (tooltip and card) and are not class boundaries. Since 13 November 2026 the
 zoomed-out change map colors each cell by `nat_change` on the continuous `FRONTIER_RAMP`
 (-1.0 to +1.0 national SD, gray at zero; cells with fewer than 10 fields at opacity 0.55). The
@@ -82,9 +73,6 @@ Tippecanoe drops a property whose value is null, so the page tests presence with
 rather than comparing against null.
 
 ## Summary layer attributes
-
-Since 14 November 2026 the area call itself is made per resolution 6 cell (resolution 5 where
-the 6 km cell is too thin), so `area_*`, `area_call` and `area_level` are the cell's own.
 
 One feature per H3 resolution 6 cell (about 6 km, 36 km²), over the scored 2024 fields, at
 every zoom from 3 to 9 (13 November 2026, at the user's request for a finer map). Coarser
@@ -110,24 +98,18 @@ names the level.
 | `dominant_crop_2024` | int | most common `crop_2024` |
 | `share_pasture` | float | share of fields with `crop_2024` 15 |
 | `dominant_decision` | string | most common `decision` (version 2), including `none` |
-| `dominant_area_decision` | string | the most common `area_decision` of the cell's fields |
-| `area_call` | string | the cell's area call (its own at resolution 6, or its resolution 5 parent's) |
-| `area_level` | int | 6 or 5, the resolution the call was made at |
-| `area_score` | float | field-weighted mean of the pooled 2024 crop and pasture levels against Brazil (national SD of cell medians) |
-| `n_trusted` | int | fields whose decision is not `low_confidence` |
-| `share_low_confidence` | float | share of fields labeled too small to judge |
-| `share_s2` | float | share of fields measured by Sentinel-2 |
-| `share_restore`, `share_improve_yields`, `share_convert_pasture`, `share_switch_failed` | float | share of the cell's fields with that `decision`, 0 to 1; `share_improve_yields` counts `improve_yields` and `improve_spare`, `share_convert_pasture` counts `convert_pasture`, `convert_cropland` and `improve_pasture` |
+| `dominant_area_decision` | string | the area call of the parent resolution 5 cell |
+| `share_restore`, `share_improve_yields`, `share_convert_pasture`, `share_switch_failed` | float | share of the cell's fields with that `decision`, 0 to 1 |
 | `share_converted` | float | share with `converted_below` or `converted_ok` |
-| `area_crops_2024`, `area_pasture_2024`, `area_mosaic_2024` | float | pooled `cell_vs_nation` of the cell (resolution 6, or the resolution 5 parent where `area_level` is 5) in 2024, national SD of cell medians; the terms of the area call; absent with under 30 fields of every class of the group |
+| `area_crops_2024`, `area_pasture_2024`, `area_mosaic_2024` | float | pooled `cell_vs_nation` of the parent resolution 5 cell in 2024, national SD of cell medians; the terms of the area call; absent with under 30 fields of every class of the group |
 | `area_crops_change`, `area_pasture_change`, `area_mosaic_change` | float | the same, 2024 minus 2020 |
 | `nat_change` | float | the national frontier value: class-weighted change, 2024 minus 2020, of the cell's class medians against the national class medians, in national SD of cell medians per class (`cell_vs_nation`); the cell's own value where a class has 30 fields, else its resolution 5 parent's; the change view colors the cell on a continuous ramp from -1.0 to +1.0 |
 | `nat_pct_change` | float | class-weighted plain change in weather-adjusted greenness, percent of 2020, over fields valid in both years with the same class |
-| `top_action` | string | the actionable decision (not keep, intensify, none or low_confidence) most over-represented against its national share, among those covering at least 15 percent of the cell's trusted fields (decision not `low_confidence`) and 1.5 times their national share among trusted fields; needs 10 trusted fields; absent when none qualifies (drawn as "no action stands out") |
+| `top_action` | string | the actionable decision (not keep, intensify or none) most over-represented against its national share, among those covering at least 15 percent of the cell's fields and 1.5 times their national share; absent when none qualifies (drawn as "no action stands out") |
 | `top_action_share` | float | the share of the cell's fields with `top_action` |
-| `top_area` | string | the most common `area_decision` other than `area_fine` and `none` among the cell's fields; absent when there is none; the Area decision view draws it when `top_area_share` is at least 0.15 |
+| `top_area` | string | the most common `area_decision` other than `area_fine` and `none` among the cell's fields (inherited from the parent resolution 5 cell); absent when there is none; the Area decision view draws it when `top_area_share` is at least 0.15 |
 | `top_area_share` | float | the share of the cell's fields with `top_area` |
-| `top3` | string | the cell's three most common trusted decisions with shares of the trusted fields, `key:share|key:share|key:share` |
+| `top3` | string | the cell's three most common decisions with shares, `key:share|key:share|key:share` |
 | `eco_crops_2024`, `eco_pasture_2024`, `eco_crops_change`, `eco_pasture_change` | float | the same pooled terms as `area_*` against the RESOLVE 2017 ecoregion instead of Brazil (secondary context) |
 | `eco_trend` | string | `declining`, `steady` or `gaining`: class-weighted Scale C change of the ecoregion holding most of the resolution 5 cell's fields, at plus or minus 0.1 national cell SD |
 | `mean_vigor_change` | float | in the original contract; absent in this release |
@@ -160,11 +142,6 @@ keys are the class values as strings. `n_fields` and `area_ha` count the 2024 ou
 the same total. `confidence_low` is the number of fields with
 `confidence` `low`. The page shows `confidence_low / n_fields` and
 `change_class.no_data / n_fields` as shares.
-
-Since 14 November 2026 stats.json also has `decision_computed` (the calls before the
-low-confidence rule, 2024 outlines only), `area_level` (fields whose area call was made at
-resolution 6 or 5), `sources` (state code to `modis` or `s2`), a `source` key per state, and a
-top-level `source` string that names the Sentinel-2 states.
 
 ## The placeholder
 

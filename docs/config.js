@@ -67,16 +67,7 @@ export const ATTR = {
 	vigor_2020: 'vigor_2020',
 	vigor_2024: 'vigor_2024',
 	decision: 'decision',
-	decision_computed: 'decision_computed',
 	area_decision: 'area_decision',
-	area_level: 'area_level',
-	source: 'source',
-	native_share_1km: 'native_share_1km',
-	native_share_250m: 'native_share_250m',
-	native_share_1km_large: 'native_share_1km_large',
-	largest_patch_ha_1km: 'largest_patch_ha_1km',
-	regrowth_share_in: 'regrowth_share_in',
-	regrowth_share_1km: 'regrowth_share_1km',
 	eco_id: 'eco_id',
 	confidence: 'confidence',
 	n_obs_2020: 'n_obs_2020',
@@ -123,26 +114,11 @@ export const SUMMARY_ATTR = {
 	top_action_share: 'top_action_share',
 	top3: 'top3',
 	top_area: 'top_area',
-	top_area_share: 'top_area_share',
-	area_call: 'area_call',
-	area_level: 'area_level',
-	area_score: 'area_score',
-	n_trusted: 'n_trusted',
-	share_low_confidence: 'share_low_confidence',
-	share_s2: 'share_s2'
+	top_area_share: 'top_area_share'
 };
 
-/** The satellite source of each field (attribute `source`). Mato Grosso switched from MODIS to
-    Sentinel-2 on 14 November 2026; the other states follow as their extraction completes. */
-export const SOURCES = {
-	modis: { label: 'MODIS, 250 m', lowAreaHa: 6.25 },
-	s2: { label: 'Sentinel-2, 30 m', lowAreaHa: 0.45 }
-};
-
-/** The confidence attribute: 'low' when the field is under 6.25 ha (one MODIS pixel; 0.45 ha,
-    five Sentinel-2 pixels, where the source is s2) or fewer than 75 percent of its growing-season
-    composites were observed in either year. Since 14 November 2026 a low-confidence field's
-    decision is "Low confidence: too small to judge yet".
+/** The confidence attribute: 'low' when the field is under 6.25 ha (one MODIS pixel) or
+    fewer than 75 percent of its growing-season composites were observed in either year.
     The control in the Where card draws low-confidence fields as usual, faded, or not at all. */
 export const CONFIDENCE = {
 	LOW: 'low',
@@ -289,73 +265,38 @@ export const VIGOR_CHANGE = [
 	{ key: 2, label: 'Rose two classes (low to high)', color: GREEN2 }
 ];
 
-/** Field decision (methods, section 7): the area call of the field's H3 cell (about 6 km, or 15 km
-    where the 6 km cell is too thin) first, the field's own record second. Each class is the
-    recommended treatment; `options` lists the other treatments that fit it, shown in the field card
-    under the recommendation. The page gives a treatment and options, never a plan for a site.
-    A class with `opacity` draws at that value: crop-switched, recently converted and abandoned
-    fields draw at half strength. Restore, assisted natural regeneration, restore candidate and
-    recently converted land are one green family; adjacent pairs separate by at least deltaE 12
-    under simulated protan, deutan and tritan vision (14 November 2026). */
+/** Field decision, version 2 (methods, section 7): the area call of the field's H3
+    resolution 5 cell first, the field's own record second. A class with `opacity` draws at
+    that value: crop-switched, newly cropped and abandoned fields draw at half strength in
+    every view, as in the change view. Recently converted land is green next to restore. */
 export const DECISIONS = [
 	{ key: 'restore', label: 'Restore', color: '#008300',
-		note: 'The field lies in an area where crops and pasture are both less green than the same uses across Brazil and both fell further behind since 2020, or it declined in a pasture area that is falling behind Brazil. Restoring the land is the recommended treatment.',
-		options: ['Assisted natural regeneration where native vegetation is returning', 'Improve yields if the land stays in production'] },
-	{ key: 'assisted_regen', label: 'Assisted natural regeneration', color: '#2e9e82',
-		note: 'Below nearby fields of the same crop and declining (or in a restore area), and native vegetation is already returning inside the field: at least 10 percent of its pixels were crop or pasture in 2020 and native vegetation in 2024. Protect and help the regrowth rather than plant.',
-		options: ['Active restoration if the regrowth stalls', 'Improve yields on the rest of the field if it stays in production'] },
-	{ key: 'restore_candidate', label: 'Restore candidate: next to native vegetation', color: '#285c23',
-		note: 'Below nearby fields of the same crop and not gaining, and next to large native vegetation: at least 30 percent of the land within 1 km is native vegetation in patches of 50 ha or more. Restoring would join a larger block of nature.',
-		options: ['Improve yields if the land stays in production', 'Assisted natural regeneration if native vegetation starts to return'] },
+		note: 'The field lies in an area where crops and pasture are both less green than the same uses across Brazil and both fell further behind since 2020. Restoring the land is suggested for the whole area, this field included.' },
 	{ key: 'converted_below', label: 'Recently converted, below peers', color: '#7cc24e', opacity: 0.5,
-		note: 'Native vegetation in 2020, crop or pasture in 2024, and already less green than the same use elsewhere in the ecoregion. The clearing is not paying off, which makes this a strong case for restoring.',
-		options: ['Restore or let native vegetation return', 'Improve the new use if it stays'] },
-	{ key: 'converted_ok', label: 'Recently converted, at or above peers', color: '#d7f28c', opacity: 0.5,
-		note: 'Native vegetation in 2020, crop or pasture in 2024, and at least as green as the same use elsewhere in the ecoregion. The new use produces; the open question is the clearing itself.',
-		options: ['Keep the new use and stop further clearing', 'Restore if the clearing broke the law or a commitment'] },
-	{ key: 'convert_cropland', label: 'Productive pasture on good cropland: conversion to crops possible', color: '#164e63',
-		note: 'Inside the Amazon biome, a pasture at least as green as nearby pasture, in an area where crops do as well as across Brazil but pasture lags. Conversion here means crops on this already cleared pasture, not new clearing.',
-		options: ['Convert this pasture to crops', 'Intensify the pasture (rotation, reform)', 'Keep as it is'] },
-	{ key: 'improve_pasture', label: 'Improve pasture', color: '#67b7d1',
-		note: 'Inside the Amazon biome, a pasture less green than nearby pasture, in an area where crops do as well as across Brazil but pasture lags. Recover the pasture before any change of use.',
-		options: ['Reform or fertilize the pasture', 'Rotate grazing', 'Restore if the pasture keeps falling behind'] },
-	{ key: 'convert_pasture', label: 'Improve or convert pasture', color: '#0e7490',
-		note: 'Outside the Amazon biome, a pasture in an area where crops do as well as across Brazil but pasture lags behind. Recover the pasture (reform, fertilize, rotate grazing) or move the land into crops.',
-		options: ['Reform or fertilize the pasture', 'Convert to crops', 'Integrated crop and livestock'] },
+		note: 'Native vegetation in 2020, crop or pasture in 2024, and already less green than the same use elsewhere in the ecoregion. The clearing is not paying off, which makes this the strongest case for restoring.' },
+	{ key: 'converted_ok', label: 'Recently converted, at or above peers', color: '#b5c95a', opacity: 0.5,
+		note: 'Native vegetation in 2020, crop or pasture in 2024, and at least as green as the same use elsewhere in the ecoregion, or not measured in 2024. The new use produces; the open question is the clearing itself.' },
+	{ key: 'convert_pasture', label: 'Improve or convert pasture', color: '#0f8b8d',
+		note: 'A pasture in an area where crops do as well as across Brazil but pasture lags behind. Recover the pasture (reform, fertilize, rotate grazing) or move the land into crops.' },
 	{ key: 'switch_paid_off', label: 'Switch paid off', color: '#2a78d6', opacity: 0.5,
-		note: 'The crop changed since 2020, and in 2024 the field is at least as green as nearby fields of the new crop. Keep the new crop.',
-		options: ['Keep the new crop', 'Intensify the new crop'] },
+		note: 'The crop changed since 2020, and in 2024 the field is at least as green as nearby fields of the new crop. Keep the new crop.' },
 	{ key: 'switch_failed', label: 'Switch failed', color: '#6250d6', opacity: 0.5,
-		note: 'The crop changed since 2020, and in 2024 the field is less green than nearby fields of the new crop. Reconsider the switch or how the new crop is managed.',
-		options: ['Return to the former crop', 'Improve how the new crop is managed'] },
-	{ key: 'improve_spare', label: 'Improve yields: spares land elsewhere', color: '#eda100',
-		note: 'Same crop in both years, below nearby fields of the same crop and not gaining, and little large native vegetation within 1 km. Raising yields here can spare land elsewhere.',
-		options: ['Improve management (inputs, sowing date, variety, soil)', 'Switch crop if the area\u2019s crop lags Brazil (see the area call)'] },
-	{ key: 'improve_yields', label: 'Improve yields', color: '#f7d58a',
-		note: 'Same crop in both years: fell behind nearby fields while at or above them, or below them but gaining. Look first at management: inputs, sowing date, variety, field condition.',
-		options: ['Improve management', 'Keep watching the trend'] },
+		note: 'The crop changed since 2020, and in 2024 the field is less green than nearby fields of the new crop. Reconsider the switch or how the new crop is managed.' },
+	{ key: 'improve_yields', label: 'Improve yields', color: '#eda100',
+		note: 'Same crop in both years, and the field fell behind nearby fields of the same crop or stays below them. The cause is likely on the field: soil, management or inputs.' },
 	{ key: 'intensify', label: 'Intensify', color: '#c4b38f',
-		note: 'Same crop, about as green as nearby fields of the same crop and not falling behind. The best neighbors show room to produce more.',
-		options: ['Intensify toward the best neighbors', 'Keep as it is'] },
+		note: 'Same crop, about as green as nearby fields of the same crop and not falling behind. The best neighbors show room to produce more.' },
 	{ key: 'keep', label: 'Keep', color: NEUTRAL,
-		note: 'Same crop, greener than nearby fields of the same crop and not falling behind. Nothing to change on this evidence.',
-		options: ['Keep as it is'] },
+		note: 'Same crop, greener than nearby fields of the same crop and not falling behind. Nothing to change on this evidence.' },
 	{ key: 'abandon', label: 'Abandon or change use', color: '#e34948',
-		note: 'Below nearby fields in both years, falling further, and close to bare soil in 2024. The land may suit another use or restoration better than the present one.',
-		options: ['Restore', 'Another use suited to the land'] },
+		note: 'Below nearby fields in both years, falling further, and close to bare soil in 2024. The land may suit another use or restoration better than the present one.' },
 	{ key: 'abandoned_outline', label: 'Abandoned since 2020', color: '#898781', opacity: 0.5,
-		note: 'Cropped or grazed in 2020 and not in 2024; drawn on the 2020 outline. Check whether native vegetation is coming back; if it is not, restore it.',
-		options: ['Assisted natural regeneration if native vegetation is coming back', 'Active restoration if it is not'] },
-	{ key: 'low_confidence', label: 'Low confidence: too small to judge yet', color: '#cfd8e3',
-		note: 'The field is smaller than the satellite pixel (under 6.25 ha for MODIS, under 0.45 ha for Sentinel-2) or had too few clear images, so its greenness mixes with its neighbors. The computed call is shown in the field card but not trusted. Sentinel-2 at 30 m replaces MODIS state by state.',
-		options: ['Wait for the Sentinel-2 update of the state'] },
+		note: 'Cropped or grazed in 2020 and not in 2024; drawn on the 2020 outline. Check whether native vegetation is coming back; if it is not, restore it.' },
 	{ key: 'none', label: 'No data', color: GRAY_NEUTRAL,
-		note: 'Too few clear satellite images in one of the years to compare, or a recently converted field with no 2024 measurement.',
-		options: [] }
+		note: 'Too few clear satellite images in one of the years to compare.' }
 ];
 
-/** Area decision per H3 resolution 6 cell (about 6 km across; the 15 km resolution 5 parent where
-    the 6 km cell has fewer than 30 fields of any crop or of pasture), from the cell's crops and
+/** Area decision per H3 resolution 5 cell (about 15 km across), from the cell's crops and
     pasture against the same uses across Brazil (methods, section 7). Below means more than
     0.75 national SD of cell medians under the national median; declining means the gap grew
     by more than 0.4 SD between 2020 and 2024. */
@@ -367,7 +308,7 @@ export const AREA_DECISIONS = [
 	{ key: 'system_misfit', label: 'System misfit', color: '#6250d6',
 		note: 'Pasture here does as well as pasture across Brazil, but the crops are weaker than crops across Brazil. The crops may not suit this land; pasture or another use may fit better.' },
 	{ key: 'area_declining', label: 'Area declining', color: BROWN1,
-		note: 'The uses present are less green than the same uses across Brazil, and at least one fell further behind since 2020. Look for a cause shared across the area. Where pasture is the only use, the declining fields are recommended for restoration.' },
+		note: 'The uses present are less green than the same uses across Brazil, and at least one fell further behind since 2020. Look for a cause shared across the area.' },
 	{ key: 'area_fine', label: 'Area fine', color: '#d6d1c7',
 		note: 'No area-wide problem: crops and pasture stand at or above the same uses across Brazil, or below them without falling further. The field call decides.' },
 	{ key: 'none', label: 'No area call', color: GRAY_NEUTRAL,
@@ -408,16 +349,16 @@ export const FRONTIER_RAMP = {
     100,538 of 144,909 cells, but stands out in 17,508). */
 export const ACTION_SUMMARY = {
 	attr: 'top_action', shareAttr: 'top_action_share', minShare: 0.15,
-	background: ['keep', 'intensify', 'none', 'abandoned_outline', 'low_confidence'],
+	background: ['keep', 'intensify', 'none', 'abandoned_outline'],
 	otherLabel: 'No action stands out', otherColor: '#d6d1c7',
-	otherNote: 'Mostly keep or intensify, the national mix, or too few fields with a trusted call: no action other than keep or intensify reaches 15 percent of the cell’s trusted fields and 1.5 times its share across Brazil. Low-confidence fields are left out of this count; a cell needs 10 trusted fields.'
+	otherNote: 'Mostly keep or intensify, or the national mix: no action other than keep or intensify reaches 15 percent of the cell’s fields and 1.5 times its share across Brazil.'
 };
 
 /** The zoomed-out area map, drawn by the same rule as the decision map: a cell takes the color
     of its most common area call other than area fine and no call when that call covers at
-    least 15 percent of the cell's fields, else the background gray. Since 14 November 2026 the
-    area call is made per 6 km cell, so each summary cell shows its own call (or its 15 km parent's
-    where the 6 km cell is too thin). */
+    least 15 percent of the cell's fields, else the background gray. The area call is made per
+    15 km cell, and each 6 km summary cell and each field inherits the call of the 15 km cell
+    that holds it. */
 export const AREA_SUMMARY = {
 	attr: 'top_area', shareAttr: 'top_area_share', minShare: 0.15,
 	background: ['area_fine', 'none'],
@@ -438,7 +379,7 @@ export const VIEWS = [
 			label: 'Change against Brazil, 2020 to 2024 (national SD, all crops)'
 		},
 		method: 'Zoomed out, each H3 cell of about 6 km is colored by how its crops moved against Brazil as a whole: for each crop in the cell, the median weather-adjusted seasonal greenness against the national median of that crop, in national standard deviations (SD) of cell medians, 2024 minus 2020, weighted by field count. The tooltip adds the plain change in greenness and the share of fields declining minus gaining. Zoomed in, each field is classed on its change against fields of the same crop nearby (peer SD), with switched, newly cropped and abandoned fields shown on their own.',
-		caveat: 'A change in greenness is not a measured yield change. The national comparison keeps regional weather the adjustment missed, including the 2024 drought, so part of a frontier may be weather. A crop needs 30 fields in a cell to count; a 6 km cell without one takes the value of its 15 km parent. Mato Grosso uses Sentinel-2 at 30 m, with the field change thresholds scaled by 1.22, the ratio of the two sensors’ year-to-year spread on fields over 25 ha, so the share of changing fields on large fields matches MODIS (22.5 against 22.8 percent). On small fields Sentinel-2 still sees more change than MODIS, which mixes them with their neighbors. Elsewhere 83 percent of fields are smaller than one MODIS pixel.'
+		caveat: 'A change in greenness is not a measured yield change. The national comparison keeps regional weather the adjustment missed, including the 2024 drought, so part of a frontier may be weather. A crop needs 30 fields in a cell to count; a 6 km cell without one takes the value of its 15 km parent. 83 percent of fields are smaller than one MODIS pixel.'
 	},
 	{
 		id: 'prod_2020', group: 'Productivity', title: 'Relative productivity 2020',
@@ -474,10 +415,10 @@ export const VIEWS = [
 	},
 	{
 		id: 'area_decision', group: 'Decision', title: 'Area decision',
-		question: 'Which land use tradeoff does each area of about 6 km face?',
+		question: 'Which land use tradeoff does each area of about 15 km face?',
 		kind: 'class', attr: 'area_decision', classes: AREA_DECISIONS, countKey: 'area_decision',
-		summary: { kind: 'action', action: AREA_SUMMARY, classes: AREA_DECISIONS, label: 'Area call, 6 km areas' },
-		method: 'Each H3 cell of about 6 km (resolution 6) is compared with Brazil as a whole, separately for crops (soybean, other temporary crops, sugarcane, rice, cotton, perennials) and for pasture: the median weather-adjusted greenness of each crop in the cell against its national median, in national SD of cell medians, pooled by field count. Below means more than 0.75 SD under; declining means the gap grew by more than 0.4 SD from 2020 to 2024. A crop needs 30 fields in the cell to count; a 6 km cell where no crop and no pasture reaches 30 fields takes the call of its 15 km parent (the field card says which). The cell card also shows the same terms against the RESOLVE 2017 ecoregion, and the tooltip how the ecoregion moved against Brazil. Mosaic of uses is shown but does not enter the call. Legend counts are the fields in cells with each call.',
+		summary: { kind: 'action', action: AREA_SUMMARY, classes: AREA_DECISIONS, label: 'Area call, 15 km areas' },
+		method: 'Each H3 cell of about 15 km (resolution 5) is compared with Brazil as a whole, separately for crops (soybean, other temporary crops, sugarcane, rice, cotton, perennials) and for pasture: the median weather-adjusted greenness of each crop in the cell against its national median, in national SD of cell medians, pooled by field count. Below means more than 0.75 SD under; declining means the gap grew by more than 0.4 SD from 2020 to 2024. A crop needs 30 fields in the cell to count. The cell card also shows the same terms against the RESOLVE 2017 ecoregion, and the tooltip how the ecoregion moved against Brazil. Mosaic of uses is shown but does not enter the call. Legend counts are the fields in cells with each call.',
 		caveat: 'The change of the area term forms blocks of 50 to 200 km, partly weather that the adjustment left in (median R squared 0.15). A refit per ecoregion with mean rainfall did not remove the blocks. Read an area call next to the 2024 drought.'
 	},
 	{
@@ -485,7 +426,7 @@ export const VIEWS = [
 		question: 'Which land use decision does the evidence point to on each field, inside its area?',
 		kind: 'class', attr: 'decision', classes: DECISIONS, countKey: 'decision',
 		summary: { kind: 'action', action: ACTION_SUMMARY, classes: DECISIONS, label: 'Action that stands out per cell' },
-		method: 'Each field gets one recommended treatment; the field card lists the other options that fit. The area call comes first: in a restore-the-area cell every field is restore, and in a declining area where pasture is the only use the declining fields are restore. In a good-land-underused cell, pasture is improve or convert pasture; inside the Amazon biome only pasture at least as green as nearby pasture is offered conversion to crops, and conversion means the already cleared pasture. Then the field’s own record: a field below nearby fields of the same crop and not gaining is assisted natural regeneration when native vegetation is returning inside it, a restore candidate when large native vegetation lies within 1 km, and otherwise improve yields, which spares land elsewhere. Fields smaller than the satellite pixel are labeled too small to judge (methods, section 7).',
+		method: 'The area call comes first: every field in a restore-the-area cell is restore, and pasture that is not above its neighbors in a good-land-underused cell is improve or convert pasture. Then the field\u2019s own record: a crop switch is judged by the 2024 level against nearby fields of the new crop, a recently converted field by its 2024 level against the same use in the ecoregion, and a field on the same crop by its change and its 2024 level against nearby fields (methods, section 7).',
 		caveat: 'These are screening results from satellite greenness. They are not agronomic advice, they do not know prices, soils, tenure or the farmer\u2019s plans, and a field flagged here deserves a visit before any decision.'
 	}
 ];
