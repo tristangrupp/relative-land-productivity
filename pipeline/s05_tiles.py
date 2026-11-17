@@ -18,10 +18,10 @@ tiles\\geojson\\<State>.geojsonl, so no state is held in memory as GeoJSON.
 
 Tippecanoe runs in WSL (Ubuntu-22.04, tippecanoe 2.80) twice per state with its temporary
 files on F:. Zoom 12 to 14: `-pk -pf` (no tile size limit, no feature limit), so no field is
-dropped or merged at the zooms where fields are the map. Zoom 9 to 11:
-`--coalesce-densest-as-needed -pf`, which merges the densest neighboring polygons into one
-feature (the first feature's attributes) where a tile would exceed 500 KB, instead of dropping
-them. `--drop-densest-as-needed` is not used. `-ab` detects shared borders so neighboring
+dropped or merged at the zooms where fields are the map. Zoom 9 to 11: since 17 November
+2026 the same, `-pk -pf --no-tiny-polygon-reduction`, so no field is dropped at any zoom where
+fields show (the user: "keep all of the fields the browser can handle it"); before, the
+smallest polygons were coalesced or dropped where a tile was too dense. `-ab` detects shared borders so neighboring
 fields simplify to the same edge, `-P` reads the newline-delimited input in parallel. The
 per-state PMTiles are joined with tile-join -pk into tiles\\fields.pmtiles. Sizes and times are
 written to tiles\\tiles_log.jsonl.
@@ -175,7 +175,10 @@ def run_tippecanoe(state, force=False):
     lo = os.path.join(STATE_TILES, f"{state}_z9_11.pmtiles")
     recs = []
     for out, args in ((hi, ["-Z12", "-z13", "-pk", "-pf"]),
-                      (lo, ["-Z9", "-z11", "--coalesce-smallest-as-needed", "--drop-smallest-as-needed", "-pf"])):
+                      # 17 November 2026, user: no field may be dropped once fields show, "the
+                      # browser can handle it". Zoom 9 to 11 keep every polygon like zoom 12 to 14:
+                      # no tile size or feature limit and no tiny-polygon reduction.
+                      (lo, ["-Z9", "-z11", "-pk", "-pf", "--no-tiny-polygon-reduction"])):
         if os.path.exists(out) and not force:
             recs.append({"state": state, "out": os.path.basename(out), "status": "exists"})
             continue

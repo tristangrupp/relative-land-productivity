@@ -33,7 +33,9 @@ export const CONFIG = {
 	FIELDS_LAYER: 'fields',
 	SUMMARY_LAYER: 'summary',
 
-	/** Below this zoom the map shows the summary cells; from it upward, the fields. */
+	/** Below this zoom the map shows the summary cells; from it upward, the fields. Since
+	    17 November 2026 the zoom 9 to 11 field tiles keep every polygon (user: no field may be
+	    dropped once fields show), so fields start at zoom 9 again. */
 	FIELDS_MIN_ZOOM: 9,
 
 	/** The fields archive stops at zoom 13. MapLibre overzooms its zoom 13 tiles up to
@@ -352,6 +354,17 @@ export const DECISIONS = [
 	{ key: 'none', label: 'No data', color: GRAY_NEUTRAL,
 		note: 'Too few clear satellite images in one of the years to compare, or a recently converted field with no 2024 measurement.',
 		options: [] }
+];
+
+/** Classes that the legend shows as one row (17 November 2026, user: combine the two improve
+    yields classes "into just 'improve yields' with a + button that adds the sparing
+    distinction to the map when clicked on"). Collapsed, every member draws in `color` and the
+    row counts all members; the + button expands the row into its members with their own
+    colors, on the map and in the legend. Intensify joined the group the same day (user: "i
+    dont understand the difference between intensify and improve yields. fold that in"). */
+export const CLASS_GROUPS = [
+	{ key: 'improve_yields_all', members: ['improve_spare', 'improve_yields', 'intensify'], label: 'Improve yields', color: '#eda100',
+		note: 'Same crop in both years, and the best nearby fields of the same crop produce more: the field is behind them, falling behind, or about level with room to reach the best. Look first at management: inputs, sowing date, variety, field condition. Press + to split it: where higher yields would also spare land elsewhere (little large native vegetation within 1 km), other fields behind or falling behind, and fields about level with their neighbors (intensify).' }
 ];
 
 /** Area decision per H3 resolution 6 cell (about 6 km across; the 15 km resolution 5 parent where

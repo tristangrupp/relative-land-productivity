@@ -678,3 +678,17 @@ DECISIONS_V2.md, S2_MATO_GROSSO.md. Methods: methods/METHODS.md. Site contract: 
   decision view. Done in docs/index.html, docs/config.js and docs/app.js (cache busters v=11).
   The low-confidence control is hidden, so fields draw as usual. Default view is now the
   decision view (supersedes the 13 Nov default of the change view, DECISIONS.md D1).
+- 17 Nov, user: "I don't want fields to be dropped at any zoom level once the fields do show".
+  First tried: draw fields from zoom 12 and overzoom the summary cells to 11. The user rejected
+  it: "I do not want hex grids this far zoomed in ... instead of dropping the fields keep all of
+  the fields the browser can handle it". Done instead: fields show from zoom 9 again, and the
+  zoom 9 to 11 field tiles are rebuilt with -pk -pf --no-tiny-polygon-reduction (no size limit,
+  no dropping) in pipeline/s05_tiles.py. Rebuild, join and upload run hidden; until they land,
+  zoom 9 to 11 still drops the smallest fields in dense tiles.
+- 17 Nov, user: combine "Improve yields: spares land elsewhere" and "Improve yields" "into just
+  'improve yields' with a + button that adds the sparing distinction to the map when clicked
+  on", then "i dont understand the difference between intensify and improve yields. fold that
+  in". The legend shows one row "Improve yields" (amber #eda100, count of the three classes);
+  + splits it into improve yields that spares land, improve yields and intensify with their
+  own colors on the map; minus combines them. `CLASS_GROUPS` in docs/config.js. Checked
+  locally in Chrome at zoom 12 near Sorriso.

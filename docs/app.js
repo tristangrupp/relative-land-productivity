@@ -14,8 +14,8 @@
 
 import {
 	CONFIG, ATTR, SUMMARY_ATTR, VIEWS, CROPS, VIGOR, VIGOR_CHANGE, DECISIONS, AREA_DECISIONS,
-	CHANGE_CLASSES, STATES, NODATA_COLOR, CONFIDENCE, ECO_TREND, SOURCES
-} from './config.js?v=11';
+	CHANGE_CLASSES, STATES, NODATA_COLOR, CONFIDENCE, ECO_TREND, SOURCES, CLASS_GROUPS
+} from './config.js?v=13';
 
 const $ = (id) => document.getElementById(id);
 const NA = 'n/a';
@@ -34,6 +34,8 @@ const state = {
 	picked: null,
 	mapReady: false,
 	summaryVisible: true,
+	/* keys of CLASS_GROUPS the user expanded with the + button */
+	expanded: new Set(),
 	ecoregions: null
 };
 
@@ -54,6 +56,17 @@ function log(title, meta, cls) {
 }
 
 /* ------------------------------------------------------------------ fill expressions */
+
+/** The classes as drawn: a member of a collapsed CLASS_GROUPS entry takes the group's color. */
+function drawClasses(classes) {
+	if (!classes) return classes;
+	const color = {};
+	for (const g of CLASS_GROUPS) {
+		if (state.expanded.has(g.key)) continue;
+		for (const k of g.members) color[k] = g.color;
+	}
+	return classes.map((c) => (color[c.key] ? { ...c, color: color[c.key] } : c));
+}
 
 function classFill(attrName, classes) {
 	const m = ['match', ['get', attrName]];
@@ -158,7 +171,7 @@ function derivedKey(view, p) {
 
 function fieldFill(view) {
 	if (view.kind === 'vigor') return vigorFill();
-	if (view.kind === 'class') return derivedFill(view, classFill(ATTR[view.attr], view.classes));
+	if (view.kind === 'class') return derivedFill(view, classFill(ATTR[view.attr], drawClasses(view.classes)));
 	return stepFill(ATTR[view.attr], view.steps);
 }
 
@@ -176,7 +189,7 @@ function actionFill(s) {
 	const a = SUMMARY_ATTR[s.action.attr];
 	const sh = SUMMARY_ATTR[s.action.shareAttr];
 	const m = ['match', ['get', a]];
-	for (const c of s.classes) m.push(c.key, c.color);
+	for (const c of drawClasses(s.classes)) m.push(c.key, c.color);
 	m.push(s.action.otherColor);
 	return ['case', ['all', ['has', a], ['>=', ['coalesce', ['get', sh], 0], s.action.minShare]], m, s.action.otherColor];
 }
@@ -185,7 +198,7 @@ function summaryFill(view) {
 	const s = view.summary;
 	if (s.kind === 'ramp') return rampFill(s.ramp);
 	if (s.kind === 'action') return actionFill(s);
-	if (s.kind === 'class') return classFill(SUMMARY_ATTR[s.attr], s.classes);
+	if (s.kind === 'class') return classFill(SUMMARY_ATTR[s.attr], drawClasses(s.classes));
 	if (s.kind === 'net') return stepFillExpr(netExpr(s), netHasExpr(s), s.steps);
 	return stepFill(SUMMARY_ATTR[s.attr], s.steps);
 }
@@ -544,6 +557,7 @@ function renderLegend() {
 		items = v.steps.labels.map((l, i) => ({ color: v.steps.colors[i], label: l }));
 		$('legendTitle').textContent = 'Field value against the peer median';
 	}
+	items = groupItems(items, v);
 	items.push({ color: NODATA_COLOR, label: 'No value' });
 	if (!state.summaryVisible && state.confMode === 'fade') {
 		items.push({ color: '#2c2a28', opacity: CONFIDENCE.FADE_FACTOR, label: 'Low confidence (faded)' });
@@ -553,8 +567,8 @@ function renderLegend() {
 		<div class="ticks">${ramp.ticks.map((t) => `<span>${esc(t)}</span>`).join('')}</div>
 		<div class="ends"><span>${esc(ramp.ends[0])}</span><span>${esc(ramp.ends[1])}</span></div></li>` : '';
 	$('legend').innerHTML = rampHtml + items.map((it, i) => `
-		<li><span class="sw" style="background:${it.color}${it.opacity != null ? `;opacity:${it.opacity}` : ''}"></span>
-		<span class="lab">${esc(it.label)}${it.note ? `<button type="button" class="info" data-i="${i}" aria-label="About ${esc(it.label)}" aria-expanded="false">i</button>` : ''}</span>
+		<li${it.member ? ' class="member"' : ''}><span class="sw" style="background:${it.color}${it.opacity != null ? `;opacity:${it.opacity}` : ''}"></span>
+		<span class="lab">${esc(it.label)}${it.note ? `<button type="button" class="info" data-i="${i}" aria-label="About ${esc(it.label)}" aria-expanded="false">i</button>` : ''}${it.group ? `<button type="button" class="grp" data-g="${it.group}" aria-expanded="${state.expanded.has(it.group)}" aria-label="${state.expanded.has(it.group) ? 'Combine' : 'Split'} ${esc(it.label)}">${state.expanded.has(it.group) ? '−' : '+'}</button>` : ''}</span>
 		<span class="n">${it.n != null ? fmtInt(it.n) : ''}</span></li>`).join('');
 	state.legendItems = items;
 	$('legendCaveat').textContent = v.caveat;
@@ -575,6 +589,31 @@ function renderLegend() {
 		}
 		$('legendCountNote').textContent = note;
 	}
+}
+
+/** Legend rows of a CLASS_GROUPS entry: one row with the summed count and a + button, or, once
+    expanded, that row with a minus button followed by its members. Rows are matched by label,
+    since the items carry no key. */
+function groupItems(items, v) {
+	const classes = (state.summaryVisible ? v.summary && v.summary.classes : v.classes) || [];
+	const keyOf = new Map(classes.map((c) => [c.label, c.key]));
+	let out = items;
+	for (const g of CLASS_GROUPS) {
+		const idx = out.map((it, i) => (g.members.includes(keyOf.get(it.label)) ? i : -1)).filter((i) => i >= 0);
+		if (!idx.length) continue;
+		const members = idx.map((i) => out[i]);
+		const n = members.some((m) => m.n != null) ? members.reduce((a, m) => a + (m.n || 0), 0) : undefined;
+		const head = { color: g.color, label: g.label, note: g.note, n, group: g.key };
+		const rows = state.expanded.has(g.key) ? [head, ...members.map((m) => ({ ...m, member: true }))] : [head];
+		out = [...out.slice(0, idx[0]), ...rows, ...out.slice(0, out.length).filter((_, i) => i > idx[0] && !idx.includes(i))];
+	}
+	return out;
+}
+
+function toggleGroup(key) {
+	if (state.expanded.has(key)) state.expanded.delete(key); else state.expanded.add(key);
+	applyView();
+	renderLegend();
 }
 
 function renderScope() {
@@ -825,6 +864,8 @@ function setupLegendTips() {
 	legend.addEventListener('focusin', (e) => { const b = e.target.closest('.info'); if (b) show(b); });
 	legend.addEventListener('focusout', (e) => { if (e.target.closest('.info')) hide(); });
 	legend.addEventListener('click', (e) => {
+		const g = e.target.closest('.grp');
+		if (g) { e.preventDefault(); hide(); toggleGroup(g.dataset.g); return; }
 		const b = e.target.closest('.info');
 		if (!b) return;
 		e.preventDefault();

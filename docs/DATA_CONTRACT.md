@@ -20,7 +20,7 @@ terms). The site also reads `docs/data/ecoregions.json` from Pages (`CONFIG.ECOR
 The bucket is public read with CORS (`Access-Control-Allow-Origin: *`, GET and HEAD), so
 GitHub Pages range-reads the PMTiles. The fields archive stops at zoom 13; MapLibre
 overzooms the zoom 13 tiles for every zoom above that, so no layer in the style may set a
-maxzoom at or under 13. From zoom 9 to 11 tippecanoe merged the smallest fields into their
+maxzoom at or under 13. Since 17 November 2026 zoom 9 to 11 keep every polygon (`-pk -pf --no-tiny-polygon-reduction`), so no field is dropped at any zoom where fields show. Before, from zoom 9 to 11 tippecanoe merged the smallest fields into their
 neighbors (`--coalesce-smallest-as-needed --drop-smallest-as-needed`); at 12 and 13 nothing
 is dropped or merged. Outlines are simplified with a 0.0001 degree tolerance and rounded to
 5 decimals; `area_ha` keeps the original value.

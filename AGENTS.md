@@ -131,6 +131,12 @@ Prefix: `https://wri-datalab-sandbox.s3.amazonaws.com/trazofields/trazo4/relativ
   <view>"; right panel order legend, then the view's question, then "Select a state" with
   only the field count and hectares; no zoom note, no source or low-confidence text, no
   low-confidence control, no screening disclaimer in the decision view.
+- (17 November 2026) No field may be dropped at any zoom where fields show (zoom 9 up): the
+  zoom 9 to 11 field tiles keep every polygon. Do not push the summary cells to higher zooms
+  instead ("I do not want hex grids this far zoomed in").
+- (17 November 2026) The legend shows "Improve yields" as one row for improve yields, improve
+  yields that spares land, and intensify; its + button splits it on the map and in the
+  legend (`CLASS_GROUPS` in config.js).
 - The zoomed-out map must be dense: many small cells. 100 km, 40 km and (13 November) 15 km
   cells were rejected as too coarse; 6 km cells at every zoom now. The change view uses a
   continuous ramp, not a few flat steps ("too coarse and oversimplified").
