@@ -198,6 +198,13 @@ details.fold summary {
 details.fold p { margin: 8px 0 0; font-size: 12px; line-height: 1.5; color: var(--ink-2); }
 
 /* stats grid and the picked field */
+.mixTitle { margin: 14px 0 6px; font: 500 11px var(--mono); color: var(--ink-2); text-transform: uppercase; letter-spacing: .04em; }
+.mix { margin: 0; padding: 0; list-style: none; }
+.mix li { display: grid; grid-template-columns: minmax(0, 1.3fr) 1fr 44px; gap: 6px; align-items: center; padding: 2px 0; font-size: 11.5px; }
+.mixLab { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.mixBar { height: 8px; background: #efebe4; border-radius: 2px; overflow: hidden; display: block; }
+.mixBar span { display: block; height: 100%; }
+.mixPct { font: 11px var(--mono); color: var(--ink-2); text-align: right; }
 .stats { display: grid; grid-template-columns: 1fr 1fr; gap: 9px 12px; }
 .stat .v { font: 600 15px var(--mono); display: block; line-height: 1.15; }
 .stat .k { font: 10.5px var(--mono); color: var(--muted); display: block; margin-top: 3px; }

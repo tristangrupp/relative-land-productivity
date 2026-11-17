@@ -15,7 +15,7 @@
 import {
 	CONFIG, ATTR, SUMMARY_ATTR, VIEWS, CROPS, VIGOR, VIGOR_CHANGE, DECISIONS, AREA_DECISIONS,
 	CHANGE_CLASSES, STATES, NODATA_COLOR, CONFIDENCE, ECO_TREND, SOURCES, CLASS_GROUPS
-} from './config.js?v=14';
+} from './config.js?v=15';
 
 const $ = (id) => document.getElementById(id);
 const NA = 'n/a';
@@ -612,6 +612,7 @@ function toggleGroup(key) {
 	if (state.expanded.has(key)) state.expanded.delete(key); else state.expanded.add(key);
 	applyView();
 	renderLegend();
+	renderScope();
 }
 
 function renderScope() {
@@ -623,7 +624,32 @@ function renderScope() {
 		<div class="stats">
 			<div class="stat"><span class="v">${fmtInt(n)}</span><span class="k">fields</span></div>
 			<div class="stat"><span class="v">${fmtInt(Math.round(st.area_ha || 0))}</span><span class="k">hectares</span></div>
-		</div>`;
+		</div>${state.stateCode ? stateMix(st, n) : ''}`;
+}
+
+/** For a selected state: the share of each recommended land use among the fields with a
+    trusted call, as bars in the legend colors, with the fields too small to judge and the
+    fields without data counted below (user, 17 November 2026). */
+function stateMix(st, n) {
+	const d = st.decision || {};
+	const skip = ['low_confidence', 'none', 'abandoned_outline'];
+	const groupOf = {};
+	for (const g of CLASS_GROUPS) if (!state.expanded.has(g.key)) for (const k of g.members) groupOf[k] = g;
+	const rows = new Map();
+	for (const c of drawClasses(DECISIONS)) {
+		if (skip.includes(c.key) || !d[c.key]) continue;
+		const g = groupOf[c.key];
+		const key = g ? g.key : c.key;
+		const r = rows.get(key) || { label: g ? g.label : c.label, color: g ? g.color : c.color, n: 0 };
+		r.n += d[c.key];
+		rows.set(key, r);
+	}
+	const list = [...rows.values()].sort((a, b) => b.n - a.n);
+	const total = list.reduce((a, r) => a + r.n, 0);
+	if (!total) return '';
+	const bars = list.map((r) => `<li><span class="mixLab">${esc(r.label)}</span><span class="mixBar"><span style="width:${(100 * r.n / list[0].n).toFixed(1)}%;background:${r.color}"></span></span><span class="mixPct">${(100 * r.n / total).toFixed(1)}%</span></li>`).join('');
+	return `<p class="mixTitle">Recommended land use in ${esc(scopeName())}</p><ul class="mix">${bars}</ul>
+		<p class="ctxNote">Shares of the ${fmtInt(total)} fields with a trusted call. ${fmtInt(d.low_confidence || 0)} fields are too small to judge yet and ${fmtInt(d.none || 0)} have no data.</p>`;
 }
 
 function setView(id, push = true) {

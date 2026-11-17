@@ -447,7 +447,7 @@ export const VIEWS = [
 		id: 'decision', group: 'Decisions', title: 'Suggested land use pathway',
 		question: 'What would be a better land use decision for sustainable food?',
 		kind: 'class', attr: 'decision', classes: DECISIONS, countKey: 'decision',
-		summary: { kind: 'action', action: ACTION_SUMMARY, classes: DECISIONS, label: 'Action that stands out per cell' },
+		summary: { kind: 'action', action: ACTION_SUMMARY, classes: DECISIONS, label: 'Possible sustainable land use future' },
 		method: 'Each field gets one recommended treatment; the field card lists the other options that fit. The area call comes first: in a restore-the-area cell every field is restore, and in a declining area where pasture is the only use the declining fields are restore. In a good-land-underused cell, pasture is improve or convert pasture; inside the Amazon biome only pasture at least as green as nearby pasture is offered conversion to crops, and conversion means the already cleared pasture. Then the field’s own record: a field below nearby fields of the same crop and not gaining is assisted natural regeneration when native vegetation is returning inside it, a restore candidate when large native vegetation lies within 1 km, and otherwise improve yields, which spares land elsewhere. Fields smaller than the satellite pixel are labeled too small to judge (methods, section 7).',
 		caveat: ''
 	},

@@ -697,3 +697,39 @@ DECISIONS_V2.md, S2_MATO_GROSSO.md. Methods: methods/METHODS.md. Site contract: 
   with ?view=area_decision opens the decision view), and the area call rows are gone from the
   tooltips; the field card still lists the area call. The nav link "Suggested land use
   pathway" is bold. The area call data and tiles are unchanged.
+- 17 Nov, user: under "Select a state", show the distribution of the recommended land uses for
+  the selected state. Done: bars of each recommendation's share of the state's fields with a
+  trusted call (the Improve yields group as one bar unless split with +), and a line with the
+  fields too small to judge and without data. Also: "'Action that stands out per cell' change
+  to: 'Possible Sustainable Land Use Future'" (the decision view's zoomed-out legend title).
+- 17 Nov, user asked why so many Amazon frontier cells, along rivers and in Amazonas, are gray
+  ("no action stands out") although much of that pasture is unproductive ("don't force that
+  ... I want you to investigate why they are Gray"). Investigation, `pipeline/s11_gray_cells.py`
+  over the per-field decision tables (6 km cells; a cell takes a color when one actionable
+  call has at least 15 percent of its trusted fields and 1.5 times its national share, with at
+  least 10 trusted fields):
+  1. In the states still on MODIS the cause is field size. Amazonas: 5,225 of 5,581 cells have
+     under 10 fields with a trusted call; 97.3 percent of the fields in gray cells are low
+     confidence (under 6.25 ha), so they show "too small to judge yet" and do not count.
+     Roraima 1,354 of 1,705 cells, Maranhão 4,273 of 6,975, Tocantins 1,522 of 5,725 are gray
+     for the same reason. Amapá: 59.5 percent of its fields have no data (cloud).
+  2. If the computed (untrusted) calls counted, 4,718 of Amazonas's 5,486 gray cells would take
+     a color: recently converted at or above peers 2,566, below peers 1,135, restore candidate
+     593, restore 169. Over the Amazon biome, 13,315 of 26,050 gray cells would: recently
+     converted 8,375, restore candidate 2,348, improve yields 1,842, restore 379.
+  3. In the states on Sentinel-2 (Pará, Acre, Rondônia, Mato Grosso) most gray cells have
+     enough trusted fields, and their pasture is not weak by this measure: the computed calls
+     in gray cells are intensify (32 to 36 percent), keep (29 to 32), improve yields that spares
+     land (15 to 18); 86 to 97 percent of their fields lie in cells whose area call is "area
+     fine", that is, their pasture greenness is not below pasture across Brazil.
+  4. The method measures greenness, not productivity. Humid Amazon pasture stays green through
+     the season, so a lightly stocked or degraded pasture there can read as at or above the
+     national pasture median. The relative measure compares a pasture with nearby pastures,
+     so a whole region of weak pasture is not flagged at field level, and the area call sees
+     Amazon pasture as fine. Pasture vigor (MapBiomas), which would address this, is not
+     implemented (open item 4).
+  Options for the user, none applied: (a) let summary cells count the computed calls of
+  low-confidence fields, since a cell aggregates many small fields (colors about half of the
+  gray Amazon cells, mostly recently converted land); (b) wait for Sentinel-2 in Amazonas,
+  Roraima, Amapá, Maranhão and Tocantins, which removes most of the size problem; (c) add a
+  pasture measure that is not greenness (MapBiomas pasture vigor or degradation).
