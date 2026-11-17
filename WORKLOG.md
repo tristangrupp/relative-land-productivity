@@ -808,3 +808,9 @@ DECISIONS_V2.md, S2_MATO_GROSSO.md. Methods: methods/METHODS.md. Site contract: 
 
 - The relaunched `--from-join` run joined the tiles at 12:49 (tile-join rc 0, `fields.pmtiles` 9,027,039,966 bytes, up from 7,060,673,632 with dropping), then the Python process vanished before logging the join, with nothing in its stderr. Cause not found.
 - Added `--from-copy` (skip the join, copy the joined file to F:, upload). Launched at 13:31 hidden; the copy is running. Log: `analysis\decisions\logs\rebuild_lowzoom.log`, output `rebuild_copy.stdout` and `.err`.
+
+### 17 November 2026, 14:32: zoom 9 to 11 no-drop tiles live
+
+- Copy to F: done 13:32; upload done (rc 0, three 206 checks). S3 `tiles/fields.pmtiles` is 9,027,039,966 bytes, last modified 18:32 UTC. `stats.json` and `summary.pmtiles` were skipped as same size.
+- Still to check: map speed at zoom 9 to 10 over São Paulo and Paraná with the larger tiles.
+- Next: switch Amazonas to Sentinel-2 when its extraction is complete.
