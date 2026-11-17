@@ -638,3 +638,9 @@ DECISIONS_V2.md, S2_MATO_GROSSO.md. Methods: methods/METHODS.md. Site contract: 
   The Forest Code subsection is back in docs/methods.html (marked in preparation); nothing
   else in docs/ changed. Next for the orchestrator: apply METHODS.md 7.7 in
   `s07_decisions.py` and the option lists in config.js.
+
+### 17 November 2026, 02:32
+
+- The Pará, Rondônia and Acre swap chain launched at 01:31 through `cmd.exe /c "a && b"` failed at once with "'E:\Water\water' is not recognized". The venv Python path has a space, and the unquoted path broke the cmd.exe line. Nothing ran.
+- Added `pipeline/run_chain.py`, which runs each script argument in turn with the same interpreter and stops at the first failure. Relaunched the chain at 02:31 with WMI, `launch_detached.py` and `run_chain.py`; Pará assemble started. Log: `F:\relative-land-productivity-data\analysis\source=s2\logs\swap_PA_RO_AC_2026-11-17.log`.
+- Use `run_chain.py` for every multi-step run from now on. Do not chain through cmd.exe.
