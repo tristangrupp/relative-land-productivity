@@ -783,3 +783,9 @@ DECISIONS_V2.md, S2_MATO_GROSSO.md. Methods: methods/METHODS.md. Site contract: 
 - 17 Nov, user: "LAND USE FOR MORE SUSTAINABLE FOOD PRODUCTION / SUGGESTED LAND USE PATHWAY /
   DEMO <---- add the text 'DEMO' in bold after these". Added to the page header (bold, after
   the view name).
+- 17 Nov 11:32, the zoom 9 to 11 rebuild moved into the repo as `pipeline/s05c_rebuild_lowzoom.py`
+  (with `pipeline/s05c_join.sh`, the tile-join script it runs inside WSL as ~/join.sh). The first
+  run died at 11:18 after the GeoJSON step on a log() keyword clash; fixed, and relaunched
+  hidden through WMI and pipeline/launch_detached.py at 11:32 (python pid 46772). It reused the
+  27 per-state GeoJSON files and is building the zoom 9 to 11 state tiles. Log:
+  F:\relative-land-productivity-data\analysis\decisions\logs\rebuild_lowzoom.log.
