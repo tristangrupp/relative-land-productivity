@@ -649,3 +649,11 @@ DECISIONS_V2.md, S2_MATO_GROSSO.md. Methods: methods/METHODS.md. Site contract: 
 
 - The relaunched chain stopped at 02:34 in `s08_s2_compare.py border` for Pará with an AssertionError. `NEIGHBORS` was one fixed list, the neighbors of Mato Grosso, so Pará was loaded twice and Mato Grosso not at all. Replaced it with `NEIGHBORS_OF`, bordering states for each tier 1 and tier 2 state. Tested `border()` on Pará, Rondônia and Acre: Pará 119 fields lose their peer group without neighbors, Rondônia 59, Acre 26. Relaunched the chain at 03:32; Pará passed the border step.
 - Open: `analysis/relative/source=s2/weather_fit.json` is rewritten by each state's relative step, so it now holds only the Pará rows; the Mato Grosso rows are gone. The Mato Grosso field tables already written are unaffected. A rerun of Mato Grosso relative would refit Mato Grosso. A per-state fit file would keep all of them; not changed yet.
+
+### 17 November 2026, 06:40: Pará, Rondônia and Acre on Sentinel-2
+
+- The chain finished at 05:58 (decisions 03:41, field tiles, summary tiles, upload of tiles and field GeoParquet). Live `stats.json` dated 2026-11-17 lists AC, MT, PA and RO as `s2`.
+- Change threshold scale k (Sentinel-2 change SD over MODIS change SD, fields of 25 ha and more): Pará 1.1792 (24,416 fields), Rondônia 1.3233 (26,909), Acre 1.417 (4,219). Share of large fields changing class, MODIS against scaled Sentinel-2: Pará 19.91 and 19.9 percent, Rondônia 15.1 and 14.42, Acre 12.49 and 10.24. Exact agreement of the change class over all comparable fields, scaled: Pará 67.92, Rondônia 73.49, Acre 76.72 percent. Details in `data/summaries/s2_{pa,ro,ac}_noise.json`.
+- National decisions after the swap (shown on the map), before in brackets: restore 52,253 (27,981), assisted natural regeneration 2,366 (1,787), restore candidate 384,872 (296,148), low confidence 18,562,422 (19,464,886), no suggestion 146,335 (425,978). Low-confidence flag: 18,705,778 fields, 76.2 percent (was 19,889,026, 81.0 percent).
+- `docs/about.html` updated with these numbers. No cache buster change: the tiles and stats keep their S3 names.
+- Next: Amazonas when its extraction completes, then Roraima and Amapá.

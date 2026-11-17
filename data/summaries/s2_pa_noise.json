@@ -1,0 +1,49 @@
+{
+ "state": "Para",
+ "min_ha": 25.0,
+ "fields": 24416,
+ "sd_s2": 0.8442,
+ "sd_modis": 0.7159,
+ "change_scale": 1.1792,
+ "comparable_fields": 818555,
+ "changing_share_large": {
+  "modis": 19.91,
+  "s2": 26.28,
+  "s2_scaled": 19.9
+ },
+ "changing_share_all": {
+  "modis": 22.51,
+  "s2": 33.92,
+  "s2_scaled": 26.74
+ },
+ "exact_agreement_all": {
+  "s2": 63.0,
+  "s2_scaled": 67.92
+ },
+ "by_band": {
+  "under 6.25 ha": {
+   "fields": 516582,
+   "modis": 22.91,
+   "s2": 36.96,
+   "s2_scaled": 29.6
+  },
+  "6.25 to 25 ha": {
+   "fields": 191518,
+   "modis": 22.29,
+   "s2": 30.54,
+   "s2_scaled": 23.45
+  },
+  "25 to 100 ha": {
+   "fields": 94192,
+   "modis": 21.61,
+   "s2": 26.58,
+   "s2_scaled": 19.99
+  },
+  "over 100 ha": {
+   "fields": 16263,
+   "modis": 17.44,
+   "s2": 19.6,
+   "s2_scaled": 13.93
+  }
+ }
+}

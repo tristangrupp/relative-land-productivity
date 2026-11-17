@@ -1,0 +1,7 @@
+modis,restore_area,good_land_underused,system_misfit,area_declining,area_fine,none
+restore_area,0,0,0,0,0,0
+good_land_underused,0,11601,0,230,468,0
+system_misfit,0,0,0,0,4569,0
+area_declining,0,9658,0,91787,88303,69
+area_fine,0,43700,0,112233,864682,412
+none,0,0,0,1801,2392,6291

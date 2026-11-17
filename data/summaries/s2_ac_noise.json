@@ -1,0 +1,49 @@
+{
+ "state": "Acre",
+ "min_ha": 25.0,
+ "fields": 4219,
+ "sd_s2": 0.8014,
+ "sd_modis": 0.5656,
+ "change_scale": 1.417,
+ "comparable_fields": 141336,
+ "changing_share_large": {
+  "modis": 12.49,
+  "s2": 22.16,
+  "s2_scaled": 10.24
+ },
+ "changing_share_all": {
+  "modis": 14.88,
+  "s2": 34.31,
+  "s2_scaled": 19.77
+ },
+ "exact_agreement_all": {
+  "s2": 65.2,
+  "s2_scaled": 76.72
+ },
+ "by_band": {
+  "under 6.25 ha": {
+   "fields": 95099,
+   "modis": 14.75,
+   "s2": 37.42,
+   "s2_scaled": 22.37
+  },
+  "6.25 to 25 ha": {
+   "fields": 30892,
+   "modis": 15.35,
+   "s2": 30.16,
+   "s2_scaled": 16.17
+  },
+  "25 to 100 ha": {
+   "fields": 13361,
+   "modis": 15.1,
+   "s2": 24.56,
+   "s2_scaled": 11.66
+  },
+  "over 100 ha": {
+   "fields": 1984,
+   "modis": 12.2,
+   "s2": 16.03,
+   "s2_scaled": 5.9
+  }
+ }
+}

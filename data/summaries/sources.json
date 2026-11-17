@@ -9,5 +9,38 @@
    "s2_scaled": 22.45
   },
   "swapped": "2026-11-14T13:59:16"
+ },
+ "Para": {
+  "source": "s2",
+  "change_scale": 1.1792,
+  "noise_fields": 24416,
+  "changing_share_large": {
+   "modis": 19.91,
+   "s2": 26.28,
+   "s2_scaled": 19.9
+  },
+  "swapped": "2026-11-17T03:34:47"
+ },
+ "Rondonia": {
+  "source": "s2",
+  "change_scale": 1.3233,
+  "noise_fields": 26909,
+  "changing_share_large": {
+   "modis": 15.1,
+   "s2": 24.54,
+   "s2_scaled": 14.42
+  },
+  "swapped": "2026-11-17T03:36:18"
+ },
+ "Acre": {
+  "source": "s2",
+  "change_scale": 1.417,
+  "noise_fields": 4219,
+  "changing_share_large": {
+   "modis": 12.49,
+   "s2": 22.16,
+   "s2_scaled": 10.24
+  },
+  "swapped": "2026-11-17T03:37:03"
  }
 }
