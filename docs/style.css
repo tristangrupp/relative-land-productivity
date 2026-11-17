@@ -55,6 +55,7 @@ code {
 .crumb-sep { color: var(--line); margin: 0 8px; }
 .crumb-leaf { color: var(--ink); }
 .crumb-mode { color: var(--accent-ink); }
+.crumb-demo { color: var(--ink); font-weight: 700; }
 .header-right { display: flex; align-items: center; gap: 10px; flex: none; }
 .badge {
 	font: 500 10.5px var(--mono); letter-spacing: .07em; color: var(--accent-ink);

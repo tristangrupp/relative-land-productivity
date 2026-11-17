@@ -780,3 +780,6 @@ DECISIONS_V2.md, S2_MATO_GROSSO.md. Methods: methods/METHODS.md. Site contract: 
   take numbers only from METHODS.md, this log and stats.json. Tested locally in Chrome at 1381
   px (every step, keys, dots, Escape, Finish, no page errors in the console) and at 390 px by
   layout measurement in an iframe (no horizontal scroll, Back and Next inside the card).
+- 17 Nov, user: "LAND USE FOR MORE SUSTAINABLE FOOD PRODUCTION / SUGGESTED LAND USE PATHWAY /
+  DEMO <---- add the text 'DEMO' in bold after these". Added to the page header (bold, after
+  the view name).
