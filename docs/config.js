@@ -52,7 +52,10 @@ export const CONFIG = {
 	    SATELLITE_FIELD_OPACITY so the imagery shows through. */
 	SATELLITE_TILES: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
 	SATELLITE_ATTRIBUTION: 'Imagery: Esri, Maxar, Earthstar Geographics',
-	SATELLITE_FIELD_OPACITY: 0.25,
+	/* 0.25 at first; 17 November 2026 the user found the fields too faint over the imagery
+	   ("make the fields stand out more"), so 0.65 with light outlines. */
+	SATELLITE_FIELD_OPACITY: 0.65,
+	SATELLITE_LINE: { color: '#ffffff', opacity: 0.85, width: 1 },
 
 	BRAZIL_BOUNDS: [[-74.0, -33.8], [-34.7, 5.3]],
 

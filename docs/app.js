@@ -15,7 +15,7 @@
 import {
 	CONFIG, ATTR, SUMMARY_ATTR, VIEWS, CROPS, VIGOR, VIGOR_CHANGE, DECISIONS, AREA_DECISIONS,
 	CHANGE_CLASSES, STATES, NODATA_COLOR, CONFIDENCE, ECO_TREND, SOURCES, CLASS_GROUPS, WALKTHROUGH
-} from './config.js?v=18';
+} from './config.js?v=20';
 
 const $ = (id) => document.getElementById(id);
 const NA = 'n/a';
@@ -627,6 +627,18 @@ function setSatellite(on) {
 	if (!state.mapReady) return;
 	map.setLayoutProperty('satellite', 'visibility', on ? 'visible' : 'none');
 	map.setPaintProperty('fields-fill', 'fill-opacity', fieldOpacity(state.view));
+	/* light outlines over the imagery so each field stands out; the usual dark hairlines otherwise */
+	const L = CONFIG.SATELLITE_LINE;
+	if (!state.lineDefault) {
+		state.lineDefault = ['line-color', 'line-opacity', 'line-width'].map((k) => [k, map.getPaintProperty('fields-line', k)]);
+	}
+	if (on) {
+		map.setPaintProperty('fields-line', 'line-color', L.color);
+		map.setPaintProperty('fields-line', 'line-opacity', L.opacity);
+		map.setPaintProperty('fields-line', 'line-width', ['interpolate', ['linear'], ['zoom'], 9, 0.4, 14, L.width * 1.5]);
+	} else {
+		for (const [k, v] of state.lineDefault) map.setPaintProperty('fields-line', k, v);
+	}
 }
 
 function toggleGroup(key) {

@@ -792,3 +792,9 @@ DECISIONS_V2.md, S2_MATO_GROSSO.md. Methods: methods/METHODS.md. Site contract: 
 - 17 Nov, user: simplify and shorten the public prose without changing titles or headings.
   Revised the GitHub Pages copy and the repository README. The map still uses the same
   data and methods (DECISIONS.md D20).
+- 17 Nov, user: "the alpha is too high, make the fields stand out more on the map when satellite
+  view is turned on". Fields over the imagery now draw at fill opacity 0.65 (was 0.25) with white
+  outlines (opacity 0.85), and the usual outlines come back when the imagery is off
+  (`CONFIG.SATELLITE_FIELD_OPACITY`, `CONFIG.SATELLITE_LINE`). Checked locally that the toggle
+  runs without console errors; a screenshot could not be taken because the tile build was
+  using the machine.
