@@ -814,3 +814,8 @@ DECISIONS_V2.md, S2_MATO_GROSSO.md. Methods: methods/METHODS.md. Site contract: 
 - Copy to F: done 13:32; upload done (rc 0, three 206 checks). S3 `tiles/fields.pmtiles` is 9,027,039,966 bytes, last modified 18:32 UTC. `stats.json` and `summary.pmtiles` were skipped as same size.
 - Still to check: map speed at zoom 9 to 10 over São Paulo and Paraná with the larger tiles.
 - Next: switch Amazonas to Sentinel-2 when its extraction is complete.
+- 17 Nov 14:08, the zoom 9 to 11 no-drop field tiles are live. pipeline/s05c_rebuild_lowzoom.py
+  rebuilt all 27 states' zoom 9 to 11 tiles (by 11:51), the WSL join finished at 13:31, and
+  fields.pmtiles (9,027,039,966 bytes, up from 7,060,673,632) uploaded in 2,161 s at 4.18 MB/s;
+  all three tile objects answer range requests with 206. Live check in Chrome at zoom 9.5 over
+  Campinas, São Paulo: every field draws, the view filled in within about 10 seconds.
