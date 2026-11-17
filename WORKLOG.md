@@ -733,3 +733,16 @@ DECISIONS_V2.md, S2_MATO_GROSSO.md. Methods: methods/METHODS.md. Site contract: 
   gray Amazon cells, mostly recently converted land); (b) wait for Sentinel-2 in Amazonas,
   Roraima, Amapá, Maranhão and Tocantins, which removes most of the size problem; (c) add a
   pasture measure that is not greenness (MapBiomas pasture vigor or degradation).
+- 17 Nov, user: "In the Amazon for those cells that no action stands out i'm surprised that more
+  of them are not Restore candidate: next to native vegetation." Measured on the 1,764,017
+  Amazon-biome fields with the same crop in both years and high confidence: 29.7 percent have
+  at least 30 percent of their 1 km band in native patches of 50 ha or more; 31.1 percent are
+  below their nearby same-crop peers; 8.3 percent meet both and are not gaining, which is the
+  restore candidate rule. Of the native-rich fields, 36.5 percent are intensify, 29.1 keep and
+  26.1 restore candidate: half of them are as green as or greener than nearby pasture (median
+  r_adj_2024 0.01). Large native patches are no more common next to Amazon fields than
+  elsewhere (median share of the 1 km band 0.154 against 0.148), because Amazon pasture lies in
+  cleared blocks and the band reaches only 1 km past the field's bounding box. So few cells
+  reach the 15 percent share and 1.5 times lift that color a cell. Not changed; options for the
+  user: drop the "below peers" condition for native-rich pasture in the Amazon, widen the band,
+  or lower the cell coloring rule for restore candidates.
