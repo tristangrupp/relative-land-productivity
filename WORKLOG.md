@@ -789,3 +789,6 @@ DECISIONS_V2.md, S2_MATO_GROSSO.md. Methods: methods/METHODS.md. Site contract: 
   hidden through WMI and pipeline/launch_detached.py at 11:32 (python pid 46772). It reused the
   27 per-state GeoJSON files and is building the zoom 9 to 11 state tiles. Log:
   F:\relative-land-productivity-data\analysis\decisions\logs\rebuild_lowzoom.log.
+- 17 Nov, user: simplify and shorten the public prose without changing titles or headings.
+  Revised the GitHub Pages copy and the repository README. The map still uses the same
+  data and methods (DECISIONS.md D20).

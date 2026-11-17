@@ -15,7 +15,7 @@
 import {
 	CONFIG, ATTR, SUMMARY_ATTR, VIEWS, CROPS, VIGOR, VIGOR_CHANGE, DECISIONS, AREA_DECISIONS,
 	CHANGE_CLASSES, STATES, NODATA_COLOR, CONFIDENCE, ECO_TREND, SOURCES, CLASS_GROUPS, WALKTHROUGH
-} from './config.js?v=17';
+} from './config.js?v=18';
 
 const $ = (id) => document.getElementById(id);
 const NA = 'n/a';

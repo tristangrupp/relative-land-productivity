@@ -4,13 +4,13 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Relative Land Productivity</title>
-<meta name="description" content="Field by field across Brazil, where crop and pasture productivity rose or fell between 2020 and 2024, and which land use decision the evidence points to.">
+<meta name="description" content="Explore where crop and pasture productivity rose or fell across Brazil from 2020 to 2024 and see suggested land uses.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="preconnect" href="https://wri-datalab-sandbox.s3.amazonaws.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
 <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css">
-<link rel="stylesheet" href="./style.css?v=18">
+<link rel="stylesheet" href="./style.css?v=19">
 </head>
 <body class="app">
 
@@ -32,7 +32,7 @@
 
 <div class="banner" id="banner" hidden>
   <b>Placeholder data</b>
-  <span>Real Trazo4 field outlines near Sorriso, Mato Grosso, with random attribute values. Nothing on this map is a result yet.</span>
+  <span>Trazo4 field outlines near Sorriso, Mato Grosso, with randomly generated values for testing.</span>
   <button type="button" id="bannerGo">Go to the placeholder window</button>
 </div>
 
@@ -54,7 +54,7 @@
         <button type="button" class="tourNav" id="tourBack">Back</button>
         <button type="button" class="tourNav primary" id="tourNext">Next</button>
       </div>
-      <p class="tourKeys">Arrow keys move between steps; Escape closes.</p>
+      <p class="tourKeys">Use the arrow keys to change steps. Press Escape to close.</p>
     </section>
   </main>
 
@@ -67,7 +67,7 @@
       <details class="fold">
         <summary>How this is measured</summary>
         <p id="legendMethod"></p>
-        <p>The full method is on the <a href="./methods.html">methods page</a>.</p>
+        <p>See the <a href="./methods.html">methods page</a> for details.</p>
       </details>
     </section>
 
@@ -98,6 +98,6 @@
 
 <script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
 <script src="https://unpkg.com/pmtiles@3.2.1/dist/pmtiles.js"></script>
-<script type="module" src="./app.js?v=17"></script>
+<script type="module" src="./app.js?v=18"></script>
 </body>
 </html>
