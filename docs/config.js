@@ -47,6 +47,13 @@ export const CONFIG = {
 	BASEMAP_STYLE: 'https://tiles.openfreemap.org/styles/positron',
 	BASEMAP_FALLBACK: 'https://basemaps.cartocdn.com/gl/positron-gl-style/style.json',
 
+	/** Satellite imagery basemap behind the toggle under "Select a state" (user, 17 November
+	    2026). Esri World Imagery tiles, no key; when it is on the fields draw at
+	    SATELLITE_FIELD_OPACITY so the imagery shows through. */
+	SATELLITE_TILES: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+	SATELLITE_ATTRIBUTION: 'Imagery: Esri, Maxar, Earthstar Geographics',
+	SATELLITE_FIELD_OPACITY: 0.25,
+
 	BRAZIL_BOUNDS: [[-74.0, -33.8], [-34.7, 5.3]],
 
 	YEARS: [2020, 2024],

@@ -15,7 +15,7 @@
 import {
 	CONFIG, ATTR, SUMMARY_ATTR, VIEWS, CROPS, VIGOR, VIGOR_CHANGE, DECISIONS, AREA_DECISIONS,
 	CHANGE_CLASSES, STATES, NODATA_COLOR, CONFIDENCE, ECO_TREND, SOURCES, CLASS_GROUPS
-} from './config.js?v=15';
+} from './config.js?v=16';
 
 const $ = (id) => document.getElementById(id);
 const NA = 'n/a';
@@ -36,6 +36,7 @@ const state = {
 	summaryVisible: true,
 	/* keys of CLASS_GROUPS the user expanded with the + button */
 	expanded: new Set(),
+	satellite: false,
 	ecoregions: null
 };
 
@@ -90,6 +91,7 @@ function classOpacity(view) {
 
 /** The class opacity, scaled down for low-confidence fields when the control says fade. */
 function fieldOpacity(view) {
+	if (state.satellite) return CONFIG.SATELLITE_FIELD_OPACITY;
 	const base = classOpacity(view);
 	if (state.confMode !== 'fade') return base;
 	const low = ['==', ['get', ATTR.confidence], CONFIDENCE.LOW];
@@ -236,6 +238,12 @@ async function initMap() {
 		const firstSymbol = (map.getStyle().layers || []).find((l) => l.type === 'symbol');
 		const before = firstSymbol ? firstSymbol.id : undefined;
 
+		map.addSource('satellite', {
+			type: 'raster', tiles: [CONFIG.SATELLITE_TILES], tileSize: 256, maxzoom: 19,
+			attribution: CONFIG.SATELLITE_ATTRIBUTION
+		});
+		map.addLayer({ id: 'satellite', type: 'raster', source: 'satellite',
+			layout: { visibility: state.satellite ? 'visible' : 'none' } }, before);
 		map.addSource('summary', {
 			type: 'vector', url: 'pmtiles://' + absolute(SRC.SUMMARY_PMTILES),
 			attribution: 'Trazo4 fields (WRI), MapBiomas Collection 10, MODIS MOD13Q1'
@@ -608,6 +616,14 @@ function groupItems(items, v) {
 	return out;
 }
 
+function setSatellite(on) {
+	state.satellite = on;
+	$('satToggle').checked = on;
+	if (!state.mapReady) return;
+	map.setLayoutProperty('satellite', 'visibility', on ? 'visible' : 'none');
+	map.setPaintProperty('fields-fill', 'fill-opacity', fieldOpacity(state.view));
+}
+
 function toggleGroup(key) {
 	if (state.expanded.has(key)) state.expanded.delete(key); else state.expanded.add(key);
 	applyView();
@@ -963,6 +979,7 @@ function setupBanner() {
 function boot() {
 	buildNav();
 	buildStateSelect();
+	$('satToggle').addEventListener('change', (e) => setSatellite(e.target.checked));
 	buildConfidenceSelect();
 	setupLegendTips();
 	setupBanner();

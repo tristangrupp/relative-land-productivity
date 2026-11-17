@@ -746,3 +746,9 @@ DECISIONS_V2.md, S2_MATO_GROSSO.md. Methods: methods/METHODS.md. Site contract: 
   reach the 15 percent share and 1.5 times lift that color a cell. Not changed; options for the
   user: drop the "below peers" condition for native-rich pasture in the Amazon, widen the band,
   or lower the cell coloring rule for restore candidates.
+- 17 Nov, user: "add a toggle that turns on the satellite imagery basemap under 'select a state'
+  when its turned on, it adds an alpha of 0.25 to fields". Done: a "Satellite imagery" checkbox
+  under the state drop-down shows Esri World Imagery tiles (no key, attribution in the map
+  corner) below the data layers, and fields then draw at fill opacity 0.25
+  (`CONFIG.SATELLITE_FIELD_OPACITY`). Summary cells keep their opacity. Checked locally in
+  Chrome near Sorriso at zoom 12.5.
