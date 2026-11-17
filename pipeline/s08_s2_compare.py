@@ -77,7 +77,21 @@ CAL_MIN_HA = 25.0
 S2_MIN_HA = 0.45
 MIN_FIELDS = DV.MIN_FIELDS
 BANDS = [(0, 6.25, "under 6.25 ha"), (6.25, 25, "6.25 to 25 ha"), (25, 100, "25 to 100 ha"), (100, np.inf, "over 100 ha")]
-NEIGHBORS = ["Rondonia", "Amazonas", "Para", "Tocantins", "Goias", "Mato_Grosso_Do_Sul"]
+# Bordering states per state, for the border check. Until 17 November 2026 this was one list,
+# the neighbors of Mato Grosso, which loaded Para twice when Para was the state checked.
+NEIGHBORS_OF = {
+    "Mato_Grosso": ["Rondonia", "Amazonas", "Para", "Tocantins", "Goias", "Mato_Grosso_Do_Sul"],
+    "Para": ["Amapa", "Amazonas", "Roraima", "Mato_Grosso", "Tocantins", "Maranhao"],
+    "Rondonia": ["Acre", "Amazonas", "Mato_Grosso"],
+    "Acre": ["Amazonas", "Rondonia"],
+    "Amazonas": ["Acre", "Rondonia", "Mato_Grosso", "Para", "Roraima"],
+    "Roraima": ["Amazonas", "Para"],
+    "Amapa": ["Para"],
+    "Mato_Grosso_Do_Sul": ["Mato_Grosso", "Goias", "Minas_Gerais", "Sao_Paulo", "Parana"],
+    "Goias": ["Mato_Grosso", "Mato_Grosso_Do_Sul", "Minas_Gerais", "Bahia", "Tocantins", "Distrito_Federal"],
+    "Tocantins": ["Para", "Mato_Grosso", "Goias", "Bahia", "Piaui", "Maranhao"],
+    "Maranhao": ["Para", "Tocantins", "Piaui"],
+}
 CC_ORDER = ["large_decline", "decline", "stable", "gain", "large_gain", "crop_switched", "newly_cropped", "no_data"]
 NOISE_MIN_HA = 25.0
 MODIS_COPY = os.path.join(C.ANALYSIS, "source=modis")
@@ -131,7 +145,7 @@ def band_of(area):
 def border(state):
     """How many fields of the state lose or change their MODIS peer group when the neighbors are dropped."""
     t0 = time.time()
-    pooled = RL.load_year("modis", 2024, 2024, [state] + NEIGHBORS)
+    pooled = RL.load_year("modis", 2024, 2024, [state] + [n for n in NEIGHBORS_OF[state] if n != state])
     alone = RL.load_year("modis", 2024, 2024, [state])
     res = {}
     for name, df in (("pooled", pooled), ("alone", alone)):

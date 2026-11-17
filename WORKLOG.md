@@ -644,3 +644,8 @@ DECISIONS_V2.md, S2_MATO_GROSSO.md. Methods: methods/METHODS.md. Site contract: 
 - The Pará, Rondônia and Acre swap chain launched at 01:31 through `cmd.exe /c "a && b"` failed at once with "'E:\Water\water' is not recognized". The venv Python path has a space, and the unquoted path broke the cmd.exe line. Nothing ran.
 - Added `pipeline/run_chain.py`, which runs each script argument in turn with the same interpreter and stops at the first failure. Relaunched the chain at 02:31 with WMI, `launch_detached.py` and `run_chain.py`; Pará assemble started. Log: `F:\relative-land-productivity-data\analysis\source=s2\logs\swap_PA_RO_AC_2026-11-17.log`.
 - Use `run_chain.py` for every multi-step run from now on. Do not chain through cmd.exe.
+
+### 17 November 2026, 03:35
+
+- The relaunched chain stopped at 02:34 in `s08_s2_compare.py border` for Pará with an AssertionError. `NEIGHBORS` was one fixed list, the neighbors of Mato Grosso, so Pará was loaded twice and Mato Grosso not at all. Replaced it with `NEIGHBORS_OF`, bordering states for each tier 1 and tier 2 state. Tested `border()` on Pará, Rondônia and Acre: Pará 119 fields lose their peer group without neighbors, Rondônia 59, Acre 26. Relaunched the chain at 03:32; Pará passed the border step.
+- Open: `analysis/relative/source=s2/weather_fit.json` is rewritten by each state's relative step, so it now holds only the Pará rows; the Mato Grosso rows are gone. The Mato Grosso field tables already written are unaffected. A rerun of Mato Grosso relative would refit Mato Grosso. A per-state fit file would keep all of them; not changed yet.
