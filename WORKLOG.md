@@ -657,3 +657,9 @@ DECISIONS_V2.md, S2_MATO_GROSSO.md. Methods: methods/METHODS.md. Site contract: 
 - National decisions after the swap (shown on the map), before in brackets: restore 52,253 (27,981), assisted natural regeneration 2,366 (1,787), restore candidate 384,872 (296,148), low confidence 18,562,422 (19,464,886), no suggestion 146,335 (425,978). Low-confidence flag: 18,705,778 fields, 76.2 percent (was 19,889,026, 81.0 percent).
 - `docs/about.html` updated with these numbers. No cache buster change: the tiles and stats keep their S3 names.
 - Next: Amazonas when its extraction completes, then Roraima and Amapá.
+
+### 17 November 2026: live Chrome check (subagent a38aa9ca287550558)
+
+- GeoParquet upload complete: 54 objects under `fields/` (run `upload_fields4.log` finished 19:32 on 16 November), refreshed by the swap upload on 17 November.
+- Checked live: zoom 4 change view (dense 6 km cells on the ramp), zoom 4 decision view (several colors, not one), zoom 4 area view (area declining on the Amazon frontier and in Rio Grande do Sul, good land underused in the south, system misfit in São Paulo and Paraná), zoom 11 decision and area views near Sorriso, and the card of field 554556 (soybean, 252.7 ha, Keep, Area fine, Sentinel-2 30 m). Legend counts match `decisions_v2.json` after the Pará, Rondônia and Acre swap.
+- Not checked: browser console, hover tooltip, the "Computed, not trusted" line of a low-confidence field, zoom 11 change view.
