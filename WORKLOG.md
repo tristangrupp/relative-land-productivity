@@ -663,3 +663,18 @@ DECISIONS_V2.md, S2_MATO_GROSSO.md. Methods: methods/METHODS.md. Site contract: 
 - GeoParquet upload complete: 54 objects under `fields/` (run `upload_fields4.log` finished 19:32 on 16 November), refreshed by the swap upload on 17 November.
 - Checked live: zoom 4 change view (dense 6 km cells on the ramp), zoom 4 decision view (several colors, not one), zoom 4 area view (area declining on the Amazon frontier and in Rio Grande do Sul, good land underused in the south, system misfit in São Paulo and Paraná), zoom 11 decision and area views near Sorriso, and the card of field 554556 (soybean, 252.7 ha, Keep, Area fine, Sentinel-2 30 m). Legend counts match `decisions_v2.json` after the Pará, Rondônia and Acre swap.
 - Not checked: browser console, hover tooltip, the "Computed, not trusted" line of a low-confidence field, zoom 11 change view.
+- 17 Nov, user, on the page layout: "Move the legend above the decision or the where on the
+  right hand panel so that the legend is at the top of the page. On the page load ... please
+  show the suggested decisions first ... so it goes Decisions productivity and then land use
+  and then the more section. Change relative land productivity slash suggested decision on
+  that top line to land use for more sustainable food production. And then ... suggested
+  land use pathway instead of suggested decision." The decision question becomes "What would
+  be a better land use decision for sustainable food?"; cut the zoom note ("Zoom 3.5: summary
+  cells zoom past nine for fields"); the Where card shows only the field count and hectares
+  ("I do not need to see the source imagery ... I don't need to see the low confidence I
+  don't need to see the number of abandoned fields"); "Where" becomes "Select a state", with
+  "Select a state" as the drop-down's first entry and no "State" label; cut "These are
+  screening results from satellite greenness. They are not agronomic advice ..." from the
+  decision view. Done in docs/index.html, docs/config.js and docs/app.js (cache busters v=11).
+  The low-confidence control is hidden, so fields draw as usual. Default view is now the
+  decision view (supersedes the 13 Nov default of the change view, DECISIONS.md D1).

@@ -15,7 +15,7 @@
 import {
 	CONFIG, ATTR, SUMMARY_ATTR, VIEWS, CROPS, VIGOR, VIGOR_CHANGE, DECISIONS, AREA_DECISIONS,
 	CHANGE_CLASSES, STATES, NODATA_COLOR, CONFIDENCE, ECO_TREND, SOURCES
-} from './config.js?v=10';
+} from './config.js?v=11';
 
 const $ = (id) => document.getElementById(id);
 const NA = 'n/a';
@@ -316,9 +316,6 @@ function updateScaleNote() {
 	const z = map.getZoom();
 	const fieldsOn = z >= CONFIG.FIELDS_MIN_ZOOM;
 	state.summaryVisible = !fieldsOn;
-	$('objScale').textContent = fieldsOn
-		? `Zoom ${z.toFixed(1)}: fields`
-		: `Zoom ${z.toFixed(1)}: summary cells. Zoom past ${CONFIG.FIELDS_MIN_ZOOM} for fields.`;
 	renderLegend();
 }
 
@@ -585,23 +582,11 @@ function renderScope() {
 	const box = $('scopeStats');
 	if (!st) { box.innerHTML = '<p class="ctxNote">No summary statistics loaded.</p>'; return; }
 	const n = st.n_fields || 0;
-	const cc = st.change_class || {};
-	const noData = cc.no_data;
-	const abandoned = cc.abandoned;
-	const low = st.confidence_low;
-	const share = (x) => (x == null || !n ? NA : `${(100 * x / n).toFixed(1)}%`);
-	const src = state.stats.source ? esc(state.stats.source) : '';
-	const gen = state.stats.generated ? esc(state.stats.generated) : '';
 	box.innerHTML = `
 		<div class="stats">
-			<div class="stat"><span class="v">${fmtInt(n)}</span><span class="k">fields, 2024 outlines</span></div>
+			<div class="stat"><span class="v">${fmtInt(n)}</span><span class="k">fields</span></div>
 			<div class="stat"><span class="v">${fmtInt(Math.round(st.area_ha || 0))}</span><span class="k">hectares</span></div>
-			<div class="stat"><span class="v">${share(low)}</span><span class="k">low confidence</span></div>
-			<div class="stat"><span class="v">${share(noData)}</span><span class="k">no data</span></div>
-			<div class="stat"><span class="v">${fmtInt(abandoned)}</span><span class="k">abandoned, 2020 outlines</span></div>
-		</div>
-		<p class="ctxNote">Shares are of the 2024 outlines. Abandoned fields are 2020 outlines, listed on their own and not in the shares; in the legend counts they add to the abandoned class and to the abandoned-since-2020 suggestion.</p>
-		${src ? `<p class="ctxNote">Source: ${src}${gen ? `, built ${gen}` : ''}. Low confidence means the field is under ${CONFIDENCE.LOW_AREA_HA} ha (one MODIS pixel; 0.45 ha where Sentinel-2 is the source) or fewer than 75 percent of its growing-season composites were observed. Low-confidence fields are labeled too small to judge in the decision view.</p>` : ''}`;
+		</div>`;
 }
 
 function setView(id, push = true) {
@@ -676,7 +661,7 @@ function renderPick() {
 			['H3 cell', p[SUMMARY_ATTR.h3]],
 			['Fields', fmtInt(p[SUMMARY_ATTR.n_fields])],
 			['Area', `${fmtInt(Math.round(p[SUMMARY_ATTR.area_ha] || 0))} ha`],
-			['Change against Brazil (national SD)', summaryValueText(VIEWS[0], p)],
+			['Change against Brazil (national SD)', summaryValueText(VIEWS.find((x) => x.id === 'change'), p)],
 			['Plain change in greenness', pctChange(p[SUMMARY_ATTR.nat_pct_change])],
 			['Declining minus gaining fields', netText(NET_SHARE, p)],
 			['Mean change (ratio scale)', fmt(p[SUMMARY_ATTR.mean_change])],
@@ -868,7 +853,7 @@ function buildNav() {
 
 function buildStateSelect() {
 	const sel = $('stateSel');
-	sel.innerHTML = '<option value="">All of Brazil</option>' +
+	sel.innerHTML = '<option value="">Select a state</option>' +
 		STATES.map((s) => `<option value="${s.code}">${esc(s.name)}</option>`).join('');
 	sel.addEventListener('change', () => setState(sel.value));
 }

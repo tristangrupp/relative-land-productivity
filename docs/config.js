@@ -430,6 +430,22 @@ export const AREA_SUMMARY = {
     see methods, section 9. */
 export const VIEWS = [
 	{
+		id: 'decision', group: 'Decisions', title: 'Suggested land use pathway',
+		question: 'What would be a better land use decision for sustainable food?',
+		kind: 'class', attr: 'decision', classes: DECISIONS, countKey: 'decision',
+		summary: { kind: 'action', action: ACTION_SUMMARY, classes: DECISIONS, label: 'Action that stands out per cell' },
+		method: 'Each field gets one recommended treatment; the field card lists the other options that fit. The area call comes first: in a restore-the-area cell every field is restore, and in a declining area where pasture is the only use the declining fields are restore. In a good-land-underused cell, pasture is improve or convert pasture; inside the Amazon biome only pasture at least as green as nearby pasture is offered conversion to crops, and conversion means the already cleared pasture. Then the field’s own record: a field below nearby fields of the same crop and not gaining is assisted natural regeneration when native vegetation is returning inside it, a restore candidate when large native vegetation lies within 1 km, and otherwise improve yields, which spares land elsewhere. Fields smaller than the satellite pixel are labeled too small to judge (methods, section 7).',
+		caveat: ''
+	},
+	{
+		id: 'area_decision', group: 'Decisions', title: 'Area decision',
+		question: 'Which land use tradeoff does each area of about 6 km face?',
+		kind: 'class', attr: 'area_decision', classes: AREA_DECISIONS, countKey: 'area_decision',
+		summary: { kind: 'action', action: AREA_SUMMARY, classes: AREA_DECISIONS, label: 'Area call, 6 km areas' },
+		method: 'Each H3 cell of about 6 km (resolution 6) is compared with Brazil as a whole, separately for crops (soybean, other temporary crops, sugarcane, rice, cotton, perennials) and for pasture: the median weather-adjusted greenness of each crop in the cell against its national median, in national SD of cell medians, pooled by field count. Below means more than 0.75 SD under; declining means the gap grew by more than 0.4 SD from 2020 to 2024. A crop needs 30 fields in the cell to count; a 6 km cell where no crop and no pasture reaches 30 fields takes the call of its 15 km parent (the field card says which). The cell card also shows the same terms against the RESOLVE 2017 ecoregion, and the tooltip how the ecoregion moved against Brazil. Mosaic of uses is shown but does not enter the call. Legend counts are the fields in cells with each call.',
+		caveat: 'The change of the area term forms blocks of 50 to 200 km, partly weather that the adjustment left in (median R squared 0.15). A refit per ecoregion with mean rainfall did not remove the blocks. Read an area call next to the 2024 drought.'
+	},
+	{
 		id: 'change', group: 'Productivity', title: 'Productivity change 2020 vs 2024',
 		question: 'Where did a field gain or lose ground against its peers?',
 		kind: 'class', attr: 'change_class', classes: CHANGE_CLASSES, countKey: 'change_class',
@@ -471,22 +487,6 @@ export const VIEWS = [
 		summary: { kind: 'class', attr: 'dominant_crop_2024', classes: CROPS, label: 'Most common class per cell' },
 		method: 'The Trazo4 modal MapBiomas Collection 10 class of the 2024 field, the class its peer group was formed on. It agrees with the MapBiomas 2024 mode inside the outline on 96.7 to 98.2 percent of fields. On abandoned 2020 outlines this is the 2024 land cover, which is not a crop or pasture class.',
 		caveat: 'MapBiomas separates soybean, sugarcane, rice, cotton, coffee, citrus, oil palm and a few perennials. Maize, beans and most other annuals fall in the temporary crop classes.'
-	},
-	{
-		id: 'area_decision', group: 'Decision', title: 'Area decision',
-		question: 'Which land use tradeoff does each area of about 6 km face?',
-		kind: 'class', attr: 'area_decision', classes: AREA_DECISIONS, countKey: 'area_decision',
-		summary: { kind: 'action', action: AREA_SUMMARY, classes: AREA_DECISIONS, label: 'Area call, 6 km areas' },
-		method: 'Each H3 cell of about 6 km (resolution 6) is compared with Brazil as a whole, separately for crops (soybean, other temporary crops, sugarcane, rice, cotton, perennials) and for pasture: the median weather-adjusted greenness of each crop in the cell against its national median, in national SD of cell medians, pooled by field count. Below means more than 0.75 SD under; declining means the gap grew by more than 0.4 SD from 2020 to 2024. A crop needs 30 fields in the cell to count; a 6 km cell where no crop and no pasture reaches 30 fields takes the call of its 15 km parent (the field card says which). The cell card also shows the same terms against the RESOLVE 2017 ecoregion, and the tooltip how the ecoregion moved against Brazil. Mosaic of uses is shown but does not enter the call. Legend counts are the fields in cells with each call.',
-		caveat: 'The change of the area term forms blocks of 50 to 200 km, partly weather that the adjustment left in (median R squared 0.15). A refit per ecoregion with mean rainfall did not remove the blocks. Read an area call next to the 2024 drought.'
-	},
-	{
-		id: 'decision', group: 'Decision', title: 'Suggested decision',
-		question: 'Which land use decision does the evidence point to on each field, inside its area?',
-		kind: 'class', attr: 'decision', classes: DECISIONS, countKey: 'decision',
-		summary: { kind: 'action', action: ACTION_SUMMARY, classes: DECISIONS, label: 'Action that stands out per cell' },
-		method: 'Each field gets one recommended treatment; the field card lists the other options that fit. The area call comes first: in a restore-the-area cell every field is restore, and in a declining area where pasture is the only use the declining fields are restore. In a good-land-underused cell, pasture is improve or convert pasture; inside the Amazon biome only pasture at least as green as nearby pasture is offered conversion to crops, and conversion means the already cleared pasture. Then the field’s own record: a field below nearby fields of the same crop and not gaining is assisted natural regeneration when native vegetation is returning inside it, a restore candidate when large native vegetation lies within 1 km, and otherwise improve yields, which spares land elsewhere. Fields smaller than the satellite pixel are labeled too small to judge (methods, section 7).',
-		caveat: 'These are screening results from satellite greenness. They are not agronomic advice, they do not know prices, soils, tenure or the farmer\u2019s plans, and a field flagged here deserves a visit before any decision.'
 	}
 ];
 

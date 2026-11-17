@@ -124,7 +124,13 @@ Prefix: `https://wri-datalab-sandbox.s3.amazonaws.com/trazofields/trazo4/relativ
 
 ## The user's standing preferences for the map
 
-- Default view: productivity change 2020 vs 2024.
+- Default view (17 November 2026): the suggested land use pathway (decision view), with the
+  nav order Decisions, Productivity, Land use, More. The productivity change view was the
+  default before.
+- Page layout (17 November 2026): header "Land use for more sustainable food production /
+  <view>"; right panel order legend, then the view's question, then "Select a state" with
+  only the field count and hectares; no zoom note, no source or low-confidence text, no
+  low-confidence control, no screening disclaimer in the decision view.
 - The zoomed-out map must be dense: many small cells. 100 km, 40 km and (13 November) 15 km
   cells were rejected as too coarse; 6 km cells at every zoom now. The change view uses a
   continuous ramp, not a few flat steps ("too coarse and oversimplified").

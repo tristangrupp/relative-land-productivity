@@ -10,13 +10,13 @@
 <link rel="preconnect" href="https://wri-datalab-sandbox.s3.amazonaws.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
 <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css">
-<link rel="stylesheet" href="./style.css?v=10">
+<link rel="stylesheet" href="./style.css?v=11">
 </head>
 <body class="app">
 
 <header class="header">
   <div class="crumbs">
-    <span class="crumb-leaf">RELATIVE LAND PRODUCTIVITY</span>
+    <span class="crumb-leaf">LAND USE FOR MORE SUSTAINABLE FOOD PRODUCTION</span>
     <span class="crumb-sep">/</span>
     <span class="crumb-mode" id="crumbMode"></span>
   </div>
@@ -43,21 +43,6 @@
   </main>
 
   <aside class="context" id="context">
-    <section class="objective" aria-live="polite">
-      <p class="objMode" id="objMode"></p>
-      <p class="objQ" id="objQ"></p>
-      <p class="objScale" id="objScale"></p>
-    </section>
-
-    <section class="card">
-      <h2>Where</h2>
-      <label class="group" for="stateSel">State</label>
-      <select id="stateSel"></select>
-      <div id="scopeStats" style="margin-top:12px"></div>
-      <label class="group" for="confSel">Low-confidence fields</label>
-      <select id="confSel"></select>
-    </section>
-
     <section class="card">
       <h2 id="legendTitle">Legend</h2>
       <ul class="legend" id="legend"></ul>
@@ -68,6 +53,18 @@
         <p id="legendMethod"></p>
         <p>The full method is on the <a href="./methods.html">methods page</a>.</p>
       </details>
+    </section>
+
+    <section class="objective" aria-live="polite">
+      <p class="objMode" id="objMode"></p>
+      <p class="objQ" id="objQ"></p>
+    </section>
+
+    <section class="card">
+      <h2><label for="stateSel">Select a state</label></h2>
+      <select id="stateSel"></select>
+      <div id="scopeStats" style="margin-top:12px"></div>
+      <select id="confSel" hidden aria-hidden="true"></select>
     </section>
 
     <section class="card" id="pickBox" hidden>
@@ -84,6 +81,6 @@
 
 <script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
 <script src="https://unpkg.com/pmtiles@3.2.1/dist/pmtiles.js"></script>
-<script type="module" src="./app.js?v=10"></script>
+<script type="module" src="./app.js?v=11"></script>
 </body>
 </html>
