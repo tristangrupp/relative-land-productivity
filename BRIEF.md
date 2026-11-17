@@ -357,3 +357,5 @@ before it ends, in addition to the Decisions entry here.
 - 2026-11-17 Walkthrough: a nine-step guided tour on the map page ("Take the tour"), its steps
   and cameras in `WALKTHROUGH` (docs/config.js), its zoom pattern taken from the scorecard
   stories. Site only; no tile, data or method change (DECISIONS.md D19, WORKLOG.md 17 Nov).
+- 2026-11-17 Public prose: the user asked for shorter, clearer wording on GitHub Pages
+  and the repository front page. Keep existing titles and headings (DECISIONS.md D20).

@@ -102,6 +102,7 @@ commit. Do not rewrite a row; mark it superseded and add the new one.
 | D17 | 17 Nov | Improve yields (spares land elsewhere), improve yields and intensify show as one legend row "Improve yields" with a + button that splits them on the map. | user ("combine these two into just 'improve yields' with a + button"; "i dont understand the difference between intensify and improve yields. fold that in") | | 136fce6 | in force |
 | D18 | 17 Nov | The Area decision view is hidden from the page for now; the nav link "Suggested land use pathway" is bold. | user ("turn off area decision from the page for now") | | 3331868 | in force |
 | D19 | 17 Nov | A nine-step walkthrough ("Take the tour" in the left nav, `WALKTHROUGH` in config.js) takes a reader through the method, fields, years and crops, productivity, change, the two satellites, native vegetation, the area call and the suggested pathways, with a camera per step on the pattern of the scorecard stories. | user ("design a walkthrough ..."; "use the stories ... to inform zoom methodology") | | 6e2e72c | in force |
+| D20 | 17 Nov | Simplify and shorten the public prose. Keep all titles and headings. | user | Make the GitHub Pages site and repository front page easier to read. | | in force |
 
 ## (e) Open questions
 

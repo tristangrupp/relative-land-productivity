@@ -1,47 +1,32 @@
 # Relative land productivity, Brazil 2020 to 2024
 
-AGENTS.md holds the standing instructions for agents; WORKLOG.md is the running record of
-state, decisions and open items; DECISIONS.md is the register of every decision, with who
-made it and whether it is in force. Read these first when resuming work.
+See AGENTS.md for agent instructions, WORKLOG.md for project status and DECISIONS.md
+for the decision register.
 
-A public web map that shows, field by field across Brazil, where crop and pasture
-productivity rose or fell between the 2020 and 2024 agricultural years, broken out by crop
-type. Each area of about 15 km gets an area call from its crops and pasture against the same
-uses across Brazil (restore the area, good land underused, system misfit, area declining,
-area fine), and each field inside it a field call: restore, recently converted (below or at
-peers), improve or convert pasture, switch paid off, switch failed, improve yields,
-intensify, keep, abandon, or abandoned since 2020.
+This map shows how the relative productivity of crops and pasture changed across Brazil
+between the 2020 and 2024 agricultural years. It suggests land use options such as
+restoration, improving yields or converting existing pasture to crops.
 
 Live: **https://tristangrupp.github.io/relative-land-productivity/**
 
-Productivity is measured from the satellite greenness record over the growing season, with
-the growing season taken from the planting and harvest calendars that CONAB, the Brazilian
-national supply company, publishes per crop and state. Rainfall and temperature changes that
-move greenness without moving yield are corrected for. The quantity on the map is relative
-productivity: a field against the median of its peers in the same crop and region, compared
-between 2020 and 2024.
-
-The suggestions are screening results from satellite greenness. They are not agronomic
-advice.
+The map compares each field with nearby fields of the same crop. It measures greenness
+from satellite images during the growing season, using CONAB crop calendars and adjusting
+for rainfall and temperature. Area recommendations compare crops and pasture with the same
+uses across Brazil. Use the suggestions to identify fields for further investigation.
 
 ## Status
 
-Released on real data on 13 November 2026: 24,554,482 Trazo4 fields in all 27 states, plus
-748,022 fields from the 2020 delineation shown as abandoned. The greenness source of this
-release is MODIS MOD13Q1 (250 m, 16-day NDVI). Its caveats, stated on the site:
+The 13 November 2026 release covered 24,554,482 Trazo4 fields across all 27 states
+and marked another 748,022 fields from 2020 as abandoned.
 
-- 78 percent of fields are smaller than one MODIS pixel; 83 percent of fields are marked
-  low confidence, and the map can fade or hide them. A Sentinel-2 run at 30 m is being
-  extracted for Mato Grosso and the other tier 1 states and will replace the MODIS values
-  there.
-- Pasture vigor from MapBiomas is not implemented (no public GeoTIFF was found); the vigor
-  attributes are null and the vigor view is left off the map.
-- The weather regression explains little (median R squared 0.15 over 134 fitted crop by
-  state pairs) and the municipal yield validation is weak (soybean Spearman 0.06 in 2020
-  and 0.18 in 2024 for the adjusted relative metric). `docs/methods.html` section 8 has the
-  table and the reasons.
-- 375,000 fields have no data (too few clear composites in one year) and 2,020,646 fields
-  get no suggestion (newly cropped or no data).
+- The initial release used MODIS MOD13Q1 (250 m, 16-day NDVI). A MODIS pixel is larger than
+  78 percent of fields. The site’s About page lists the states that use 30 m Sentinel-2.
+- Pasture scores use NDVI because no public GeoTIFF of MapBiomas pasture vigor was available.
+- The weather model explained little (median R squared 0.15 across 134 crop and state
+  pairs). Adjusted soybean scores correlated weakly with municipal yields (Spearman
+  0.06 in 2020 and 0.18 in 2024). See section 8 of `docs/methods.html`.
+- In the initial release, 375,000 fields had too few clear observations in one year.
+  The map gave no suggestion for 2,020,646 fields that were newly cropped or lacked data.
 
 ## Folder layout
 

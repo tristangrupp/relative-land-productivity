@@ -24,21 +24,21 @@
 
 <main class="page">
   <h1>About this map</h1>
-  <p class="lead">A public web map that shows, field by field across Brazil, where crop and pasture productivity rose or fell between the 2020 and 2024 agricultural years, broken out by crop type, with a suggested land use decision per area and per field.</p>
+  <p class="lead">Explore how relative productivity changed for crops and pasture across Brazil from 2020 to 2024. The map suggests land use decisions for areas and individual fields.</p>
 
   <h2>Purpose</h2>
-  <p>The map is meant to say which land use decision the evidence points to, first for each area of about 6 km and then for each field inside it. The area call compares the area's crops and pasture with the same uses across Brazil: restore the whole area, good land underused (strong crops next to weak pasture), system misfit (weak crops next to fine pasture), area declining, or area fine. The field call then compares the field with nearby fields of the same crop: improve yields, intensify, keep, judge a crop switch as paid off or failed, flag recently converted land, improve or convert pasture, or abandon. A field below its neighbors is split by the native vegetation around and inside it: assisted natural regeneration where native vegetation is already returning inside the field, a restore candidate next to large native patches, and otherwise improve yields, which spares land elsewhere. Each field shows one recommended treatment and a short list of other options; the map gives no site plan. Fields smaller than the satellite pixel are labeled too small to judge yet.</p>
-  <p>Productivity is measured from the satellite greenness record over the growing season, with the growing season taken from CONAB crop calendars per crop and state. The measure corrects for rainfall and temperature changes that move greenness without moving yield. The quantity on the map is relative productivity: a field against the median of its peers in the same crop and region, compared between 2020 and 2024.</p>
+  <p>The map compares crops and pasture in each 6 km area with the same uses across Brazil. For example, “Good land underused” means crops are doing well while pasture lags. The map then compares each field with nearby fields of the same crop. A field below its peers may be a candidate for assisted natural regeneration if native plants are returning, or for restoration if large native patches are nearby. Otherwise, raising yields could spare land elsewhere. Each field card shows one suggested action and other options. Fields smaller than a satellite pixel are marked too small to judge.</p>
+  <p>The map uses satellite greenness during the growing season, as defined by CONAB calendars for each crop and state. It adjusts for rainfall and temperature, then compares each field with the median for nearby fields of the same crop in 2020 and 2024.</p>
 
   <div class="note">
-    <p>The suggested decisions are screening results from satellite greenness. They are not agronomic advice. The method does not know prices, soils, tenure, inputs or the farmer's plans, and a field flagged here deserves a visit before any decision is taken on it.</p>
+    <p>Use these suggestions to decide where to investigate. Satellite greenness gives an initial indication. Visit the field and consider soils, input costs, land tenure, prices, and the farmer’s plans before deciding.</p>
   </div>
 
   <h2>What this release holds</h2>
-  <p>24,554,482 Trazo4 fields in all 27 states, 190.7 million hectares, scored for the agricultural years 2020 (1 September 2019 to 31 August 2020) and 2024 (1 September 2023 to 31 August 2024), plus 748,022 fields from the 2020 delineation whose land cover in 2024 is no longer a crop or pasture class, shown as abandoned. The tiles were built on 12 November 2026.</p>
-  <p>The greenness source is MODIS MOD13Q1, a 250 m 16-day NDVI product. 78 percent of Brazilian fields are smaller than one MODIS pixel, so most fields are marked low confidence: their greenness is shared with neighboring land. With Mato Grosso, Pará, Rondônia and Acre on Sentinel-2, 18,705,778 fields (76.2 percent) are low confidence, and 18,562,422 of them show “too small to judge yet” in the decision view. The Where card on the map can fade or hide them. 146,335 fields get no suggestion. In Amapá, still on MODIS, 59.6 percent of fields have no data because too few clear composites were observed. Mato Grosso is measured with Sentinel-2 at 30 m instead of MODIS since 14 November 2026, and Pará, Rondônia and Acre since 17 November 2026. The other tier 1 and tier 2 states follow one by one as their Sentinel-2 extraction finishes (Amazonas, Roraima, Amapá, then Mato Grosso do Sul, Goiás, Tocantins, Maranhão). The tooltip and the field card name the satellite of each field.</p>
-  <p>Pasture vigor from MapBiomas is not in this release. No public GeoTIFF of the product was found, so pasture is scored on NDVI alone and the vigor view is left off the map.</p>
-  <p>The weather correction is weak (median R squared 0.15 across the 134 fitted crop by state pairs) and the municipal yield validation is weak (Spearman 0.06 to 0.18 for soybean against IBGE yields). The methods page states both and why.</p>
+  <p>The release covers 24,554,482 Trazo4 fields across all 27 states, totaling 190.7 million hectares. The agricultural years run from 1 September 2019 to 31 August 2020 and from 1 September 2023 to 31 August 2024. The map also shows 748,022 fields from 2020 as abandoned because MapBiomas shows neither crop nor pasture there in 2024. The original tiles were built on 12 November 2026.</p>
+  <p>Most states use MODIS MOD13Q1, a 16-day greenness index (NDVI) at 250 m. A MODIS pixel is larger than 78 percent of Brazil’s fields, so readings from many fields include neighboring land. Mato Grosso switched to 30 m Sentinel-2 on 14 November 2026. Pará, Rondônia and Acre switched on 17 November. With those four states on Sentinel-2, 18,705,778 fields (76.2 percent) have low confidence. The decision view marks 18,562,422 as “too small to judge yet,” and 146,335 fields receive no suggestion. In Amapá, 59.6 percent of fields lack enough clear images. The field card and tooltip show the satellite used. The next states are Amazonas, Roraima, Amapá, Mato Grosso do Sul, Goiás, Tocantins and Maranhão.</p>
+  <p>Pasture scores use NDVI alone. The MapBiomas pasture vigor data was unavailable as a public GeoTIFF.</p>
+  <p>The weather model explains little of the variation (median R squared of 0.15 across 134 crop and state pairs). Adjusted soybean scores have weak correlations with IBGE municipal yields (Spearman 0.06 to 0.18). See the methods page for details.</p>
 
   <h2>Data sources</h2>
   <table>
@@ -52,16 +52,16 @@
     <tr><td>Yields</td><td>IBGE, Produção Agrícola Municipal (SIDRA table 5457)</td><td>Validation against municipal yields.</td></tr>
     <tr><td>Basemap</td><td>OpenFreeMap (OpenStreetMap data), Carto as fallback</td><td>Context under the fields.</td></tr>
   </table>
-  <p>No Google Earth Engine was used. The rasters were downloaded or streamed and reduced to fields on one machine.</p>
+  <p>We downloaded or streamed the source rasters and calculated the field values on one machine without Google Earth Engine.</p>
 
   <h2>Reading the map</h2>
-  <p>Below zoom 9 the map shows H3 hexagon cells with the mean, the net share or the most common value of the fields inside, at a cell size that follows the zoom: about 6 km (36 km²) at every zoom until the fields appear; from zoom 9 the fields themselves. In the change view a cell is colored on a continuous scale by how its crops moved against Brazil as a whole between 2020 and 2024, so the frontiers where productivity fell or rose stand out; cells that kept pace are gray. In the decision view a cell takes the color of the action that stands out in it, and is gray where no action does. From zoom 9 to 11 the smallest fields are merged into their neighbors so the tiles stay small; from zoom 12 every field is drawn. Clicking a field opens a card with its values in both years, its confidence and its suggested decision. The state selector flies to a state and switches the counts in the legend to that state.</p>
+  <p>Below zoom 9, the map groups fields into H3 hexagons about 6 km across (36 km²). The change view compares how crop greenness changed in each cell with the change across Brazil. Gray cells kept pace. The decision view colors a cell when a suggested action stands out. At zoom 9, the map switches to field outlines. At zooms 9 to 11, the smallest fields are merged into neighbors to reduce tile size. Every field appears from zoom 12. Click a field to see its scores, confidence and suggested action. Select a state to zoom to it and see its legend counts.</p>
 
   <h2>Code and data</h2>
-  <p>The site, the pipeline and the methods text are in the repository at
+  <p>Find the site, pipeline and methods at
   <a href="https://github.com/tristangrupp/relative-land-productivity">github.com/tristangrupp/relative-land-productivity</a>.
-  The field tiles (6.4 GB), the summary tiles (53 MB) and the statistics file are served as PMTiles and JSON from a public bucket under
-  <code>s3://wri-datalab-sandbox/trazofields/trazo4/relative-land-productivity/tiles/</code>; the file <code>docs/DATA_CONTRACT.md</code> lists every attribute the map reads.</p>
+  Download the field tiles (6.4 GB), summary tiles (53 MB) and statistics from
+  <code>s3://wri-datalab-sandbox/trazofields/trazo4/relative-land-productivity/tiles/</code>. The map uses PMTiles and JSON. See <code>docs/DATA_CONTRACT.md</code> for the attributes.</p>
 </main>
 </body>
 </html>

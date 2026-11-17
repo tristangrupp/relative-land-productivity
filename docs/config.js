@@ -455,7 +455,7 @@ export const VIEWS = [
 		question: 'What would be a better land use decision for sustainable food?',
 		kind: 'class', attr: 'decision', classes: DECISIONS, countKey: 'decision',
 		summary: { kind: 'action', action: ACTION_SUMMARY, classes: DECISIONS, label: 'Possible sustainable land use future' },
-		method: 'Each field gets one recommended treatment; the field card lists the other options that fit. The area call comes first: in a restore-the-area cell every field is restore, and in a declining area where pasture is the only use the declining fields are restore. In a good-land-underused cell, pasture is improve or convert pasture; inside the Amazon biome only pasture at least as green as nearby pasture is offered conversion to crops, and conversion means the already cleared pasture. Then the field’s own record: a field below nearby fields of the same crop and not gaining is assisted natural regeneration when native vegetation is returning inside it, a restore candidate when large native vegetation lies within 1 km, and otherwise improve yields, which spares land elsewhere. Fields smaller than the satellite pixel are labeled too small to judge (methods, section 7).',
+		method: 'Each field gets one suggested action. The field card lists other options. The method starts with the area: it suggests restoration where crops and pasture are both below national levels and falling further behind, or for declining fields in a pasture-only area. Where crops do well and pasture lags, it suggests improving pasture or converting existing pasture to crops. In the Amazon biome, conversion is an option only for pasture at least as green as nearby pasture. The method then looks at the field itself. A field below its peers and stable or declining may be a candidate for assisted natural regeneration where native vegetation is returning, or restoration near large native patches. For other fields below their peers and stable or declining, the method suggests raising yields to spare land elsewhere. The map flags small fields as too small to judge. See section 7 of Methods.',
 		caveat: ''
 	},
 	{
@@ -476,7 +476,7 @@ export const VIEWS = [
 			kind: 'ramp', ramp: FRONTIER_RAMP,
 			label: 'Change against Brazil, 2020 to 2024 (national SD, all crops)'
 		},
-		method: 'Zoomed out, each H3 cell of about 6 km is colored by how its crops moved against Brazil as a whole: for each crop in the cell, the median weather-adjusted seasonal greenness against the national median of that crop, in national standard deviations (SD) of cell medians, 2024 minus 2020, weighted by field count. The tooltip adds the plain change in greenness and the share of fields declining minus gaining. Zoomed in, each field is classed on its change against fields of the same crop nearby (peer SD), with switched, newly cropped and abandoned fields shown on their own.',
+		method: 'Zoomed out, each 6 km cell compares changes in its crops with the same crops across Brazil. For each crop, we compare the median adjusted greenness with the national median in standard deviations (SD) of cell medians. We take the difference from 2020 to 2024 and weight crops by field count. The tooltip shows the change in greenness and the difference between the shares of fields that declined and gained. Zoomed in, each field is compared with nearby fields of the same crop. Crop switches, newly cropped fields and abandoned fields have their own classes.',
 		caveat: 'A change in greenness is not a measured yield change. The national comparison keeps regional weather the adjustment missed, including the 2024 drought, so part of a frontier may be weather. A crop needs 30 fields in a cell to count; a 6 km cell without one takes the value of its 15 km parent. Mato Grosso uses Sentinel-2 at 30 m, with the field change thresholds scaled by 1.22, the ratio of the two sensors’ year-to-year spread on fields over 25 ha, so the share of changing fields on large fields matches MODIS (22.5 against 22.8 percent). On small fields Sentinel-2 still sees more change than MODIS, which mixes them with their neighbors. Elsewhere 83 percent of fields are smaller than one MODIS pixel.'
 	},
 	{
@@ -484,23 +484,23 @@ export const VIEWS = [
 		question: 'In 2020, which fields were above or below their peers?',
 		kind: 'step', attr: 'prod_2020', steps: PROD_CLASSES,
 		summary: { kind: 'step', attr: 'mean_prod_2020', steps: PROD_CLASSES, label: 'Mean per cell' },
-		method: 'The field\u2019s weather-adjusted seasonal greenness divided by the median of the same crop in the same region for the 2020 agricultural year (1 September 2019 to 31 August 2020). 1.0 is the peer median. The value is computed on the 2024 outlines from the 2020 satellite record, with the crop taken from the MapBiomas 2020 map.',
-		caveat: 'The weather adjustment removes the part of greenness that rainfall and temperature explain across the peer groups of the crop in the state. It explains little (median R squared 0.15) and cannot remove field-level weather such as hail or local flooding.'
+		method: 'We divide each field’s adjusted greenness by the median for nearby fields of the same crop. A score of 1.0 is the median. The 2020 agricultural year runs from 1 September 2019 to 31 August 2020. We use the 2024 field outlines with the 2020 satellite observations and MapBiomas crop classes.',
+		caveat: 'The adjustment accounts for how rainfall and temperature affect each crop across peer groups in the state. It explains little (median R squared 0.15) and misses local events such as hail or flooding.'
 	},
 	{
 		id: 'prod_2024', group: 'Productivity', title: 'Relative productivity 2024',
 		question: 'In 2024, which fields were above or below their peers?',
 		kind: 'step', attr: 'prod_2024', steps: PROD_CLASSES,
 		summary: { kind: 'step', attr: 'mean_prod_2024', steps: PROD_CLASSES, label: 'Mean per cell' },
-		method: 'As for 2020, for the 2024 agricultural year (1 September 2023 to 31 August 2024), on the 2024 outlines with the Trazo4 crop class.',
-		caveat: 'The 2024 agricultural year was the El Ni\u00f1o drought year in the center and north of Brazil. The peer-relative measure cancels weather that is common to a region, but a field with irrigation scores a gain that is water, not management.'
+		method: 'We divide each field’s adjusted greenness by the median for nearby fields of the same crop. The 2024 agricultural year runs from 1 September 2023 to 31 August 2024. We use the 2024 field outlines and Trazo4 crop classes.',
+		caveat: 'An El Niño drought affected central and northern Brazil in 2024. Comparing nearby fields reduces the effect of shared weather. An irrigated field can gain relative to neighboring fields because it had more water.'
 	},
 	{
 		id: 'crop_2020', group: 'Land use', title: 'Crop type 2020',
 		question: 'What grew on each field in 2020?',
 		kind: 'class', attr: 'crop_2020', classes: CROPS, countKey: 'crop_2020',
 		summary: { kind: 'class', attr: 'dominant_crop_2020', classes: CROPS, label: 'Most common class per cell' },
-		method: 'The modal MapBiomas Collection 10 class inside the 2024 field outline on the 2020 coverage map, so a crop switch is visible per field. Forest, savanna and other non-agricultural classes appear here: those fields were newly cropped by 2024.',
+		method: 'We use the most common MapBiomas Collection 10 class in each 2024 field outline to show what was there in 2020. Forest, savanna and other nonagricultural classes show where land was newly cropped by 2024.',
 		caveat: 'MapBiomas separates soybean, sugarcane, rice, cotton, coffee, citrus, oil palm and a few perennials. Maize, beans and most other annuals fall in the temporary crop classes.'
 	},
 	{
@@ -508,7 +508,7 @@ export const VIEWS = [
 		question: 'What grew on each field in 2024?',
 		kind: 'class', attr: 'crop_2024', classes: CROPS, countKey: 'crop_2024',
 		summary: { kind: 'class', attr: 'dominant_crop_2024', classes: CROPS, label: 'Most common class per cell' },
-		method: 'The Trazo4 modal MapBiomas Collection 10 class of the 2024 field, the class its peer group was formed on. It agrees with the MapBiomas 2024 mode inside the outline on 96.7 to 98.2 percent of fields. On abandoned 2020 outlines this is the 2024 land cover, which is not a crop or pasture class.',
+		method: 'We use the Trazo4 crop class to group fields for comparison. It matches the most common MapBiomas Collection 10 class inside the 2024 outline for 96.7 to 98.2 percent of fields. On abandoned 2020 outlines, this view shows the 2024 land cover, which is neither crop nor pasture.',
 		caveat: 'MapBiomas separates soybean, sugarcane, rice, cotton, coffee, citrus, oil palm and a few perennials. Maize, beans and most other annuals fall in the temporary crop classes.'
 	}
 ];
@@ -562,47 +562,47 @@ export const WALKTHROUGH = {
 	STEPS: [
 		{
 			title: 'Land use for more sustainable food production',
-			text: 'This map follows every mapped crop and pasture field in Brazil through two agricultural years, 2020 and 2024. For each field it asks how green the crop or pasture grew compared with nearby fields of the same crop. From that record it suggests a land use pathway. Zoomed out, each colored cell is about 6 km across and sums up the fields inside it.',
+			text: 'Compare 24,554,482 crop and pasture fields across Brazil in 2020 and 2024. The map uses greenness relative to nearby fields of the same crop or land use to suggest what to do with each field. Zoom out to see summaries in cells about 6 km across.',
 			view: 'decision', camera: { bounds: 'brazil' }, satellite: false, state: ''
 		},
 		{
 			title: 'Fields',
-			text: 'The map unit is the field: 24,554,482 outlines of 2024 fields from the Trazo4 field map, covering 190.7 million hectares. Here, near Sorriso in Mato Grosso, the outlines sit over satellite imagery. Fields appear from zoom 9; below that zoom the map shows summary cells.',
+			text: 'The 24,554,482 Trazo4 field outlines cover 190.7 million hectares. Here they sit over satellite imagery near Sorriso, Mato Grosso. Summary cells give way to fields at zoom 9.',
 			view: 'crop_2024', camera: { center: [-55.6, -12.62], zoom: 13 }, satellite: true, state: ''
 		},
 		{
 			title: 'Two years and their crops',
-			text: 'The two years are agricultural years: 2020 runs from 1 September 2019 to 31 August 2020, and 2024 from 1 September 2023 to 31 August 2024. The crop of each field in each year is the most common MapBiomas Collection 10 class inside its 2024 outline. This view shows 2020, and Crop type 2024 in the left menu shows the later year. A field whose crop changed is marked as crop switched rather than compared across the years.',
+			text: 'The 2020 agricultural year ran from 1 September 2019 to 31 August 2020, and 2024 ran from 1 September 2023 to 31 August 2024. For each year, we use the most common MapBiomas Collection 10 class inside each 2024 outline. Use Crop type 2024 to see the later year. Fields that changed crops are marked as crop switched because their peer groups changed.',
 			view: 'crop_2020', camera: 'hold', satellite: false, state: ''
 		},
 		{
 			title: 'Productivity relative to neighbors',
-			text: 'Productivity here is relative greenness, not yield. The satellite greenness (NDVI) of each field is summed over the crop’s growing season, adjusted for rainfall and temperature, and divided by the median of nearby fields of the same crop. A value of 1.0 is that median: brown fields are below it and green fields above it. Nearby means the same H3 cell of about 17 km, with at least 30 fields of the crop.',
+			text: 'We add up satellite greenness (NDVI) over the growing season, adjust for rainfall and temperature, then divide by the median for nearby fields of the same crop. A score of 1.0 is the median. Brown marks fields below it and green marks fields above it. A peer group starts with a 17 km H3 cell and needs at least 30 fields of the same crop class.',
 			view: 'prod_2024', camera: 'hold', satellite: false, state: ''
 		},
 		{
 			title: 'Productivity change from 2020 to 2024',
-			text: 'Zoomed out, each 6 km cell shows how its crops moved against the same crops across Brazil: brown cells lost ground and green cells gained. Zoomed in, each field is classed by how far it moved against its neighbors: stable within 1 peer standard deviation, gain or decline beyond it, large gain or large decline beyond 2. Part of a frontier can be weather that the adjustment missed, including the 2024 drought.',
+			text: 'Zoomed out, brown cells lost ground to the same crops across Brazil and green cells gained. Zoomed in, a change within 1 peer standard deviation is stable. Beyond 1 is a gain or decline, and beyond 2 is a large gain or decline. Some of the differences may reflect weather the model missed, including the 2024 drought.',
 			view: 'change', camera: { center: [-52.5, -13.5], zoom: 4 }, satellite: false, state: ''
 		},
 		{
 			title: 'Two satellites',
-			text: 'Greenness comes from MODIS at 250 m in most states and from Sentinel-2 at 30 m in Mato Grosso, Pará, Rondônia and Acre. Here the Araguaia river divides Pará (left, Sentinel-2) from Tocantins (right, MODIS). A field under 6.25 ha, one MODIS pixel, mixes with its neighbors, so it shows as too small to judge yet in light gray. On Sentinel-2 the limit is 0.45 ha, and the other states switch to Sentinel-2 one by one.',
+			text: 'Most states use MODIS at 250 m. Mato Grosso, Pará, Rondônia and Acre use Sentinel-2 at 30 m. Here the Araguaia River separates Pará (left, Sentinel-2) from Tocantins (right, MODIS). Light gray marks fields too small to judge, under 6.25 ha for MODIS or 0.45 ha for Sentinel-2.',
 			view: 'decision', camera: { center: [-49.1, -7.3], zoom: 9.4 }, satellite: false, state: ''
 		},
 		{
 			title: 'Native vegetation around and inside fields',
-			text: 'Along the Cuiabá river in Mato Grosso, the imagery shows native vegetation between the fields, which draw faintly while Satellite imagery is on. A field below nearby fields of the same crop and not gaining is a restore candidate when native patches of 50 ha or more cover at least 30 percent of the land within 1 km. If it is also declining and native vegetation is returning inside it (at least 10 percent of its pixels went from crop or pasture in 2020 to native vegetation in 2024), it is assisted natural regeneration. Native vegetation and its return come from the MapBiomas maps of 2020 and 2024.',
+			text: 'Satellite imagery shows native vegetation between fields along the Cuiabá River in Mato Grosso. A field below its peers and stable or declining is a restore candidate if native patches of at least 50 ha cover at least 30 percent of the land within 1 km. If the field is declining and at least 10 percent changed from crop or pasture to native vegetation, the map suggests assisted natural regeneration. These changes come from MapBiomas maps from 2020 and 2024.',
 			view: 'decision', camera: { center: [-56.32, -15.3], zoom: 12 }, satellite: true, state: ''
 		},
 		{
 			title: 'The area around each field',
-			text: 'Before judging a field, the method judges its area. In each cell of about 6 km, crops and pasture are compared with the same uses across Brazil, in 2024 and in their change since 2020. Where every use is below Brazil and falling further, as in these green cells near Porto Velho in Rondônia, the suggestion is to restore. Where crops do well but pasture lags, the pasture is suggested to improve or convert to crops.',
+			text: 'In each 6 km cell, we compare crops and pasture with the same uses across Brazil in 2024 and measure how that gap changed since 2020. The green cells near Porto Velho, Rondônia, show where the map suggests restoration because crops and pasture were below national levels and fell further behind. Where crops do well but pasture lags, the map suggests improving the pasture or converting it to crops.',
 			view: 'decision', camera: { center: [-64.0, -9.2], zoom: 8 }, satellite: false, state: ''
 		},
 		{
 			title: 'Suggested land use pathways',
-			text: 'Each field gets one suggested pathway, and its card lists other options. The greens are the restoration family: restore, assisted natural regeneration, restore candidate and recently converted land. Amber is improve yields, and its + button in the legend splits it; teal and blue are pasture options. Under Select a state, the bars show the mix of pathways for one state, here Mato Grosso.',
+			text: 'Each field has one suggested action and other options in its field card. Greens mark restoration and recently converted land. Amber marks Improve yields, which you can expand with + in the legend. Teal and blue mark pasture options, and the bars below Select a state show how common each action is in the selected state, here Mato Grosso.',
 			view: 'decision', camera: { bounds: 'brazil' }, satellite: false, state: 'MT'
 		}
 	]
