@@ -798,3 +798,8 @@ DECISIONS_V2.md, S2_MATO_GROSSO.md. Methods: methods/METHODS.md. Site contract: 
   (`CONFIG.SATELLITE_FIELD_OPACITY`, `CONFIG.SATELLITE_LINE`). Checked locally that the toggle
   runs without console errors; a screenshot could not be taken because the tile build was
   using the machine.
+
+### 17 November 2026, 12:35: zoom 9 to 11 rebuild stuck at the join
+
+- `s05c_rebuild_lowzoom.py` finished tippecanoe for all 27 states at 11:51, then waited 40 minutes for a join that never ran. Two bugs: the join was started with `setsid nohup ... &` inside a short `wsl.exe` call, and `~/join.sh` did not run (its log was still from 16 November); the wait loop polled `\wsl.localhost\...` with one leading backslash, a path that never exists.
+- Fixed: `join()` now runs `wsl -d Ubuntu-22.04 -- bash /home/tristangrupp/join.sh` blocking (the script itself runs detached) and reads `\wsl.localhost\...`. Added `--from-join` to rerun only the join, copy and upload. Stopped pid 46772 and relaunched with `--from-join` at 12:32; tile-join is running in WSL.

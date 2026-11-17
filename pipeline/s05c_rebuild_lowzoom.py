@@ -38,15 +38,18 @@ def main():
         p = os.path.join(T.GEOJSON, f"{s}.geojsonl")
         if os.path.exists(p):
             os.remove(p)
-    # join inside WSL, detached there, then wait for done.txt
-    subprocess.run(["wsl", "-d", "Ubuntu-22.04", "--", "bash", "-c",
-                    "rm -f ~/tj/done.txt; setsid nohup bash ~/join.sh > /dev/null 2>&1 < /dev/null & disown"], creationflags=NW)
-    done = r"\wsl.localhost\Ubuntu-22.04\home\tristangrupp\tj\done.txt"
-    while not os.path.exists(done):
-        subprocess.run(["wsl", "-d", "Ubuntu-22.04", "--", "true"], creationflags=NW)  # keeps the VM up
-        time.sleep(30)
-    rc = open(done).read().strip()
-    src = r"\wsl.localhost\Ubuntu-22.04\home\tristangrupp\tj\fields.pmtiles"
+    join()
+
+
+def join():
+    """Join inside WSL, copy to F:, upload. Until 17 November 2026 12:40 the join was started
+    with setsid nohup inside a short wsl.exe call, which never ran the join, and the wait loop
+    polled a UNC path with one leading backslash, so it waited forever. This script is itself
+    launched detached, so a plain blocking wsl.exe call is safe here."""
+    subprocess.run(["wsl", "-d", "Ubuntu-22.04", "--", "bash", "/home/tristangrupp/join.sh"], creationflags=NW)
+    done = r"\\wsl.localhost\Ubuntu-22.04\home\tristangrupp\tj\done.txt"
+    rc = open(done).read().strip() if os.path.exists(done) else "missing"
+    src = r"\\wsl.localhost\Ubuntu-22.04\home\tristangrupp\tj\fields.pmtiles"
     log(step="join", rc=rc, bytes=os.path.getsize(src))
     if rc != "0":
         return
@@ -58,4 +61,7 @@ def main():
     log(step="upload", rc=r.returncode, out=r.stdout[-2500:], err=r.stderr[-800:])
 
 if __name__ == "__main__":
-    main()
+    if "--from-join" in sys.argv:
+        join()
+    else:
+        main()
