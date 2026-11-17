@@ -46,8 +46,9 @@ def join():
     with setsid nohup inside a short wsl.exe call, which never ran the join, and the wait loop
     polled a UNC path with one leading backslash, so it waited forever. This script is itself
     launched detached, so a plain blocking wsl.exe call is safe here."""
-    subprocess.run(["wsl", "-d", "Ubuntu-22.04", "--", "bash", "/home/tristangrupp/join.sh"], creationflags=NW)
-    done = r"\\wsl.localhost\Ubuntu-22.04\home\tristangrupp\tj\done.txt"
+    if "--from-copy" not in sys.argv:
+        subprocess.run(["wsl", "-d", "Ubuntu-22.04", "--", "bash", "/home/tristangrupp/join.sh"], creationflags=NW)
+    done =r"\\wsl.localhost\Ubuntu-22.04\home\tristangrupp\tj\done.txt"
     rc = open(done).read().strip() if os.path.exists(done) else "missing"
     src = r"\\wsl.localhost\Ubuntu-22.04\home\tristangrupp\tj\fields.pmtiles"
     log(step="join", rc=rc, bytes=os.path.getsize(src))
@@ -61,7 +62,7 @@ def join():
     log(step="upload", rc=r.returncode, out=r.stdout[-2500:], err=r.stderr[-800:])
 
 if __name__ == "__main__":
-    if "--from-join" in sys.argv:
+    if "--from-join" in sys.argv or "--from-copy" in sys.argv:
         join()
     else:
         main()

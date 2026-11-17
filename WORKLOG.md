@@ -803,3 +803,8 @@ DECISIONS_V2.md, S2_MATO_GROSSO.md. Methods: methods/METHODS.md. Site contract: 
 
 - `s05c_rebuild_lowzoom.py` finished tippecanoe for all 27 states at 11:51, then waited 40 minutes for a join that never ran. Two bugs: the join was started with `setsid nohup ... &` inside a short `wsl.exe` call, and `~/join.sh` did not run (its log was still from 16 November); the wait loop polled `\wsl.localhost\...` with one leading backslash, a path that never exists.
 - Fixed: `join()` now runs `wsl -d Ubuntu-22.04 -- bash /home/tristangrupp/join.sh` blocking (the script itself runs detached) and reads `\wsl.localhost\...`. Added `--from-join` to rerun only the join, copy and upload. Stopped pid 46772 and relaunched with `--from-join` at 12:32; tile-join is running in WSL.
+
+### 17 November 2026, 13:35: zoom 9 to 11 rebuild, join done, copy and upload running
+
+- The relaunched `--from-join` run joined the tiles at 12:49 (tile-join rc 0, `fields.pmtiles` 9,027,039,966 bytes, up from 7,060,673,632 with dropping), then the Python process vanished before logging the join, with nothing in its stderr. Cause not found.
+- Added `--from-copy` (skip the join, copy the joined file to F:, upload). Launched at 13:31 hidden; the copy is running. Log: `analysis\decisions\logs\rebuild_lowzoom.log`, output `rebuild_copy.stdout` and `.err`.
