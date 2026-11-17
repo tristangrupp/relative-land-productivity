@@ -15,7 +15,7 @@
 import {
 	CONFIG, ATTR, SUMMARY_ATTR, VIEWS, CROPS, VIGOR, VIGOR_CHANGE, DECISIONS, AREA_DECISIONS,
 	CHANGE_CLASSES, STATES, NODATA_COLOR, CONFIDENCE, ECO_TREND, SOURCES, CLASS_GROUPS
-} from './config.js?v=13';
+} from './config.js?v=14';
 
 const $ = (id) => document.getElementById(id);
 const NA = 'n/a';
@@ -349,7 +349,6 @@ function showTip(e, layerId) {
 		const c24 = p[ATTR.crop_2024];
 		if (v.id !== 'crop_2020') rows.push(['Crop 2020', cropName(c20)]);
 		if (v.id !== 'crop_2024') rows.push(['Crop 2024', cropName(c24) + (c20 != null && c24 != null && c20 !== c24 ? ' (switched)' : '')]);
-		if (v.id !== 'area_decision' && p[ATTR.area_decision] != null) rows.push([areaLabel(p[ATTR.area_level]), areaName(p[ATTR.area_decision])]);
 		if (v.id === 'area_decision' || v.id === 'decision') {
 			if (v.id !== 'decision') rows.push(['Field call', decisionName(p[ATTR.decision])]);
 			const eco = ecoLine(p);
@@ -370,7 +369,6 @@ function showTip(e, layerId) {
 			for (const [k, sh] of top3(p)) rows.push([decisionName(k), pct(sh)]);
 		}
 		if (v.id === 'area_decision' || v.id === 'decision') {
-			if (v.id === 'decision') rows.push([areaLabel(p[SUMMARY_ATTR.area_level]), areaName(p[SUMMARY_ATTR.area_call] || p[SUMMARY_ATTR.dominant_area_decision])]);
 			if (v.id === 'area_decision' && p[SUMMARY_ATTR.area_level] === 5) rows.push(['Call made on', 'the 15 km parent cell (too few fields at 6 km)']);
 			rows.push(['Crops vs Brazil', areaTermText(p[SUMMARY_ATTR.area_crops_2024], p[SUMMARY_ATTR.area_crops_change])]);
 			rows.push(['Pasture vs Brazil', areaTermText(p[SUMMARY_ATTR.area_pasture_2024], p[SUMMARY_ATTR.area_pasture_change])]);
@@ -629,7 +627,7 @@ function renderScope() {
 }
 
 function setView(id, push = true) {
-	const v = VIEWS.find((x) => x.id === id) || VIEWS[0];
+	const v = VIEWS.find((x) => x.id === id && !x.hidden) || VIEWS[0];
 	state.view = v;
 	document.querySelectorAll('.view-link').forEach((b) => b.classList.toggle('active', b.dataset.view === v.id));
 	$('crumbMode').textContent = v.title.toUpperCase();
@@ -881,9 +879,9 @@ function buildNav() {
 	const nav = $('sidebar');
 	let group = null;
 	let html = '';
-	for (const v of VIEWS) {
+	for (const v of VIEWS.filter((x) => !x.hidden)) {
 		if (v.group !== group) { group = v.group; html += `<p class="group">${esc(group)}</p>`; }
-		html += `<button class="view-link" type="button" data-view="${v.id}"><span class="vt">${esc(v.title)}</span></button>`;
+		html += `<button class="view-link${v.bold ? ' bold' : ''}" type="button" data-view="${v.id}"><span class="vt">${esc(v.title)}</span></button>`;
 	}
 	html += '<p class="group">More</p>';
 	html += '<a class="view-link" href="./methods.html"><span class="vt">Methods</span></a>';

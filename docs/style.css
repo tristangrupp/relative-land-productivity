@@ -106,6 +106,7 @@ body:not(.has-banner) { --banner-h: 0px; }
 	width: 100%; text-align: left; border-top: 0; border-right: 0; border-bottom: 0;
 }
 .view-link:hover { background: #f5f2ec; }
+.view-link.bold .vt { font-weight: 600; }
 .view-link.active { background: var(--card); border-left-color: var(--accent); }
 .view-link .vt { display: block; font: 13px var(--mono); color: var(--ink); }
 .view-link.active .vt { color: var(--accent-ink); }

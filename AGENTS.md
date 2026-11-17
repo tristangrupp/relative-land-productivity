@@ -137,6 +137,8 @@ Prefix: `https://wri-datalab-sandbox.s3.amazonaws.com/trazofields/trazo4/relativ
 - (17 November 2026) The legend shows "Improve yields" as one row for improve yields, improve
   yields that spares land, and intensify; its + button splits it on the map and in the
   legend (`CLASS_GROUPS` in config.js).
+- (17 November 2026) The Area decision view is hidden for now (`hidden: true`); the
+  "Suggested land use pathway" nav link is bold.
 - The zoomed-out map must be dense: many small cells. 100 km, 40 km and (13 November) 15 km
   cells were rejected as too coarse; 6 km cells at every zoom now. The change view uses a
   continuous ramp, not a few flat steps ("too coarse and oversimplified").

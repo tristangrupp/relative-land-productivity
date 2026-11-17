@@ -692,3 +692,8 @@ DECISIONS_V2.md, S2_MATO_GROSSO.md. Methods: methods/METHODS.md. Site contract: 
   + splits it into improve yields that spares land, improve yields and intensify with their
   own colors on the map; minus combines them. `CLASS_GROUPS` in docs/config.js. Checked
   locally in Chrome at zoom 12 near Sorriso.
+- 17 Nov, user: "turn off area decision from the page for now. Make Suggested land use
+  mapthway bold." The Area decision view is hidden (`hidden: true` in config.js VIEWS; a link
+  with ?view=area_decision opens the decision view), and the area call rows are gone from the
+  tooltips; the field card still lists the area call. The nav link "Suggested land use
+  pathway" is bold. The area call data and tiles are unchanged.

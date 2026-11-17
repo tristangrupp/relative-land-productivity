@@ -443,6 +443,7 @@ export const AREA_SUMMARY = {
     see methods, section 9. */
 export const VIEWS = [
 	{
+		bold: true,
 		id: 'decision', group: 'Decisions', title: 'Suggested land use pathway',
 		question: 'What would be a better land use decision for sustainable food?',
 		kind: 'class', attr: 'decision', classes: DECISIONS, countKey: 'decision',
@@ -451,6 +452,8 @@ export const VIEWS = [
 		caveat: ''
 	},
 	{
+		/* hidden from the page for now (user, 17 November 2026: "turn off area decision from the page for now") */
+		hidden: true,
 		id: 'area_decision', group: 'Decisions', title: 'Area decision',
 		question: 'Which land use tradeoff does each area of about 6 km face?',
 		kind: 'class', attr: 'area_decision', classes: AREA_DECISIONS, countKey: 'area_decision',
