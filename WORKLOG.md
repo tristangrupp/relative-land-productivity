@@ -752,3 +752,31 @@ DECISIONS_V2.md, S2_MATO_GROSSO.md. Methods: methods/METHODS.md. Site contract: 
   corner) below the data layers, and fields then draw at fill opacity 0.25
   (`CONFIG.SATELLITE_FIELD_OPACITY`). Summary cells keep their opacity. Checked locally in
   Chrome near Sorriso at zoom 12.5.
+- 17 Nov, user: "design a walkthrough that takes someone high-level through the methodology,
+  fields, years, productivity, productivity across years, native vegetation, land use, and how
+  all of this led to the suggested land use pathways", and "use the stories:
+  https://github.com/wri/organizational-scorecard-js to inform zoom methodology". Done: a "Take
+  the tour" button at the top of the left nav opens a caption card over the top left of the map
+  (bottom of the map on a phone) with nine steps, Back, Next (Finish on the last), a dot per step,
+  Close, the arrow keys and Escape. Steps and cameras are `WALKTHROUGH` in docs/config.js; the
+  logic is the walkthrough section of docs/app.js; `?tour=N` opens step N. The steps: (1) the
+  decision view of Brazil; (2) fields over satellite imagery near Sorriso, Mato Grosso, zoom 13;
+  (3) crop type 2020 at the same place; (4) relative productivity 2024 there; (5) the national
+  frontier change map at zoom 4; (6) the decision view at zoom 9.4 on the Araguaia river, where
+  Pará (Sentinel-2) shows trusted calls and Tocantins (MODIS) mostly "too small to judge yet";
+  (7) native vegetation along the Cuiabá river, Mato Grosso, zoom 12 with satellite imagery;
+  (8) restore cells near Porto Velho, Rondônia, zoom 8, to explain the area call; (9) the
+  decision view of Brazil with Mato Grosso selected, so the state mix shows under "Select a
+  state". Places were chosen by querying the tiles for restore, restore candidate and low
+  confidence fields. What was taken from the scorecard stories (wt-stories, stories/index.html):
+  a camera per step, few camera chapters with the zoom moving one way inside a chapter, a held
+  camera that does not move, flight time scaled by zoom change and distance (there 4 to 7 s for
+  scroll-driven stories, here 1.6 to 4.5 s because a click drives each step), the new layer
+  arriving while the flight lands (there at 55 percent of the flight, here the view switch at the
+  same point), padding so the target sits beside the text card, numbered stops to jump between
+  steps (here the dots), and Escape to leave. Not taken: scroll-driven motion, autoplay and the
+  disabled zoom; here the map stays free to pan and zoom during the tour. Closing puts back the
+  reader's view, imagery, state and camera; Finish leaves the map at the last step. Captions
+  take numbers only from METHODS.md, this log and stats.json. Tested locally in Chrome at 1381
+  px (every step, keys, dots, Escape, Finish, no page errors in the console) and at 390 px by
+  layout measurement in an iframe (no horizontal scroll, Back and Next inside the card).

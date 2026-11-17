@@ -14,8 +14,8 @@
 
 import {
 	CONFIG, ATTR, SUMMARY_ATTR, VIEWS, CROPS, VIGOR, VIGOR_CHANGE, DECISIONS, AREA_DECISIONS,
-	CHANGE_CLASSES, STATES, NODATA_COLOR, CONFIDENCE, ECO_TREND, SOURCES, CLASS_GROUPS
-} from './config.js?v=16';
+	CHANGE_CLASSES, STATES, NODATA_COLOR, CONFIDENCE, ECO_TREND, SOURCES, CLASS_GROUPS, WALKTHROUGH
+} from './config.js?v=17';
 
 const $ = (id) => document.getElementById(id);
 const NA = 'n/a';
@@ -305,6 +305,11 @@ async function initMap() {
 		state.mapReady = true;
 		updateScaleNote();
 		if (PLACEHOLDER && !location.hash.includes('map=')) goToPlaceholder();
+		/* A walkthrough opened from the URL before the map loaded flies to its step now. */
+		if (tour.open) {
+			if (tour.before && !tour.before.camera) tour.before.camera = { center: map.getCenter(), zoom: map.getZoom(), bearing: map.getBearing(), pitch: map.getPitch() };
+			tourApply(tour.i);
+		}
 	});
 }
 
@@ -706,6 +711,7 @@ function writeUrl() {
 	const u = new URL(location.href);
 	u.searchParams.set('view', state.view.id);
 	if (state.stateCode) u.searchParams.set('state', state.stateCode); else u.searchParams.delete('state');
+	if (tour.open) u.searchParams.set('tour', String(tour.i + 1)); else u.searchParams.delete('tour');
 	if (state.confMode !== CONFIDENCE.DEFAULT) u.searchParams.set('conf', state.confMode); else u.searchParams.delete('conf');
 	history.replaceState(null, '', u);
 }
@@ -915,6 +921,144 @@ function setupLegendTips() {
 	document.addEventListener('pointerdown', (e) => { if (open && !e.target.closest('.info')) hide(); });
 }
 
+/* ------------------------------------------------------------------ walkthrough */
+
+/* The guided walkthrough. Its camera follows the stories of the WRI organizational scorecard:
+   each step names a camera, a held camera does not move, the flight time grows with the zoom
+   change and the distance, and the step's view switches while the flight lands, so the reader
+   sees the new layer arrive at the new place. Back, Next, the step dots, the arrow keys and
+   Escape drive it. Closing puts back the view, imagery, state and camera the reader had. */
+const tour = { open: false, i: 0, before: null, timers: [] };
+
+function tourPad() {
+	const card = $('tour');
+	const r = card.getBoundingClientRect();
+	const m = $('map').getBoundingClientRect();
+	if (window.innerWidth <= 760) return { top: 0, left: 0, right: 0, bottom: Math.min(r.height + 12, m.height * 0.6) };
+	return { top: 0, left: Math.min(r.width + 24, m.width * 0.5), right: 0, bottom: 0 };
+}
+
+/** The target camera of a step. A held camera is the camera of the last step before it that
+    names one, so a flight cut short by a quick Next still ends at the right place. */
+function tourCamera(i, pad) {
+	const steps = WALKTHROUGH.STEPS;
+	let k = i;
+	while (k > 0 && (!steps[k].camera || steps[k].camera === 'hold')) k--;
+	const c = steps[k].camera;
+	if (!c || c === 'hold') return null;
+	if (c.bounds) {
+		const b = c.bounds === 'brazil' ? CONFIG.BRAZIL_BOUNDS : c.bounds;
+		/* The card sits over the Pacific and the Andes at the national view, so the bounds give
+		   up only part of the card's width; Brazil then fills more of the map. */
+		const cc = map.cameraForBounds(b, { padding: { top: 10 + pad.top, bottom: 10 + pad.bottom, left: 10 + pad.left * 0.4, right: 10 + pad.right } });
+		/* cameraForBounds already offsets the center for the padding, so fly with none */
+		return cc ? { center: cc.center, zoom: cc.zoom, padding: { top: 0, bottom: 0, left: 0, right: 0 } } : null;
+	}
+	return { center: c.center, zoom: c.zoom, padding: pad };
+}
+
+function tourFly(target) {
+	if (!target) return 0;
+	const dz = Math.abs(map.getZoom() - target.zoom);
+	const km = maplibregl.LngLat.convert(target.center).distanceTo(map.getCenter()) / 1000;
+	if (dz < 0.05 && km < 0.5) { map.setPadding(target.padding); return 0; }
+	const w = WALKTHROUGH;
+	const dur = Math.round(Math.min(w.FLY_MAX, Math.max(w.FLY_MIN, w.FLY_MIN + dz * 250 + Math.sqrt(km) * 20)));
+	map.flyTo({ ...target, bearing: 0, pitch: 0, duration: dur, curve: 1.2, essential: true });
+	return dur;
+}
+
+function tourApply(i) {
+	const steps = WALKTHROUGH.STEPS;
+	tour.i = Math.max(0, Math.min(steps.length - 1, i));
+	const s = steps[tour.i];
+	tour.timers.forEach(clearTimeout);
+	tour.timers = [];
+	renderTour();
+	if (!state.mapReady) return;
+	const dur = tourFly(tourCamera(tour.i, tourPad()));
+	const swap = () => {
+		if (state.view.id !== s.view) setView(s.view);
+		if (state.satellite !== !!s.satellite) setSatellite(!!s.satellite);
+		if (state.stateCode !== (s.state || '')) setState(s.state || '', false);
+		writeUrl();
+	};
+	if (dur) tour.timers.push(setTimeout(swap, dur * WALKTHROUGH.SWITCH_AT)); else swap();
+}
+
+function renderTour() {
+	const steps = WALKTHROUGH.STEPS;
+	const s = steps[tour.i];
+	$('tourCount').textContent = `Step ${tour.i + 1} of ${steps.length}`;
+	$('tourTitle').textContent = s.title;
+	$('tourText').textContent = s.text;
+	$('tourBack').disabled = tour.i === 0;
+	$('tourNext').textContent = tour.i === steps.length - 1 ? 'Finish' : 'Next';
+	$('tourDots').innerHTML = steps.map((x, k) => `<button type="button" data-k="${k}" aria-label="Step ${k + 1}: ${esc(x.title)}"${k === tour.i ? ' aria-current="step"' : ''}></button>`).join('');
+}
+
+function openTour(i = 0) {
+	if (!tour.open) {
+		tour.before = {
+			view: state.view.id, satellite: state.satellite, stateCode: state.stateCode,
+			camera: state.mapReady ? { center: map.getCenter(), zoom: map.getZoom(), bearing: map.getBearing(), pitch: map.getPitch() } : null
+		};
+	}
+	tour.open = true;
+	clearPick();
+	hideTip();
+	document.body.classList.add('touring');
+	$('tour').hidden = false;
+	tourApply(i);
+	$('tourNext').focus({ preventScroll: true });
+}
+
+/** Ends the walkthrough. `restore` puts back what the reader had before it began; Finish on
+    the last step leaves the map where the walkthrough ended. */
+function closeTour(restore = true) {
+	if (!tour.open) return;
+	tour.open = false;
+	tour.timers.forEach(clearTimeout);
+	tour.timers = [];
+	$('tour').hidden = true;
+	document.body.classList.remove('touring');
+	const b = tour.before;
+	if (state.mapReady) {
+		map.stop();
+		map.setPadding({ top: 0, bottom: 0, left: 0, right: 0 });
+	}
+	if (restore && b) {
+		setView(b.view, false);
+		setSatellite(b.satellite);
+		setState(b.stateCode, false);
+		if (state.mapReady && b.camera) map.flyTo({ ...b.camera, duration: 1600, essential: true });
+	}
+	writeUrl();
+	$('tourOpen').focus({ preventScroll: true });
+}
+
+function setupTour() {
+	$('tourBack').addEventListener('click', () => tourApply(tour.i - 1));
+	$('tourNext').addEventListener('click', () => {
+		if (tour.i === WALKTHROUGH.STEPS.length - 1) closeTour(false); else tourApply(tour.i + 1);
+	});
+	$('tourClose').addEventListener('click', () => closeTour(true));
+	$('tourDots').addEventListener('click', (e) => {
+		const b = e.target.closest('button[data-k]');
+		if (b) tourApply(Number(b.dataset.k));
+	});
+	/* Capture phase, so the map's own arrow-key panning does not also run. */
+	document.addEventListener('keydown', (e) => {
+		if (!tour.open || e.altKey || e.ctrlKey || e.metaKey) return;
+		/* a held arrow key repeats; one press moves one step */
+		if (e.repeat && e.key !== 'Escape') { if (/^Arrow(Left|Right)$/.test(e.key)) { e.preventDefault(); e.stopPropagation(); } return; }
+		if (e.target.closest && e.target.closest('select, input, textarea')) return;
+		if (e.key === 'ArrowRight') { e.preventDefault(); e.stopPropagation(); if (tour.i < WALKTHROUGH.STEPS.length - 1) tourApply(tour.i + 1); }
+		else if (e.key === 'ArrowLeft') { e.preventDefault(); e.stopPropagation(); if (tour.i > 0) tourApply(tour.i - 1); }
+		else if (e.key === 'Escape') { e.preventDefault(); closeTour(true); }
+	}, true);
+}
+
 /* ------------------------------------------------------------------ boot */
 
 function buildNav() {
@@ -928,7 +1072,8 @@ function buildNav() {
 	html += '<p class="group">More</p>';
 	html += '<a class="view-link" href="./methods.html"><span class="vt">Methods</span></a>';
 	html += '<a class="view-link" href="./about.html"><span class="vt">About</span></a>';
-	nav.innerHTML = html;
+	nav.innerHTML = '<button class="tourBtn" type="button" id="tourOpen">Take the tour</button>' + html;
+	$('tourOpen').addEventListener('click', () => openTour(0));
 	nav.querySelectorAll('button.view-link').forEach((b) => b.addEventListener('click', () => setView(b.dataset.view)));
 }
 
@@ -983,11 +1128,14 @@ function boot() {
 	buildConfidenceSelect();
 	setupLegendTips();
 	setupBanner();
+	setupTour();
 	$('pickClose').addEventListener('click', clearPick);
 	const u = new URL(location.href);
 	if (u.searchParams.get('conf')) setConfidence(u.searchParams.get('conf'));
 	setView(u.searchParams.get('view') || VIEWS[0].id, false);
 	if (u.searchParams.get('state')) setState(u.searchParams.get('state'), false);
+	const t = Number(u.searchParams.get('tour'));
+	if (t >= 1 && t <= WALKTHROUGH.STEPS.length) openTour(t - 1);
 	loadStats();
 	loadEcoregions();
 	initMap();
@@ -996,4 +1144,4 @@ function boot() {
 boot();
 
 /** Debug handle, so a console or a test can drive the page. */
-window.__rlp = { get map() { return map; }, state, setView, setState, setConfidence, pickField, goToPlaceholder, CONFIG };
+window.__rlp = { get map() { return map; }, state, tour, openTour, closeTour, setView, setState, setConfidence, pickField, goToPlaceholder, CONFIG };

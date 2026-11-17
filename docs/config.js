@@ -544,3 +544,66 @@ export const STATES = [
 	{ code: 'SE', name: 'Sergipe', tier: 3, bbox: [-38.246, -11.568, -36.413, -9.522] },
 	{ code: 'TO', name: 'Tocantins', tier: 2, bbox: [-50.738, -13.438, -45.699, -5.174] }
 ];
+
+/** The guided walkthrough ("Take the tour" in the left nav; user, 17 November 2026). Each step
+    sets a view, a camera and the satellite imagery toggle, and shows a short caption over the
+    map. The camera follows the stories of the WRI organizational scorecard: few camera
+    chapters, zoom moving one way inside a chapter, a flight time scaled by the distance and the
+    zoom change, a held camera ('hold') that does not move, and the view changing while the
+    flight lands. `camera` is { center: [lng, lat], zoom }, { bounds: 'brazil' } or 'hold'.
+    `state` selects a state in the "Select a state" card without moving the map. Numbers in the
+    captions come from methods/METHODS.md, WORKLOG.md and the live stats.json of 17 November 2026. */
+export const WALKTHROUGH = {
+	/* flight time in ms: FLY_MIN plus 250 per zoom level plus 20 per square root km, capped */
+	FLY_MIN: 1600,
+	FLY_MAX: 4500,
+	/* share of the flight after which the step's view and imagery switch */
+	SWITCH_AT: 0.55,
+	STEPS: [
+		{
+			title: 'Land use for more sustainable food production',
+			text: 'This map follows every mapped crop and pasture field in Brazil through two agricultural years, 2020 and 2024. For each field it asks how green the crop or pasture grew compared with nearby fields of the same crop. From that record it suggests a land use pathway. Zoomed out, each colored cell is about 6 km across and sums up the fields inside it.',
+			view: 'decision', camera: { bounds: 'brazil' }, satellite: false, state: ''
+		},
+		{
+			title: 'Fields',
+			text: 'The map unit is the field: 24,554,482 outlines of 2024 fields from the Trazo4 field map, covering 190.7 million hectares. Here, near Sorriso in Mato Grosso, the outlines sit over satellite imagery. Fields appear from zoom 9; below that zoom the map shows summary cells.',
+			view: 'crop_2024', camera: { center: [-55.6, -12.62], zoom: 13 }, satellite: true, state: ''
+		},
+		{
+			title: 'Two years and their crops',
+			text: 'The two years are agricultural years: 2020 runs from 1 September 2019 to 31 August 2020, and 2024 from 1 September 2023 to 31 August 2024. The crop of each field in each year is the most common MapBiomas Collection 10 class inside its 2024 outline. This view shows 2020, and Crop type 2024 in the left menu shows the later year. A field whose crop changed is marked as crop switched rather than compared across the years.',
+			view: 'crop_2020', camera: 'hold', satellite: false, state: ''
+		},
+		{
+			title: 'Productivity relative to neighbors',
+			text: 'Productivity here is relative greenness, not yield. The satellite greenness (NDVI) of each field is summed over the crop’s growing season, adjusted for rainfall and temperature, and divided by the median of nearby fields of the same crop. A value of 1.0 is that median: brown fields are below it and green fields above it. Nearby means the same H3 cell of about 17 km, with at least 30 fields of the crop.',
+			view: 'prod_2024', camera: 'hold', satellite: false, state: ''
+		},
+		{
+			title: 'Productivity change from 2020 to 2024',
+			text: 'Zoomed out, each 6 km cell shows how its crops moved against the same crops across Brazil: brown cells lost ground and green cells gained. Zoomed in, each field is classed by how far it moved against its neighbors: stable within 1 peer standard deviation, gain or decline beyond it, large gain or large decline beyond 2. Part of a frontier can be weather that the adjustment missed, including the 2024 drought.',
+			view: 'change', camera: { center: [-52.5, -13.5], zoom: 4 }, satellite: false, state: ''
+		},
+		{
+			title: 'Two satellites',
+			text: 'Greenness comes from MODIS at 250 m in most states and from Sentinel-2 at 30 m in Mato Grosso, Pará, Rondônia and Acre. Here the Araguaia river divides Pará (left, Sentinel-2) from Tocantins (right, MODIS). A field under 6.25 ha, one MODIS pixel, mixes with its neighbors, so it shows as too small to judge yet in light gray. On Sentinel-2 the limit is 0.45 ha, and the other states switch to Sentinel-2 one by one.',
+			view: 'decision', camera: { center: [-49.1, -7.3], zoom: 9.4 }, satellite: false, state: ''
+		},
+		{
+			title: 'Native vegetation around and inside fields',
+			text: 'Along the Cuiabá river in Mato Grosso, the imagery shows native vegetation between the fields, which draw faintly while Satellite imagery is on. A field below nearby fields of the same crop and not gaining is a restore candidate when native patches of 50 ha or more cover at least 30 percent of the land within 1 km. If it is also declining and native vegetation is returning inside it (at least 10 percent of its pixels went from crop or pasture in 2020 to native vegetation in 2024), it is assisted natural regeneration. Native vegetation and its return come from the MapBiomas maps of 2020 and 2024.',
+			view: 'decision', camera: { center: [-56.32, -15.3], zoom: 12 }, satellite: true, state: ''
+		},
+		{
+			title: 'The area around each field',
+			text: 'Before judging a field, the method judges its area. In each cell of about 6 km, crops and pasture are compared with the same uses across Brazil, in 2024 and in their change since 2020. Where every use is below Brazil and falling further, as in these green cells near Porto Velho in Rondônia, the suggestion is to restore. Where crops do well but pasture lags, the pasture is suggested to improve or convert to crops.',
+			view: 'decision', camera: { center: [-64.0, -9.2], zoom: 8 }, satellite: false, state: ''
+		},
+		{
+			title: 'Suggested land use pathways',
+			text: 'Each field gets one suggested pathway, and its card lists other options. The greens are the restoration family: restore, assisted natural regeneration, restore candidate and recently converted land. Amber is improve yields, and its + button in the legend splits it; teal and blue are pasture options. Under Select a state, the bars show the mix of pathways for one state, here Mato Grosso.',
+			view: 'decision', camera: { bounds: 'brazil' }, satellite: false, state: 'MT'
+		}
+	]
+};

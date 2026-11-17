@@ -354,3 +354,6 @@ before it ends, in addition to the Decisions entry here.
   86.1 percent of fields in a registered parcel; 47.1 percent in a property with a legal
   reserve deficit (79.8 percent on the Amazon frontier). Proposal for the recommendations in
   METHODS.md 7.7, not yet applied.
+- 2026-11-17 Walkthrough: a nine-step guided tour on the map page ("Take the tour"), its steps
+  and cameras in `WALKTHROUGH` (docs/config.js), its zoom pattern taken from the scorecard
+  stories. Site only; no tile, data or method change (DECISIONS.md D19, WORKLOG.md 17 Nov).

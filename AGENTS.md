@@ -139,6 +139,11 @@ Prefix: `https://wri-datalab-sandbox.s3.amazonaws.com/trazofields/trazo4/relativ
   legend (`CLASS_GROUPS` in config.js).
 - (17 November 2026) The Area decision view is hidden for now (`hidden: true`); the
   "Suggested land use pathway" nav link is bold.
+- (17 November 2026) A guided walkthrough ("Take the tour", `WALKTHROUGH` in config.js) of nine
+  steps follows the zoom pattern of the WRI scorecard stories: a camera per step, held cameras,
+  flight time scaled by distance, the view switching as the flight lands. Keep its captions to
+  two to four plain sentences with numbers from METHODS.md, WORKLOG.md or stats.json, and keep
+  it out of the right panel. Update a step's place or numbers when the data it shows changes.
 - The zoomed-out map must be dense: many small cells. 100 km, 40 km and (13 November) 15 km
   cells were rejected as too coarse; 6 km cells at every zoom now. The change view uses a
   continuous ramp, not a few flat steps ("too coarse and oversimplified").
