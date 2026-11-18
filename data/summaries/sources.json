@@ -53,5 +53,16 @@
    "s2_scaled": 20.18
   },
   "swapped": "2026-11-17T22:34:21"
+ },
+ "Roraima": {
+  "source": "s2",
+  "change_scale": 1.2656,
+  "noise_fields": 1731,
+  "changing_share_large": {
+   "modis": 16.29,
+   "s2": 23.28,
+   "s2_scaled": 14.85
+  },
+  "swapped": "2026-11-18T02:32:46"
  }
 }

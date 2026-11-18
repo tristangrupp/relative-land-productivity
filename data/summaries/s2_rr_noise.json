@@ -1,0 +1,49 @@
+{
+ "state": "Roraima",
+ "min_ha": 25.0,
+ "fields": 1731,
+ "sd_s2": 0.803,
+ "sd_modis": 0.6345,
+ "change_scale": 1.2656,
+ "comparable_fields": 50358,
+ "changing_share_large": {
+  "modis": 16.29,
+  "s2": 23.28,
+  "s2_scaled": 14.85
+ },
+ "changing_share_all": {
+  "modis": 18.22,
+  "s2": 35.08,
+  "s2_scaled": 24.7
+ },
+ "exact_agreement_all": {
+  "s2": 65.13,
+  "s2_scaled": 72.9
+ },
+ "by_band": {
+  "under 6.25 ha": {
+   "fields": 31843,
+   "modis": 17.92,
+   "s2": 38.17,
+   "s2_scaled": 27.48
+  },
+  "6.25 to 25 ha": {
+   "fields": 12813,
+   "modis": 19.49,
+   "s2": 32.14,
+   "s2_scaled": 22.11
+  },
+  "25 to 100 ha": {
+   "fields": 5076,
+   "modis": 17.55,
+   "s2": 25.45,
+   "s2_scaled": 15.7
+  },
+  "over 100 ha": {
+   "fields": 626,
+   "modis": 12.78,
+   "s2": 16.61,
+   "s2_scaled": 9.42
+  }
+ }
+}

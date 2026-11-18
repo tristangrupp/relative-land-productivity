@@ -828,3 +828,10 @@ DECISIONS_V2.md, S2_MATO_GROSSO.md. Methods: methods/METHODS.md. Site contract: 
 - Checked live: `stats.json` dated 2026-11-17 lists AC, AM, MT, PA and RO as Sentinel-2; `fields.pmtiles` is 9,027,681,355 bytes, Last-Modified 04:55 UTC on 18 November, so the zoom 9 to 11 no-drop rule held through the rebuild. Map not looked at in a browser.
 - `docs/about.html` updated with these numbers.
 - Next: Roraima (extraction 11 of 155 tiles at 22:32), then Amapá.
+
+### 18 November 2026, 05:30: Roraima on Sentinel-2
+
+- Roraima extraction finished (155 of 155 tiles) by 02:31. The hidden swap chain ran 02:31 to 04:47 with exit 0.
+- k = 1.2656 (Sentinel-2 change SD 0.803 over MODIS 0.6345, 1,731 fields of 25 ha and more). Large fields changing class: MODIS 16.29, Sentinel-2 unscaled 23.28, scaled 14.85 percent. Exact agreement over 50,358 comparable fields: 65.13 percent unscaled, 72.9 scaled. Details in `data/summaries/s2_rr_noise.json`.
+- National decisions after the swap, before in brackets: restore 57,204 (56,381), assisted natural regeneration 2,522 (2,499), restore candidate 403,924 (396,903), low confidence 18,429,853 (18,468,381), no suggestion 137,095 (138,936). Low-confidence flag 75.1 percent. Fields on Sentinel-2: 3,398,203.
+- `docs/about.html` updated. Amapá extraction finished (69 of 69) and its swap started at 05:31.
