@@ -209,6 +209,17 @@ earlier; `--revert` puts the MODIS tables back. Afterwards record the state's nu
 (`data/summaries/s2_<uf>_noise.json`, `decisions_v2.json`) in WORKLOG.md, bump the cache
 busters if the site changed, commit and push.
 
+## Sharing the machine with other projects
+
+Agreed on 18 November 2026 at the user's request with the water infrastructure session
+(grupp-8a); Fields of the Land has not answered yet.
+- Keep total commit charge under about 100 GB, one heavy job at a time per project.
+- Relative land productivity has priority on RAM and the network link.
+- Before a state's tile upload (s05_upload.py, about 45 minutes), message grupp-8a that the
+  upload starts; it suspends its downloaders (pause_downloads.ps1) and leaves training running.
+  Message again when the upload ends. Without an end message it resumes after 90 minutes.
+- Every project launches jobs hidden, with no console windows.
+
 ## Caveats every output should state where relevant
 
 - MODIS at 250 m: most fields are low confidence (smaller than one pixel or few clear
