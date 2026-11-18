@@ -1,0 +1,49 @@
+{
+ "state": "Amazonas",
+ "min_ha": 25.0,
+ "fields": 986,
+ "sd_s2": 0.8696,
+ "sd_modis": 0.7473,
+ "change_scale": 1.1637,
+ "comparable_fields": 102164,
+ "changing_share_large": {
+  "modis": 20.69,
+  "s2": 26.27,
+  "s2_scaled": 20.18
+ },
+ "changing_share_all": {
+  "modis": 21.12,
+  "s2": 35.05,
+  "s2_scaled": 28.33
+ },
+ "exact_agreement_all": {
+  "s2": 64.73,
+  "s2_scaled": 69.46
+ },
+ "by_band": {
+  "under 6.25 ha": {
+   "fields": 66240,
+   "modis": 20.45,
+   "s2": 37.42,
+   "s2_scaled": 30.74
+  },
+  "6.25 to 25 ha": {
+   "fields": 22479,
+   "modis": 22.14,
+   "s2": 32.18,
+   "s2_scaled": 25.5
+  },
+  "25 to 100 ha": {
+   "fields": 11508,
+   "modis": 23.29,
+   "s2": 29.31,
+   "s2_scaled": 22.18
+  },
+  "over 100 ha": {
+   "fields": 1937,
+   "modis": 19.41,
+   "s2": 21.48,
+   "s2_scaled": 15.49
+  }
+ }
+}

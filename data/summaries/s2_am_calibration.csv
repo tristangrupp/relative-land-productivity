@@ -1,0 +1,4 @@
+ay,peer_cls,n,med_s2,med_modis,sd_s2,sd_modis,slope,intercept,ols_slope,ols_intercept,pearson,spearman,resid_sd_modis_units,resid_in_cell_sd
+2020,15,1048,3.114,2.006,0.8255,0.6123,0.7417,-0.3032,0.6107,0.0974,0.8613,0.8482,0.3195,0.5433
+2024,15,1481,2.861,1.809,0.8876,0.6942,0.7822,-0.4286,0.6218,-0.01463,0.866,0.8544,0.3844,0.6537
+2024,19,1,,,,,,,,,,,,

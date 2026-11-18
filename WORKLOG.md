@@ -819,3 +819,12 @@ DECISIONS_V2.md, S2_MATO_GROSSO.md. Methods: methods/METHODS.md. Site contract: 
   fields.pmtiles (9,027,039,966 bytes, up from 7,060,673,632) uploaded in 2,161 s at 4.18 MB/s;
   all three tile objects answer range requests with 206. Live check in Chrome at zoom 9.5 over
   Campinas, São Paulo: every field draws, the view filled in within about 10 seconds.
+
+### 18 November 2026, 01:30: Amazonas on Sentinel-2
+
+- Amazonas extraction reached 771 of 771 tiles by 22:32 on 17 November. The swap chain (`s09_swap_state_to_s2.py --state Amazonas`, hidden through WMI, `launch_detached.py` and `run_chain.py`) started at 22:32 and ended at 01:16 with exit 0: decisions 22:40, field tiles 23:53, tile upload 00:29, field GeoParquet upload 01:16.
+- Change threshold scale k = 1.1637 (Sentinel-2 change SD 0.8696 over MODIS 0.7473, 986 fields of 25 ha and more). Share of large fields changing class: MODIS 20.69, Sentinel-2 unscaled 26.27, scaled 20.18 percent. Exact agreement of the change class over 102,164 comparable fields: 64.73 percent unscaled, 69.46 scaled. Details in `data/summaries/s2_am_noise.json`.
+- National decisions after the swap, before in brackets: restore 56,381 (52,253), assisted natural regeneration 2,499 (2,366), restore candidate 396,903 (384,872), low confidence 18,468,381 (18,562,422), no suggestion 138,936 (146,335). Low-confidence flag: 18,468,381 fields, 75.2 percent (was 18,705,778, 76.2 percent). Fields on Sentinel-2: 3,332,019.
+- Checked live: `stats.json` dated 2026-11-17 lists AC, AM, MT, PA and RO as Sentinel-2; `fields.pmtiles` is 9,027,681,355 bytes, Last-Modified 04:55 UTC on 18 November, so the zoom 9 to 11 no-drop rule held through the rebuild. Map not looked at in a browser.
+- `docs/about.html` updated with these numbers.
+- Next: Roraima (extraction 11 of 155 tiles at 22:32), then Amapá.

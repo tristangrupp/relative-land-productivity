@@ -42,5 +42,16 @@
    "s2_scaled": 10.24
   },
   "swapped": "2026-11-17T03:37:03"
+ },
+ "Amazonas": {
+  "source": "s2",
+  "change_scale": 1.1637,
+  "noise_fields": 986,
+  "changing_share_large": {
+   "modis": 20.69,
+   "s2": 26.27,
+   "s2_scaled": 20.18
+  },
+  "swapped": "2026-11-17T22:34:21"
  }
 }
