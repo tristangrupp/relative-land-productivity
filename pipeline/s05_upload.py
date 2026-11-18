@@ -76,7 +76,10 @@ def cp(local, key, dry_run=False, attempts=4):
     acl = "public-read"
     for attempt in range(1, attempts + 1):
         r = aws("s3", "cp", local, uri, "--acl", "public-read", "--only-show-errors", check=False)
-        if r.returncode != 0 and "AccessControlListNotSupported" in (r.stderr or ""):
+        # The bucket refuses ACLs. On a multipart upload it says AccessControlListNotSupported; on a
+        # single PUT (files under 8 MiB) it closes the connection instead, which failed Amapa four
+        # times on 18 November 2026. Retry both without the ACL.
+        if r.returncode != 0 and any(m in (r.stderr or "") for m in ("AccessControlListNotSupported", "Connection was closed")):
             r = aws("s3", "cp", local, uri, "--only-show-errors", check=False)
             acl = "bucket-policy"
         if r.returncode == 0:
