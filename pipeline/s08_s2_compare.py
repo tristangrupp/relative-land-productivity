@@ -94,6 +94,7 @@ NEIGHBORS_OF = {
 }
 CC_ORDER = ["large_decline", "decline", "stable", "gain", "large_gain", "crop_switched", "newly_cropped", "no_data"]
 NOISE_MIN_HA = 25.0
+NOISE_MIN_FIELDS = 100
 MODIS_COPY = os.path.join(C.ANALYSIS, "source=modis")
 
 
@@ -261,6 +262,10 @@ def modis_fields(state):
     return sc
 
 
+CAL_COLS = ["ay", "peer_cls", "n", "med_s2", "med_modis", "sd_s2", "sd_modis", "slope", "intercept", "ols_slope",
+            "ols_intercept", "pearson", "spearman", "resid_sd_modis_units", "resid_in_cell_sd"]
+
+
 def calibrate(state, s2=None, mo=None):
     t0 = time.time()
     s2 = s2 if s2 is not None else pd.read_parquet(p("year=2024", f"state={state}", "fields_scored.parquet"))
@@ -287,7 +292,9 @@ def calibrate(state, s2=None, mo=None):
                             "pearson": float(pearsonr(x, y).statistic), "spearman": float(spearmanr(x, y).statistic),
                             "resid_sd_modis_units": float(C.mad_sd(y - cal)), "resid_in_cell_sd": np.nan})
             rows.append(rec)
-    cal = pd.DataFrame(rows)
+    # Fixed columns: in Amapa (18 November 2026) no class had 100 large high-confidence fields, so
+    # no row was fitted, the frame had no slope column and the step failed with KeyError.
+    cal = pd.DataFrame(rows).reindex(columns=CAL_COLS)
     nat = json.load(open(os.path.join(C.ANALYSIS, "decisions", "national_summary.json")))
     cal["resid_in_cell_sd"] = [r.resid_sd_modis_units / nat["r5_2024"]["cell_sd"].get(str(int(r.peer_cls)), np.nan)
                                if np.isfinite(r.resid_sd_modis_units) else np.nan for r in cal.itertuples()]
@@ -580,14 +587,20 @@ def noise(state, s2=None, mo=None):
            & (s2["confidence"].astype(str).values == "high") & (mo["confidence"].values == "high")
            & (s2["area_ha"].values > NOISE_MIN_HA))
     sd_s2, sd_m = float(C.mad_sd(Ds[sel])), float(C.mad_sd(Dm[sel]))
-    k = sd_s2 / sd_m
+    k, k_from = sd_s2 / sd_m, "state"
+    if sel.sum() < NOISE_MIN_FIELDS:
+        # Amapa (18 November 2026) has no field over 25 ha that is high confidence on both sensors,
+        # so its own k is undefined. Use the median k of the states already on Sentinel-2.
+        with open(os.path.join(C.ANALYSIS, "sources.json")) as fh:
+            ks = [v["change_scale"] for v in json.load(fh).values() if v.get("source") == "s2" and np.isfinite(v.get("change_scale", np.nan))]
+        k, k_from = float(np.median(ks)), f"median of {len(ks)} states on Sentinel-2"
     ch = ["large_decline", "decline", "gain", "large_gain"]
 
     def share(cc, m):
         return round(100 * float(np.isin(cc[m], ch).mean()), 2)
     cc_k = CH.change_class(Ds / k)
     res = {"state": state, "min_ha": NOISE_MIN_HA, "fields": int(sel.sum()), "sd_s2": round(sd_s2, 4), "sd_modis": round(sd_m, 4),
-           "change_scale": round(k, 4), "comparable_fields": int(both.sum()),
+           "change_scale": round(k, 4), "change_scale_from": k_from, "comparable_fields": int(both.sum()),
            "changing_share_large": {"modis": share(cc_m, sel), "s2": share(cc_s, sel), "s2_scaled": share(cc_k, sel)},
            "changing_share_all": {"modis": share(cc_m, both), "s2": share(cc_s, both), "s2_scaled": share(cc_k, both)},
            "exact_agreement_all": {"s2": round(100 * float((cc_s[both] == cc_m[both]).mean()), 2),
@@ -636,6 +649,9 @@ def validate(state):
                 rows.append({"source": src, "crop": crop, "year": "change", "metric": metric, "n_muni": n, "spearman": sp, "pearson": pe})
     out = pd.DataFrame(rows)
     out.to_csv(p("validation", f"validation_{state}.csv"), index=False, float_format="%.4f")
+    if out.empty:
+        log(step="validate", rows=0, note="no municipality with yields and fields on both sensors", seconds=round(time.time() - t0))
+        return out
     wide = out.pivot_table(index=["crop", "year", "metric", "n_muni"], columns="source", values=["spearman", "pearson"]).reset_index()
     wide.columns = ["_".join([c for c in col if c]) for col in wide.columns]
     wide.to_csv(summ("s2_mt_validation.csv"), index=False, float_format="%.4f")

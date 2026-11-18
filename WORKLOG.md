@@ -835,3 +835,10 @@ DECISIONS_V2.md, S2_MATO_GROSSO.md. Methods: methods/METHODS.md. Site contract: 
 - k = 1.2656 (Sentinel-2 change SD 0.803 over MODIS 0.6345, 1,731 fields of 25 ha and more). Large fields changing class: MODIS 16.29, Sentinel-2 unscaled 23.28, scaled 14.85 percent. Exact agreement over 50,358 comparable fields: 65.13 percent unscaled, 72.9 scaled. Details in `data/summaries/s2_rr_noise.json`.
 - National decisions after the swap, before in brackets: restore 57,204 (56,381), assisted natural regeneration 2,522 (2,499), restore candidate 403,924 (396,903), low confidence 18,429,853 (18,468,381), no suggestion 137,095 (138,936). Low-confidence flag 75.1 percent. Fields on Sentinel-2: 3,398,203.
 - `docs/about.html` updated. Amapá extraction finished (69 of 69) and its swap started at 05:31.
+
+### 18 November 2026, 06:35: Amapá swap failed, fixed, relaunched
+
+- The Amapá swap (started 05:31) stopped at 05:32 in `s08_s2_compare.py` calibrate with `KeyError: 'slope'`. No peer class in Amapá has 100 fields over 25 ha with high MODIS confidence, so no row was fitted and the table had no slope column. The noise step then found 0 large fields on both sensors, so k was NaN, and validation found no municipality with yields on both sensors.
+- Fixes in `pipeline/s08_s2_compare.py`: the calibration table keeps fixed columns (`CAL_COLS`); a state with under 100 large fields takes the median k of the states already on Sentinel-2, recorded as `change_scale_from` (Amapá: 1.2415, median of 6 states); validation logs and returns when it has no rows. Recorded as DECISIONS.md B19.
+- Tested `all` on Amapá by hand through noise and validate: 546 comparable fields of 8,420; changing share over all comparable fields MODIS 39.38, Sentinel-2 scaled 25.09 percent; exact agreement 58.79 percent scaled.
+- Relaunched the swap hidden at 06:33 (pid 12080, log `swap_amapa2.log`).

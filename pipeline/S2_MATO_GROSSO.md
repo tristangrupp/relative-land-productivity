@@ -302,3 +302,10 @@ changing against 22.8 for MODIS; over all comparable fields 23.2 against 17.0, w
 small fields. Low confidence in the state falls from 684,199 fields on MODIS to 228,320 on s2.
 The MODIS tables are kept under `analysis\source=modis\`. Details in METHODS.md 7.6 and
 WORKLOG.md.
+
+## Addendum, 18 November 2026: states with too few large fields
+
+`s08_s2_compare.py noise` needs at least 100 fields (`NOISE_MIN_FIELDS`) over 25 ha with high
+confidence on both sensors. A state below that takes the median k of the states already on
+Sentinel-2, and `noise_<state>.json` names the source in `change_scale_from`. Amapá has 0 such
+fields and takes 1.2415 (DECISIONS.md B19).
