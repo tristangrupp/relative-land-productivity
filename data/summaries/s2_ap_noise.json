@@ -1,0 +1,50 @@
+{
+ "state": "Amapa",
+ "min_ha": 25.0,
+ "fields": 0,
+ "sd_s2": NaN,
+ "sd_modis": NaN,
+ "change_scale": 1.2415,
+ "change_scale_from": "median of 6 states on Sentinel-2",
+ "comparable_fields": 546,
+ "changing_share_large": {
+  "modis": NaN,
+  "s2": NaN,
+  "s2_scaled": NaN
+ },
+ "changing_share_all": {
+  "modis": 39.38,
+  "s2": 33.88,
+  "s2_scaled": 25.09
+ },
+ "exact_agreement_all": {
+  "s2": 56.96,
+  "s2_scaled": 58.79
+ },
+ "by_band": {
+  "under 6.25 ha": {
+   "fields": 332,
+   "modis": 37.05,
+   "s2": 33.73,
+   "s2_scaled": 25.0
+  },
+  "6.25 to 25 ha": {
+   "fields": 134,
+   "modis": 43.28,
+   "s2": 35.82,
+   "s2_scaled": 25.37
+  },
+  "25 to 100 ha": {
+   "fields": 79,
+   "modis": 43.04,
+   "s2": 30.38,
+   "s2_scaled": 25.32
+  },
+  "over 100 ha": {
+   "fields": 1,
+   "modis": 0.0,
+   "s2": 100.0,
+   "s2_scaled": 0.0
+  }
+ }
+}

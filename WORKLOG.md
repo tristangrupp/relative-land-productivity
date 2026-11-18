@@ -842,3 +842,11 @@ DECISIONS_V2.md, S2_MATO_GROSSO.md. Methods: methods/METHODS.md. Site contract: 
 - Fixes in `pipeline/s08_s2_compare.py`: the calibration table keeps fixed columns (`CAL_COLS`); a state with under 100 large fields takes the median k of the states already on Sentinel-2, recorded as `change_scale_from` (Amapá: 1.2415, median of 6 states); validation logs and returns when it has no rows. Recorded as DECISIONS.md B19.
 - Tested `all` on Amapá by hand through noise and validate: 546 comparable fields of 8,420; changing share over all comparable fields MODIS 39.38, Sentinel-2 scaled 25.09 percent; exact agreement 58.79 percent scaled.
 - Relaunched the swap hidden at 06:33 (pid 12080, log `swap_amapa2.log`).
+
+### 18 November 2026, 08:35: Amapá on Sentinel-2
+
+- The relaunched swap (06:33) ran decisions, field and summary tiles and the tile upload (08:16, all three objects answer 206). Live `stats.json` lists AC, AM, AP, MT, PA, RO and RR as Sentinel-2.
+- The field GeoParquet upload failed at 08:19 on Amapá's `fields_scored.parquet`: "Connection was closed before we received a valid response", four attempts. Network error, not data. Relaunched `s05_upload.py --fields` hidden at 08:33 (log `upload_fields_amapa.log`); files already on S3 at the same size are skipped.
+- Amapá: k = 1.2415 (pooled, DECISIONS.md B19). Exact agreement over 546 comparable fields 58.79 percent scaled. No-data change class 98 of 8,420 fields (1.2 percent), against 59.6 percent on MODIS.
+- National decisions after the swap, before in brackets: restore 57,228 (57,204), assisted natural regeneration 2,528 (2,522), restore candidate 404,703 (403,924), low confidence 18,430,125 (18,429,853), no suggestion 133,044 (137,095). Fields on Sentinel-2: 3,406,623.
+- `docs/about.html` updated. All tier 1 Amazon states are now on Sentinel-2. Next: Mato Grosso do Sul, Goiás, Tocantins, Maranhão as extraction finishes.

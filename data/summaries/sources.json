@@ -64,5 +64,16 @@
    "s2_scaled": 14.85
   },
   "swapped": "2026-11-18T02:32:46"
+ },
+ "Amapa": {
+  "source": "s2",
+  "change_scale": 1.2415,
+  "noise_fields": 0,
+  "changing_share_large": {
+   "modis": NaN,
+   "s2": NaN,
+   "s2_scaled": NaN
+  },
+  "swapped": "2026-11-18T06:32:41"
  }
 }

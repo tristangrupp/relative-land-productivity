@@ -1,24 +1,24 @@
 {
  "national": {
   "decision": {
-   "restore": 57204,
-   "assisted_regen": 2522,
-   "restore_candidate": 403924,
+   "restore": 57228,
+   "assisted_regen": 2528,
+   "restore_candidate": 404703,
    "converted_below": 116751,
    "converted_ok": 221833,
    "convert_cropland": 5966,
    "improve_pasture": 2799,
    "convert_pasture": 48510,
-   "switch_paid_off": 264663,
-   "switch_failed": 97871,
-   "improve_spare": 1095786,
-   "improve_yields": 244872,
-   "intensify": 1966128,
-   "keep": 1419178,
-   "abandon": 39527,
+   "switch_paid_off": 264687,
+   "switch_failed": 97895,
+   "improve_spare": 1095976,
+   "improve_yields": 245006,
+   "intensify": 1967535,
+   "keep": 1420348,
+   "abandon": 39548,
    "abandoned_outline": 748022,
-   "low_confidence": 18429853,
-   "none": 137095
+   "low_confidence": 18430125,
+   "none": 133044
   },
   "area_decision_fields": {
    "restore_area": 55435,
@@ -38,24 +38,24 @@
    "none": 9173
   },
   "decision_computed": {
-   "restore": 155216,
-   "assisted_regen": 11290,
-   "restore_candidate": 1615320,
-   "converted_below": 470748,
-   "converted_ok": 1165997,
+   "restore": 155243,
+   "assisted_regen": 11298,
+   "restore_candidate": 1616431,
+   "converted_below": 470247,
+   "converted_ok": 1165559,
    "convert_cropland": 8709,
    "improve_pasture": 4222,
    "convert_pasture": 304486,
-   "switch_paid_off": 1688617,
-   "switch_failed": 681599,
-   "improve_spare": 4160176,
-   "improve_yields": 1046796,
-   "intensify": 6997289,
-   "keep": 5969283,
-   "abandon": 137639,
+   "switch_paid_off": 1688654,
+   "switch_failed": 681631,
+   "improve_spare": 4160420,
+   "improve_yields": 1046967,
+   "intensify": 6999065,
+   "keep": 5970835,
+   "abandon": 137671,
    "abandoned_outline": 0,
    "low_confidence": 0,
-   "none": 137095
+   "none": 133044
   },
   "area_level_cells": {
    "6": 100790,
@@ -66,53 +66,53 @@
    "5": 1250621
   },
   "source_fields": {
-   "modis": 21156279,
-   "s2": 3398203
+   "modis": 21147859,
+   "s2": 3406623
   },
-  "recently_converted_unmeasured_to_none": 8901,
-  "restore_pasture_only_declining_computed": 101488,
-  "restore_pasture_only_declining_shown": 44455,
+  "recently_converted_unmeasured_to_none": 9840,
+  "restore_pasture_only_declining_computed": 101515,
+  "restore_pasture_only_declining_shown": 44479,
   "amazon": {
    "fields": 3285873,
    "decision_computed": {
-    "restore": 52697,
-    "assisted_regen": 1255,
-    "restore_candidate": 226183,
-    "converted_below": 110753,
-    "converted_ok": 228907,
+    "restore": 52724,
+    "assisted_regen": 1263,
+    "restore_candidate": 227294,
+    "converted_below": 110252,
+    "converted_ok": 228469,
     "convert_cropland": 8709,
     "improve_pasture": 4222,
     "convert_pasture": 0,
-    "switch_paid_off": 20636,
-    "switch_failed": 11227,
-    "improve_spare": 570719,
-    "improve_yields": 144074,
-    "intensify": 1016251,
-    "keep": 825361,
-    "abandon": 22914,
+    "switch_paid_off": 20673,
+    "switch_failed": 11259,
+    "improve_spare": 570963,
+    "improve_yields": 144245,
+    "intensify": 1018027,
+    "keep": 826913,
+    "abandon": 22946,
     "abandoned_outline": 0,
     "low_confidence": 0,
-    "none": 41965
+    "none": 37914
    },
    "decision": {
-    "restore": 32871,
-    "assisted_regen": 901,
-    "restore_candidate": 156153,
+    "restore": 32895,
+    "assisted_regen": 907,
+    "restore_candidate": 156932,
     "converted_below": 66642,
     "converted_ok": 125044,
     "convert_cropland": 5966,
     "improve_pasture": 2799,
     "convert_pasture": 0,
-    "switch_paid_off": 15740,
-    "switch_failed": 7686,
-    "improve_spare": 376654,
-    "improve_yields": 86182,
-    "intensify": 712871,
-    "keep": 483469,
-    "abandon": 11893,
+    "switch_paid_off": 15764,
+    "switch_failed": 7710,
+    "improve_spare": 376844,
+    "improve_yields": 86316,
+    "intensify": 714278,
+    "keep": 484639,
+    "abandon": 11914,
     "abandoned_outline": 0,
-    "low_confidence": 1159037,
-    "none": 41965
+    "low_confidence": 1159309,
+    "none": 37914
    }
   },
   "biome_fields": {
@@ -151,15 +151,15 @@
    "AM": 45476,
    "DF": 29305,
    "RR": 17739,
-   "AP": 1492
+   "AP": 1764
   },
   "below_not_gaining": {
-   "fields": 5775496,
+   "fields": 5776851,
    "native_1km_large_q": {
-    "0.25": 0.0098,
+    "0.25": 0.0099,
     "0.5": 0.1356,
-    "0.75": 0.3288,
-    "0.9": 0.527
+    "0.75": 0.3289,
+    "0.9": 0.5272
    },
    "all_fields_native_1km_large_q": {
     "0.25": 0.023,
@@ -222,7 +222,7 @@
    "none": 11438
   }
  },
- "v1_to_v2_same_key": 3826400,
+ "v1_to_v2_same_key": 3825169,
  "fields": 24554482,
- "seconds": 27
+ "seconds": 28
 }
