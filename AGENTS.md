@@ -212,13 +212,19 @@ busters if the site changed, commit and push.
 ## Sharing the machine with other projects
 
 Agreed on 18 November 2026 at the user's request with the water infrastructure session
-(grupp-8a); Fields of the Land has not answered yet.
+(grupp-8a) and the Fields of the Land session.
 - Keep total commit charge under about 100 GB, one heavy job at a time per project.
 - Relative land productivity has priority on RAM and the network link.
 - Before a state's tile upload (s05_upload.py, about 45 minutes), message grupp-8a that the
   upload starts; it suspends its downloaders (pause_downloads.ps1) and leaves training running.
   Message again when the upload ends. Without an end message it resumes after 90 minutes.
 - Every project launches jobs hidden, with no console windows.
+- Fields of the Land: message it when a state's decisions and tile build starts; it stops its
+  viewer (about 7 GB, growing) and starts nothing new. Only if commit still nears the ceiling,
+  send a second message and it drops to 2 inference workers, which loses up to 2 hours of
+  work. Also tell it when an upload runs: its Landsat reads share the same Wi-Fi link.
+- The GPU is in use by Fields of the Land inference (about 3 GB, low duty). Ask that session
+  before starting any heavy GPU job.
 
 ## Caveats every output should state where relevant
 
