@@ -219,6 +219,9 @@ Agreed on 18 November 2026 at the user's request with the water infrastructure s
   upload starts; it suspends its downloaders (pause_downloads.ps1) and leaves training running.
   Message again when the upload ends. Without an end message it resumes after 90 minutes.
 - Every project launches jobs hidden, with no console windows.
+- Plan the field tile build at about 20 GB of WSL memory (vmmemWSL measured 18.8 GB during
+  the Mato Grosso do Sul build on 18 November 2026), not 10. Commit reached the ceiling at
+  about 23:20 that night and Fields of the Land lost its 1990 run even with its viewer stopped.
 - Fields of the Land: message it when a state's decisions and tile build starts; it stops its
   viewer (about 7 GB, growing) and starts nothing new. Only if commit still nears the ceiling,
   send a second message and it drops to 2 inference workers, which loses up to 2 hours of
