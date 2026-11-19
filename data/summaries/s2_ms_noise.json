@@ -1,0 +1,50 @@
+{
+ "state": "Mato_Grosso_Do_Sul",
+ "min_ha": 25.0,
+ "fields": 162021,
+ "sd_s2": 0.8525,
+ "sd_modis": 0.7358,
+ "change_scale": 1.1586,
+ "change_scale_from": "state",
+ "comparable_fields": 496691,
+ "changing_share_large": {
+  "modis": 23.21,
+  "s2": 28.06,
+  "s2_scaled": 22.64
+ },
+ "changing_share_all": {
+  "modis": 21.69,
+  "s2": 29.93,
+  "s2_scaled": 24.22
+ },
+ "exact_agreement_all": {
+  "s2": 71.98,
+  "s2_scaled": 75.57
+ },
+ "by_band": {
+  "under 6.25 ha": {
+   "fields": 207591,
+   "modis": 19.82,
+   "s2": 30.89,
+   "s2_scaled": 24.99
+  },
+  "6.25 to 25 ha": {
+   "fields": 127024,
+   "modis": 22.79,
+   "s2": 30.73,
+   "s2_scaled": 24.97
+  },
+  "25 to 100 ha": {
+   "fields": 127691,
+   "modis": 24.13,
+   "s2": 29.24,
+   "s2_scaled": 23.74
+  },
+  "over 100 ha": {
+   "fields": 34385,
+   "modis": 19.82,
+   "s2": 23.7,
+   "s2_scaled": 18.57
+  }
+ }
+}

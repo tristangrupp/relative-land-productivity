@@ -75,5 +75,16 @@
    "s2_scaled": NaN
   },
   "swapped": "2026-11-18T06:32:41"
+ },
+ "Mato_Grosso_Do_Sul": {
+  "source": "s2",
+  "change_scale": 1.1586,
+  "noise_fields": 162021,
+  "changing_share_large": {
+   "modis": 23.21,
+   "s2": 28.06,
+   "s2_scaled": 22.64
+  },
+  "swapped": "2026-11-18T22:33:51"
  }
 }
