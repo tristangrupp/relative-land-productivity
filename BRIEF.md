@@ -359,3 +359,4 @@ before it ends, in addition to the Decisions entry here.
   stories. Site only; no tile, data or method change (DECISIONS.md D19, WORKLOG.md 17 Nov).
 - 2026-11-17 Public prose: the user asked for shorter, clearer wording on GitHub Pages
   and the repository front page. Keep existing titles and headings (DECISIONS.md D20).
+- 2026-11-20 Possible mis-detection: recently converted fields whose Trazo4 outline is huge for its class and state (99th percentile, at least 50 ha) and still a quarter or more native vegetation inside get `converted_misdetect`, "Possible mis-detection" (METHODS.md 7.8, DECISIONS.md C22). New step `s07_decisions.py shape`.

@@ -4,6 +4,8 @@ pipeline/DECISIONS_V2.md, the 14 November 2026 entries of WORKLOG.md).
 
   python s07_decisions.py biome      IBGE biome per 2024 field -> analysis\\decisions\\biome\\<State>.parquet
   python s07_decisions.py native     native vegetation share around each 2024 field -> analysis\\decisions\\native\\<State>.parquet
+  python s07_decisions.py shape      outline shape of each 2024 field and the MapBiomas mix inside newly cropped
+                                     outlines -> analysis\\decisions\\shape\\<State>.parquet
   python s07_decisions.py national   cell_vs_nation and the plain change per H3 cell and class, resolutions 5 and 6
   python s07_decisions.py dist       distributions of the area term, to set the thresholds
   python s07_decisions.py area       area call per resolution 6 cell -> analysis\\decisions\\area_cells.parquet,
@@ -70,6 +72,14 @@ Field call, in order (first match wins):
                       2024 integral under the 20th percentile of the class in the state)
   converted_below     newly cropped (not crop or pasture in 2020), 2024 below ecoregion peers (r_eco_2024 < -0.5)
   converted_ok        newly cropped, 2024 at or above ecoregion peers
+  converted_misdetect (20 November 2026) a converted_below or converted_ok field at or above the 99th
+                      percentile of area of the 2024 fields of its MapBiomas class in its state and
+                      at least 50 ha, with
+                      25 percent or more of the pixels inside its outline still native vegetation in
+                      2024: possibly a Trazo4 outline that merged native vegetation and fields. The
+                      converted call stays in decision_computed. Applied after low_confidence and
+                      wins over it. Needs the shape step
+                      (analysis\\decisions\\shape\\<State>.parquet).
   restore             the cell's area call is restore_area; or (14 November 2026) a same-crop field
                       that declined, in an area_declining cell that is pasture_only
   convert_cropland    inside the IBGE Amazon biome, a pasture field at or above its cell peers
@@ -144,11 +154,19 @@ LARGE_PATCH_HA = 50.0
 REGROWTH_T = 0.10  # set from the distribution, METHODS.md 7.3
 NATIVE_BANDS = {"native_share_1km": 1000.0, "native_share_250m": 250.0}
 NATIVE_T = 0.30   # set from the distribution, METHODS.md 7.3
+# Possible mis-detection (20 November 2026, METHODS.md 7.8): a recently converted field at or above
+# this quantile of the area of the 2024 fields of its MapBiomas class in its state and at least
+# MISDETECT_MIN_HA, with at least this share of the pixels inside its outline still native
+# vegetation in 2024. Below about 50 ha, mixed 30 m pixels along an irregular outline can alone
+# put a quarter of the pixels in a neighboring class.
+MISDETECT_AREA_Q = 0.99
+MISDETECT_MIN_HA = 50.0
+MISDETECT_NATIVE_T = 0.25
 SOURCES_JSON = os.path.join(C.ANALYSIS, "sources.json")
 S2_ROOT = os.path.join(C.ANALYSIS, "source=s2")
 
 AREA = ["restore_area", "good_land_underused", "system_misfit", "area_declining", "area_fine", "none"]
-DECISIONS = ["restore", "assisted_regen", "restore_candidate", "converted_below", "converted_ok", "convert_cropland", "improve_pasture",
+DECISIONS = ["restore", "assisted_regen", "restore_candidate", "converted_below", "converted_ok", "converted_misdetect", "convert_cropland", "improve_pasture",
              "convert_pasture", "switch_paid_off", "switch_failed", "improve_spare", "improve_yields", "intensify", "keep",
              "abandon", "abandoned_outline", "low_confidence", "none"]
 SOURCES = ["modis", "s2"]
@@ -378,6 +396,100 @@ def native(states, workers=2):
     with open(os.path.join(OUT, "native", "quantiles.json"), "w") as fh:
         json.dump(q, fh, indent=1)
     log(step="native", fields=int(len(d)), quantiles=q, seconds=round(time.time() - t0))
+
+
+def shape_state(state):
+    """Outline shape of every 2024 field, and the MapBiomas mix inside the outline of each newly cropped
+    field (20 November 2026, the possible mis-detection check of METHODS.md 7.8).
+
+    Shape, from the outline in local meters (longitude scaled by the cosine of the centroid latitude):
+      perim_km    outline length, holes included
+      pp          Polsby-Popper compactness, 4 pi area / perimeter squared (1 for a disk)
+      solidity    area / convex hull area
+      n_vert      vertex count
+      n_holes     interior rings
+    Inside the outline (pixel centers in the outline, MapBiomas Collection 10, 30 m), newly cropped
+    fields only, NaN elsewhere:
+      native_in_2024, native_in_2020   share of observed pixels in NATIVE_CLASSES
+      class_share_2024                 share of observed pixels in the field's crop_2024 class
+    Geometry is read one row group (100,000 fields) at a time to keep memory under about 3 GB."""
+    import rasterio
+    import rasterio.features
+    import shapely
+    from rasterio.windows import Window, from_bounds
+    t0 = time.time()
+    p = os.path.join(C.ANALYSIS, "year=2024", f"state={state}", "fields_scored.parquet")
+    pf = pq.ParquetFile(p)
+    nat_lut = np.zeros(256, dtype=bool)
+    nat_lut[NATIVE_CLASSES] = True
+    srcs = {y: rasterio.open(MAPBIOMAS[y]) for y in (2020, 2024)}
+    T = srcs[2024].transform
+    full = Window(0, 0, srcs[2024].width, srcs[2024].height)
+    parts = []
+    for rg in range(pf.metadata.num_row_groups):
+        t = pf.read_row_group(rg, columns=["fid", "crop_2024", "change_class", "geometry"])
+        g = shapely.from_wkb(t.column("geometry").cast(pa.large_binary()).to_numpy(zero_copy_only=False))
+        df = pd.DataFrame({"fid": t.column("fid").to_numpy()})
+        crop = t.column("crop_2024").to_numpy(zero_copy_only=False).astype(np.int64)
+        nc = np.where(t.column("change_class").to_pandas().astype(str).values == "newly_cropped")[0]
+        del t
+        lat = shapely.get_y(shapely.centroid(g))
+        xy, ix = shapely.get_coordinates(g, return_index=True)
+        xy[:, 0] *= 111320.0 * np.cos(np.radians(lat[ix]))
+        xy[:, 1] *= 111320.0
+        gm = shapely.set_coordinates(g.copy(), xy)
+        del xy, ix
+        area = shapely.area(gm)
+        per = shapely.length(gm)
+        with np.errstate(invalid="ignore", divide="ignore"):
+            df["perim_km"] = (per / 1000).astype(np.float32)
+            df["pp"] = (4 * np.pi * area / per ** 2).astype(np.float32)
+            df["solidity"] = (area / shapely.area(shapely.convex_hull(gm))).astype(np.float32)
+        del gm
+        df["n_vert"] = shapely.get_num_coordinates(g).astype(np.int32)
+        pg, pix = shapely.get_parts(g, return_index=True)
+        df["n_holes"] = np.bincount(pix, weights=shapely.get_num_interior_rings(pg), minlength=len(g)).astype(np.int32)
+        del pg, pix
+        res = {k: np.full(len(g), np.nan, dtype=np.float32) for k in ("native_in_2024", "native_in_2020", "class_share_2024")}
+        for j in nc[np.lexsort((shapely.get_x(shapely.centroid(g[nc])), np.round(lat[nc], 1)))]:
+            w = from_bounds(*shapely.bounds(g[j]), transform=T).round_offsets(op="floor")
+            w = Window(int(w.col_off), int(w.row_off), int(np.ceil(w.width)) + 1, int(np.ceil(w.height)) + 1).intersection(full)
+            m = rasterio.features.geometry_mask([g[j]], (int(w.height), int(w.width)), rasterio.windows.transform(w, T), invert=True)
+            if not m.any():
+                continue
+            a24 = srcs[2024].read(1, window=w)[m]
+            a20 = srcs[2020].read(1, window=w)[m]
+            ob = a24 > 0
+            if not ob.any():
+                continue
+            res["native_in_2024"][j] = nat_lut[a24[ob]].mean()
+            res["native_in_2020"][j] = nat_lut[a20[ob]].mean()
+            res["class_share_2024"][j] = (a24[ob] == crop[j]).mean()
+        for k, v in res.items():
+            df[k] = np.round(v, 4)
+        parts.append(df)
+        del g
+    out = pd.concat(parts, ignore_index=True)
+    os.makedirs(os.path.join(OUT, "shape"), exist_ok=True)
+    out.to_parquet(os.path.join(OUT, "shape", f"{state}.parquet"), index=False)
+    return {"state": state, "fields": int(len(out)), "newly_cropped_measured": int(np.isfinite(out["native_in_2024"]).sum()),
+            "seconds": round(time.time() - t0)}
+
+
+def shape(states):
+    os.environ.setdefault("GDAL_CACHEMAX", "256")
+    for s in states:
+        log(step="shape", **shape_state(s))
+
+
+SHAPE_COLS = ["perim_km", "pp", "solidity", "n_vert", "n_holes", "native_in_2024", "native_in_2020", "class_share_2024"]
+
+
+def load_shape(state, fid):
+    p = os.path.join(OUT, "shape", f"{state}.parquet")
+    s = read(p, ["fid"] + SHAPE_COLS)
+    assert np.array_equal(s["fid"].values, fid), "shape fid order differs"
+    return s
 
 
 NATIVE_COLS = ["native_share_1km", "native_share_250m", "native_share_1km_large", "largest_patch_ha_1km",
@@ -687,8 +799,10 @@ def eco_lookup():
     return cls.set_index(["eco_id", "peer_cls"])["scale_c_change"]
 
 
-def field_call(cc, dec_v1, r24, r_eco24, crop24, area, pasture_only, biome, native_large, regrow_in, conf_low):
-    """Returns (decision, decision_computed): the second is the call before the low-confidence rule."""
+def field_call(cc, dec_v1, r24, r_eco24, crop24, area, pasture_only, biome, native_large, regrow_in, conf_low, misdetect=None):
+    """Returns (decision, decision_computed): the second is the call before the low-confidence and
+    possible mis-detection rules. misdetect: boolean per field, the size and native vegetation test of
+    misdetect_mask; a recently converted field that passes it becomes converted_misdetect."""
     n = len(cc)
     out = np.full(n, "none", dtype=object)
     level_below = r24 < -FIELD_LEVEL
@@ -733,7 +847,20 @@ def field_call(cc, dec_v1, r24, r_eco24, crop24, area, pasture_only, biome, nati
     out[dec_v1 == "abandon"] = "abandon"
     computed = out.copy()
     out[conf_low & (out != "none")] = "low_confidence"
+    # possible mis-detection wins over low confidence: the outline itself is in doubt
+    if misdetect is not None:
+        out[misdetect & np.isin(computed, ["converted_below", "converted_ok"])] = "converted_misdetect"
     return out, computed
+
+
+def misdetect_mask(area_ha, crop24, native_in_2024):
+    """Possible mis-detection test (METHODS.md 7.8): area at or above the MISDETECT_AREA_Q quantile of
+    the 2024 fields of the same MapBiomas class in the state and at least MISDETECT_MIN_HA, and
+    native_in_2024 >= MISDETECT_NATIVE_T. Returns the mask and the per-field area threshold."""
+    q = pd.Series(area_ha).groupby(crop24).transform(lambda x: x.quantile(MISDETECT_AREA_Q)).values
+    q = np.maximum(q, MISDETECT_MIN_HA)
+    nat = np.nan_to_num(native_in_2024, nan=0.0)
+    return (area_ha >= q) & (nat >= MISDETECT_NATIVE_T), q.astype(np.float32)
 
 
 def fields_state(state, a, a5, eco_cls):
@@ -765,10 +892,12 @@ def fields_state(state, a, a5, eco_cls):
     peer24 = e["peer_cls_2024"].values.astype(np.int64)
     bio = load_biome(state, fid)
     nat = load_native(state, fid)
-    n1 = nat["native_share_1km"].values.astype(np.float32)
+    shp = load_shape(state, fid)
+    area_ha = tab.column("area_ha").to_numpy(zero_copy_only=False).astype(np.float64)
+    mis, mis_area_t = misdetect_mask(area_ha, crop24, shp["native_in_2024"].values)
     dec, dec_c = field_call(cc, dec_v1, r24, r_eco24, crop24, area, pasture_only, bio,
                             nat["native_share_1km_large"].values.astype(np.float32),
-                            nat["regrowth_share_in"].values.astype(np.float32), conf_low)
+                            nat["regrowth_share_in"].values.astype(np.float32), conf_low, misdetect=mis)
     sc = eco_cls.reindex(pd.MultiIndex.from_arrays([e["eco_id"].values.astype(np.int64), peer24])).values
     tr = trend(sc)
     drop = ("decision", "decision_v1", "decision_computed", "area_decision", "area_level", "eco_id", "eco_trend",
@@ -793,7 +922,8 @@ def fields_state(state, a, a5, eco_cls):
     meta = dict(tab.schema.metadata or {})
     meta[b"s07_decisions"] = json.dumps({"state": state, "source": src, "level_t": LEVEL_T, "change_t": CHANGE_T, "eco_t": ECO_T,
                                          "area_resolution": 6, "pasture_only_crop_share": PASTURE_ONLY_CROP_SHARE,
-                                         "native_t": NATIVE_T, "written": datetime.now().isoformat(timespec="seconds")}).encode()
+                                         "native_t": NATIVE_T,
+                                         "misdetect_area_q": MISDETECT_AREA_Q, "misdetect_min_ha": MISDETECT_MIN_HA, "misdetect_native_t": MISDETECT_NATIVE_T, "written": datetime.now().isoformat(timespec="seconds")}).encode()
     out = out.replace_schema_metadata(meta)
     pq.write_table(out, p + ".part", compression="zstd", row_group_size=100_000)
     del tab, out, cols
@@ -851,7 +981,8 @@ def fields_state(state, a, a5, eco_cls):
                          "decision": dec, "decision_computed": dec_c, "decision_v1": dec_v1, "area_decision": area,
                          "area_level": area_level, "pasture_only": pasture_only, "change_class": cc, "crop_2024": crop24,
                          "biome": bio, "source": src, "confidence_low": conf_low, "r_eco_nan": ~np.isfinite(r_eco24),
-                         "r_adj_2024": r24, **{k: nat[k].values for k in NATIVE_COLS}})
+                         "r_adj_2024": r24, "area_ha": area_ha.astype(np.float32), "misdetect_area_t": mis_area_t,
+                         **{k: nat[k].values for k in NATIVE_COLS}, **{k: shp[k].values for k in SHAPE_COLS}})
     os.makedirs(os.path.join(OUT, "fields"), exist_ok=True)
     slim.to_parquet(os.path.join(OUT, "fields", f"{state}.parquet"), index=False)
     return {"state": state, "source": src, "rows": int(len(fid)), "low_confidence": int((dec == "low_confidence").sum()),
@@ -888,6 +1019,11 @@ def report(states):
     nat["area_level_cells"] = {str(int(k)): int(v) for k, v in cells["area_level"].value_counts().items()}
     nat["area_level_fields"] = {str(int(k)): int(v) for k, v in df["area_level"].value_counts().items()}
     nat["source_fields"] = {str(k): int(v) for k, v in df["source"].value_counts().items()}
+    conv = df["decision_computed"].isin(["converted_below", "converted_ok"])
+    nat["converted_misdetect"] = {"converted_computed": int(conv.sum()),
+                                  "misdetect": int((df["decision"] == "converted_misdetect").sum()),
+                                  "misdetect_low_confidence": int(((df["decision"] == "converted_misdetect") & df["confidence_low"]).sum()),
+                                  "by_state": df[df["decision"] == "converted_misdetect"]["uf"].value_counts().to_dict()}
     nat["recently_converted_unmeasured_to_none"] = int(((df["change_class"] == "newly_cropped") & df["r_eco_nan"]).sum())
     po = (df["decision_computed"] == "restore") & (df["area_decision"] == "area_declining")
     nat["restore_pasture_only_declining_computed"] = int(po.sum())
@@ -954,7 +1090,7 @@ def rnd(v, d=2):
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("step", choices=["biome", "native", "national", "dist", "area", "fields", "report", "lookup", "all"])
+    ap.add_argument("step", choices=["biome", "native", "shape", "national", "dist", "area", "fields", "report", "lookup", "all"])
     ap.add_argument("--states", nargs="*", default=None)
     args = ap.parse_args()
     states = args.states or C.state_dirs(2024)
@@ -963,6 +1099,8 @@ def main():
         biome(states)
     if args.step == "native" or (args.step == "all" and not have("native")):
         native(states)
+    if args.step == "shape" or (args.step == "all" and not have("shape")):
+        shape(states)
     if args.step in ("national", "all"):
         national(states)
     if args.step == "dist":

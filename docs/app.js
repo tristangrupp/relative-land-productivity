@@ -15,7 +15,7 @@
 import {
 	CONFIG, ATTR, SUMMARY_ATTR, VIEWS, CROPS, VIGOR, VIGOR_CHANGE, DECISIONS, AREA_DECISIONS,
 	CHANGE_CLASSES, STATES, NODATA_COLOR, CONFIDENCE, ECO_TREND, SOURCES, CLASS_GROUPS, WALKTHROUGH
-} from './config.js?v=20';
+} from './config.js?v=21';
 
 const $ = (id) => document.getElementById(id);
 const NA = 'n/a';
@@ -817,7 +817,7 @@ function renderPick() {
 	rows.push(['Recommended treatment', decisionName(decKey)]);
 	const dOpt = decisionByKey[decKey];
 	if (dOpt && dOpt.options && dOpt.options.length) rows.push(['Other options', dOpt.options.join('; ')]);
-	if (decKey === 'low_confidence' && p[ATTR.decision_computed] != null) {
+	if (dOpt && dOpt.showComputed && p[ATTR.decision_computed] != null) {
 		rows.push(['Computed, not trusted', decisionName(p[ATTR.decision_computed])]);
 	}
 	rows.push([areaLabel(p[ATTR.area_level]), areaName(p[ATTR.area_decision])]);

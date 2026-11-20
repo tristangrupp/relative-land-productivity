@@ -308,7 +308,11 @@ export const VIGOR_CHANGE = [
     A class with `opacity` draws at that value: crop-switched, recently converted and abandoned
     fields draw at half strength. Restore, assisted natural regeneration, restore candidate and
     recently converted land are one green family; adjacent pairs separate by at least deltaE 12
-    under simulated protan, deutan and tritan vision (14 November 2026). */
+    under simulated protan, deutan and tritan vision (14 November 2026). Possible mis-detection
+    (20 November 2026) is a recently converted field whose outline may be a segmentation failure:
+    a dark green-gray at full opacity, deltaE 13.8 or more from every other class under the same
+    simulations. A class with `showComputed` shows decision_computed in the field card as
+    "Computed, not trusted". */
 export const DECISIONS = [
 	{ key: 'restore', label: 'Restore', color: '#008300',
 		note: 'The field lies in an area where crops and pasture are both less green than the same uses across Brazil and both fell further behind since 2020, or it declined in a pasture area that is falling behind Brazil. Restoring the land is the recommended treatment.',
@@ -325,6 +329,9 @@ export const DECISIONS = [
 	{ key: 'converted_ok', label: 'Recently converted, at or above peers', color: '#d7f28c', opacity: 0.5,
 		note: 'Native vegetation in 2020, crop or pasture in 2024, and at least as green as the same use elsewhere in the ecoregion. The new use produces; the open question is the clearing itself.',
 		options: ['Keep the new use and stop further clearing', 'Restore if the clearing broke the law or a commitment'] },
+	{ key: 'converted_misdetect', label: 'Possible mis-detection', color: '#364036', showComputed: true,
+		note: 'Counted as recently converted, but the outline is 50 ha or more and among the largest 1 percent of fields of its land use in the state, and a quarter or more of the land inside it is still native vegetation in 2024 (MapBiomas). The field model may have drawn one outline around native vegetation, roads and several fields. The computed call is in the field card.',
+		options: ['Check the outline against satellite imagery before acting', 'Treat as recently converted land if the clearing is confirmed'] },
 	{ key: 'convert_cropland', label: 'Productive pasture on good cropland: conversion to crops possible', color: '#164e63',
 		note: 'Inside the Amazon biome, a pasture at least as green as nearby pasture, in an area where crops do as well as across Brazil but pasture lags. Conversion here means crops on this already cleared pasture, not new clearing.',
 		options: ['Convert this pasture to crops', 'Intensify the pasture (rotation, reform)', 'Keep as it is'] },
@@ -358,7 +365,7 @@ export const DECISIONS = [
 	{ key: 'abandoned_outline', label: 'Abandoned since 2020', color: '#898781', opacity: 0.5,
 		note: 'Cropped or grazed in 2020 and not in 2024; drawn on the 2020 outline. Check whether native vegetation is coming back; if it is not, restore it.',
 		options: ['Assisted natural regeneration if native vegetation is coming back', 'Active restoration if it is not'] },
-	{ key: 'low_confidence', label: 'Low confidence: too small to judge yet', color: '#cfd8e3',
+	{ key: 'low_confidence', label: 'Low confidence: too small to judge yet', color: '#cfd8e3', showComputed: true,
 		note: 'The field is smaller than the satellite pixel (under 6.25 ha for MODIS, under 0.45 ha for Sentinel-2) or had too few clear images, so its greenness mixes with its neighbors. The computed call is shown in the field card but not trusted. Sentinel-2 at 30 m replaces MODIS state by state.',
 		options: ['Wait for the Sentinel-2 update of the state'] },
 	{ key: 'none', label: 'No data', color: GRAY_NEUTRAL,

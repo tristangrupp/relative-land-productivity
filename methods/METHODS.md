@@ -298,6 +298,7 @@ in version 1. The first matching row wins.
 | 2 | below cell peers in both years, declining, and the 2024 integral under the 20th percentile of the class in the state | abandon or change use (`abandon`) | close to bare soil for two seasons; the land may suit another use or restoration |
 | 3 | newly cropped, 2024 below ecoregion peers (`r_eco_2024` under -0.5) | recently converted, below peers (`converted_below`) | cleared since 2020 and already weaker than the same use elsewhere in the ecoregion: the strongest restore case |
 | 4 | newly cropped, 2024 at or above ecoregion peers, or no 2024 ecoregion value | recently converted, at or above peers (`converted_ok`) | cleared since 2020 and producing; the open question is the clearing itself |
+| 4a | (20 November 2026, applied last) row 3 or 4, outline 50 ha or more and at or above the 99th percentile of area of its MapBiomas class in the state, and 25 percent or more of the pixels inside it native vegetation in 2024 | possible mis-detection (`converted_misdetect`) | the outline may join native vegetation and several fields; check it against imagery. Section 7.8 |
 | 5 | the cell's area call is restore the area | restore (`restore`) | restore across the area, this field included |
 | 6 | pasture, not above cell peers, in a good land underused cell | improve or convert pasture (`convert_pasture`) | recover the pasture or move the land into crops |
 | 7 | crop group switched, 2024 at or above cell peers of the new crop | switch paid off (`switch_paid_off`) | keep the new crop |
@@ -538,6 +539,65 @@ and write one categorical column `car_context` (usable deficit, surplus, neither
 parcel) that config.js uses to pick the option list. `car_cod` must never be read into a
 published table. A separate "policy context" map view, if the user asks for it later, would
 draw `car_context` on its own toggle and is out of scope here.
+
+### 7.8 Possible mis-detection of recently converted land (20 November 2026)
+
+The user asked for a check on recently converted fields that may be Trazo4 segmentation
+failures rather than conversions, after looking at Mato Grosso field 612719. That outline
+covers 10,909 ha, the largest 2024 field in the state. Its Polsby-Popper compactness is 0.043,
+below the 1st percentile of Mato Grosso pasture (0.056). It has 88 holes against a 99th
+percentile of 11, and 10,209 vertices. In MapBiomas 2024, 33 percent of the pixels inside it
+are still native vegetation, against 94 percent in 2020. Pasture, its 2024 class, covers 67
+percent. The outline looks like one polygon drawn around forest, roads and several pastures.
+
+New field call row, applied after the low-confidence rule and winning over it:
+
+| field | suggestion | note |
+|---|---|---|
+| computed call `converted_below` or `converted_ok`; area at or above the 99th percentile of the 2024 fields of the same MapBiomas class in the state, and at least 50 ha; 25 percent or more of the pixels inside the outline native vegetation (classes 3, 4, 5, 6, 11, 12, 49, 50) in MapBiomas 2024 | possible mis-detection (`converted_misdetect`) | check the outline against imagery before acting; the converted call stays in `decision_computed` |
+
+How the thresholds were set (`s07_decisions.py shape`, then the distributions over all 27
+units):
+
+1. Size. The 99th percentile of area per class and state, so that "huge" is relative to the
+   fields around it. For pasture it ranges from 10.5 ha (Rio Grande do Sul) to 276.5 ha (Mato
+   Grosso do Sul); Mato Grosso is 158.9 ha. Of 1,635,769 fields with a computed converted call,
+   16,490 reach their class and state 99th percentile.
+2. Floor of 50 ha. Mixed 30 m pixels along the outline put some edge pixels in the neighboring
+   class. For an outline as irregular as the flagged ones (Polsby-Popper near 0.1, so about 2.8
+   times the perimeter of a square of the same area), edge pixels alone can make a quarter of
+   the pixels native up to about 45 ha. Without the floor the rule flags 3,855 fields, many of
+   10 to 40 ha in the southern states.
+3. Native vegetation inside the outline. Among large fields that kept the same crop (area at
+   or above the class and state 99th percentile, 200,109 fields), native vegetation inside the
+   outline has a median of 0.7 percent and a 95th percentile of 21.8 percent (pasture 23.6
+   percent). 25 percent is just above that 95th percentile. Among the 16,490 large converted
+   fields the median is 4.3 percent and the 75th percentile 23.4 percent.
+
+The shape terms are not criteria, because a large irregular outline that MapBiomas shows as
+fully cleared is a real conversion even when it joins several pastures. They describe the
+flagged fields: median Polsby-Popper 0.087 against 0.148 for large converted fields not
+flagged; 67 percent are at or below the 5th percentile of compactness of their class and
+state; 53 percent have at least the 99th percentile count of holes. Their own 2024 class
+covers a median 53 percent of the pixels inside, against 92 percent in large converted
+fields not flagged.
+
+Result (shape run of 20 November 2026): 2,512 fields, 0.154 percent of the computed converted
+calls, 415 of which would otherwise show as low confidence. 1,608 were converted at or above
+peers and 904 below. Their 2020 class was mostly savanna formation (4, 1,410 fields) and
+grassland (12, 620). Their 2024 class was mostly pasture (15, 1,581) and mosaic of uses (21,
+840). Per state counts are in WORKLOG.md (20 November 2026).
+
+Inputs. `analysis\decisions\shape\<State>.parquet`: per 2024 field, `perim_km`, `pp`
+(Polsby-Popper, 4 pi area over perimeter squared), `solidity` (area over convex hull area),
+`n_vert`, `n_holes`, and for newly cropped fields `native_in_2024`, `native_in_2020` and
+`class_share_2024` (shares of the MapBiomas pixels whose centers fall inside the outline).
+Shape is measured in local meters, longitude scaled by the cosine of the centroid latitude.
+
+Limits. Within-field NDVI heterogeneity would be a third signal, but the Sentinel-2 extraction
+keeps only the field mean per month, so it is not used. MapBiomas confuses native grassland
+(class 12) with pasture in the south, so some flags in Rio Grande do Sul may be map confusion
+inside a correct outline. The check does not look at fields that were not recently converted.
 
 ### 7.4 Superseded 2026-11-13: version 1 decision table
 

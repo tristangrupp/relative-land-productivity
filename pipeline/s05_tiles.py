@@ -375,7 +375,7 @@ def summarize_cells(df, key):
         "share_convert_pasture": np.isin(d, ["convert_pasture", "convert_cropland", "improve_pasture"]),
         "share_low_confidence": d == "low_confidence",
         "share_s2": df["source"].astype(str).values == "s2",
-        "share_converted": np.isin(d, ["converted_below", "converted_ok"]),
+        "share_converted": np.isin(d, ["converted_below", "converted_ok", "converted_misdetect"]),
         "share_switch_failed": d == "switch_failed"}).astype(np.float32)
     out = pd.DataFrame({
         "n_fields": g.size(),
