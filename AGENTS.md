@@ -226,6 +226,12 @@ Agreed on 18 November 2026 at the user's request with the water infrastructure s
   viewer (about 7 GB, growing) and starts nothing new. Only if commit still nears the ceiling,
   send a second message and it drops to 2 inference workers, which loses up to 2 hours of
   work. Also tell it when an upload runs: its Landsat reads share the same Wi-Fi link.
+- Since 20 November 2026: during the Goiás build commit stayed near 80 GB, yet the Fields of
+  the Land harness still killed its 1990 run for memory pressure. Its three workers peak near
+  10 GB, so dropping to 2 workers frees little. Ask it to pause the run for the whole tile build
+  (about 1 hour); failed tiles re-queue, so a pause costs it only wall-clock time. Watch free
+  physical memory as well as commit. grupp-8a stops (not suspends) its fetchers and prediction
+  jobs for the build, since a suspended process still holds its commit.
 - The GPU is in use by Fields of the Land inference (about 3 GB, low duty). Ask that session
   before starting any heavy GPU job.
 
