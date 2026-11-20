@@ -67,17 +67,44 @@ def wsl_out(out):
     return f"{OUT_WSL}/{os.path.basename(out)}"
 
 
+DROP_CACHES = ["wsl", "-d", "Ubuntu-22.04", "-u", "root", "--", "sh", "-c", "sync; echo 1 > /proc/sys/vm/drop_caches"]
+DROP_EVERY_S = 120
+
+
+def drop_wsl_cache():
+    """Free the WSL page cache so vmmemWSL returns physical memory to Windows.
+
+    On 20 November 2026 the Tocantins build held vmmemWSL at 29.6 GB, 25 GB of it page cache
+    from the tippecanoe temp files, and Windows free memory fell to 1.2 GB with commit at only
+    87 GB. Low free memory is what killed the Fields of the Land run during the Goiás build.
+    Dropping the cache does not touch running processes or files."""
+    subprocess.run(DROP_CACHES, capture_output=True, creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0))
+
+
+def run_dropping_cache(cmd):
+    """subprocess.run(cmd) that drops the WSL page cache every DROP_EVERY_S seconds while cmd runs."""
+    p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+    while True:
+        try:
+            out, err = p.communicate(timeout=DROP_EVERY_S)
+            break
+        except subprocess.TimeoutExpired:
+            drop_wsl_cache()
+    return subprocess.CompletedProcess(cmd, p.returncode, out, err)
+
+
 def wsl_run(cmd, out):
     """Run cmd (a WSL command list writing to wsl_out(out)), copy the result to out, remove the WSL copy."""
     subprocess.run(WSL + ["mkdir", "-p", TMP_WSL, OUT_WSL], capture_output=True)
-    r = subprocess.run(cmd, capture_output=True, text=True)
+    r = run_dropping_cache(cmd)
     tmp = wsl_out(out)
     if r.returncode == 0:
-        c = subprocess.run(WSL + ["cp", "-f", tmp, wsl_path(out)], capture_output=True, text=True)
+        c = run_dropping_cache(WSL + ["cp", "-f", tmp, wsl_path(out)])
         if c.returncode != 0:
             r.returncode = c.returncode
             r.stderr += c.stderr
     subprocess.run(WSL + ["rm", "-f", tmp], capture_output=True)
+    drop_wsl_cache()
     if r.returncode != 0 and os.path.exists(out):
         os.remove(out)
     return r
