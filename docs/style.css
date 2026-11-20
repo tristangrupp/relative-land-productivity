@@ -51,11 +51,33 @@ code {
 	padding: 0 16px; background: var(--bg);
 	border-bottom: var(--hair) solid var(--line);
 }
-.crumbs { font: 500 12.5px var(--mono); letter-spacing: .04em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.crumb-sep { color: var(--line); margin: 0 8px; }
-.crumb-leaf { color: var(--ink); }
-.crumb-mode { color: var(--accent-ink); }
-.crumb-demo { color: var(--ink); font-weight: 700; }
+/* The title and view name shrink with an ellipsis on narrow screens; DATA POC and its
+   info marker always stay visible. */
+.crumbs {
+	display: flex; align-items: center; min-width: 0; margin-right: 12px;
+	font: 500 12.5px var(--mono); letter-spacing: .04em; white-space: nowrap;
+}
+.crumb-leaf, .crumb-mode { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+.crumb-sep { color: var(--line); margin: 0 8px; flex: none; }
+.crumb-leaf { color: var(--ink); flex: 0 1 auto; }
+.crumb-mode { color: var(--accent-ink); flex: 0 2 auto; }
+.crumb-demo { color: var(--ink); font-weight: 700; flex: none; }
+.crumb-info {
+	position: relative; flex: none;
+	display: inline-flex; align-items: center; justify-content: center;
+	width: 14px; height: 14px; margin-left: 6px; padding: 0; border-radius: 50%; cursor: help;
+	border: var(--hair) solid var(--ink-2); background: transparent; color: var(--ink-2);
+	font: 600 9.5px var(--mono); letter-spacing: 0;
+}
+.crumb-info:hover, .crumb-info:focus-visible { background: var(--ink); color: var(--bg); outline: none; }
+.crumb-tip {
+	position: absolute; top: calc(100% + 8px); left: -8px; z-index: 40; display: none;
+	width: max-content; max-width: 280px; padding: 8px 10px; border-radius: 5px;
+	background: var(--bg); border: var(--hair) solid var(--line); color: var(--ink-2);
+	font: 400 12px/1.45 var(--sans); letter-spacing: 0;
+	white-space: normal; text-align: left; box-shadow: 0 8px 24px rgba(44, 42, 40, .16);
+}
+.crumb-info:hover .crumb-tip, .crumb-info:focus .crumb-tip { display: block; }
 .header-right { display: flex; align-items: center; gap: 10px; flex: none; }
 .badge {
 	font: 500 10.5px var(--mono); letter-spacing: .07em; color: var(--accent-ink);

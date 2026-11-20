@@ -900,3 +900,10 @@ DECISIONS_V2.md, S2_MATO_GROSSO.md. Methods: methods/METHODS.md. Site contract: 
 - Site: `converted_misdetect` in `docs/config.js`, "Possible mis-detection", #364036 (dark green-gray, full opacity). Under simulated protan, deutan and tritan vision (Machado 2009, CIEDE2000, raw hexes as for D12) it is 13.8 or more from every class; no yellow-green or olive passed 12 against the green family, because those collide with restore under protan and deutan vision. At half opacity it would fall to 5.3 from assisted natural regeneration, so it draws at full opacity. The field card shows its converted call as "Computed, not trusted" (`showComputed`, shared with low confidence). Cache busters `app.js?v=21`, `config.js?v=21`.
 - Ran `s07_decisions.py fields` and `report` (12:00 to 12:05) after checking that no swap chain was running. Tiles and uploads were not run: the published tiles show the class from the next state swap (Maranhão), which rebuilds them. Until then the legend row reads 0.
 
+
+### 20 November 2026, 14:05: header label DATA POC (user decision D21)
+
+- The user asked to rename "DEMO" in the main page header to "DATA POC", with an info marker next to it whose hover text reads "This is a Data Lab prototype and an experimental application; Data Proof of Concept."
+- docs/index.html: the label and a button .crumb-info holding the tooltip #pocTip; it opens on hover and keyboard focus. Cache buster style.css v=20.
+- docs/style.css: the header crumbs are now a flex row. The title and view name shrink with an ellipsis on narrow screens, so DATA POC and its marker stay visible; before, a 1,148 px wide window cut the DEMO label off.
+- Checked on the local server in Chrome at 1,148 px: label, marker and tooltip show.
