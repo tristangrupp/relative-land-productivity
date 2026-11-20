@@ -876,3 +876,11 @@ DECISIONS_V2.md, S2_MATO_GROSSO.md. Methods: methods/METHODS.md. Site contract: 
 - Why low confidence stays high (user question, 20 November): by state, the ten Sentinel-2 states are at 18 to 38 percent low confidence (25.4 percent of their 5.9 million rows), and the 17 MODIS units at 71 to 93 percent (82.9 percent of 19.4 million rows). Under MODIS a field under 6.25 ha (one pixel) is low confidence, which is most fields outside the frontier states. Only switching the remaining states to Sentinel-2 lowers the national share much further.
 - Memory: at 07:3x free physical memory fell to 1.2 GB with commit at 87 GB. vmmemWSL held 29.6 GB, 25 GB of it page cache from the tippecanoe temp files. Dropping the WSL cache freed it at once. `s05_tiles.py` now drops the WSL page cache every 2 minutes while tippecanoe or the copy runs (73b0ee4). This also explains the Fields of the Land kill during the Goiás build.
 - `docs/about.html` updated. Next: Maranhão (extraction started); the 15 remaining states and the Federal District wait for the user's go.
+
+### 20 November 2026, 10:55: tier 3 queued (user decision A13)
+
+- The user approved moving every remaining state and the Federal District to Sentinel-2: "yes queue those 16 to follow. 3 days isnt bad".
+- `s03g_weights.TIER_STATES[3]` lists them by 2024 field count: Minas Gerais, Bahia, Rio Grande do Sul, São Paulo, Paraná, Santa Catarina, Pernambuco, Ceará, Paraíba, Espírito Santo, Piauí, Rio Grande do Norte, Alagoas, Rio de Janeiro, Sergipe, Distrito Federal. 3,276 tiles, 3,126 not already in tier 1 or 2.
+- Launched hidden at 10:52 (log `F:\relative-land-productivity-data\extracted\s2\run_tier3.log`): `run_chain.py` runs `pipeline/wait_pid.py 38160`, then `s03g_s2_fetch_reduce.py run --tier 3 --workers 4 --threads 2 --min-days 2`, so tier 3 starts only when the tier 1 and 2 run (now on Maranhão, 86 of 352 tiles at 10:31) exits. At 41 tiles per hour that is about 76 hours.
+- Plan for the swaps: run each state with `s09_swap_state_to_s2.py --no-tiles --no-upload` as it completes, then one field tile rebuild and one upload for the batch, so there are not 16 separate 9 GB rebuilds. The machine-sharing terms in AGENTS.md apply to that build.
+- Why: under MODIS 82.9 percent of these states' fields are low confidence, against 25.4 percent in the ten states on Sentinel-2.

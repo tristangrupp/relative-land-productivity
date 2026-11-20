@@ -635,7 +635,7 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("cmd", choices=["run", "status"])
     ap.add_argument("--state", action="append", help="state folder name, repeatable, run order")
-    ap.add_argument("--tier", action="append", type=int, help="1 or 2, repeatable")
+    ap.add_argument("--tier", action="append", type=int, help="1, 2 or 3, repeatable")
     ap.add_argument("--workers", type=int, default=4, help="tiles in flight")
     ap.add_argument("--threads", type=int, default=2, help="dask threads per tile load")
     ap.add_argument("--limit-tiles", type=int, default=0)

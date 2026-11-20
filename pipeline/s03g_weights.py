@@ -44,6 +44,11 @@ TILE = 1024
 TIER_STATES = {
     1: ["Mato_Grosso", "Para", "Rondonia", "Acre", "Amazonas", "Roraima", "Amapa"],
     2: ["Mato_Grosso_Do_Sul", "Goias", "Tocantins", "Maranhao"],
+    # tier 3 (user, 20 November 2026): every remaining state and the Federal District, by 2024
+    # field count descending
+    3: ["Minas_Gerais", "Bahia", "Rio_Grande_do_Sul", "Sao_Paulo", "Parana", "Santa_Catarina",
+        "Pernambuco", "Ceara", "Paraiba", "Espirito_Santo", "Piaui", "Rio_Grande_Do_Norte",
+        "Alagoas", "Rio_de_Janeiro", "Sergipe", "Distrito_Federal"],
 }
 
 
