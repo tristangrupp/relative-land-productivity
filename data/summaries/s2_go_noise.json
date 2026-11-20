@@ -1,0 +1,50 @@
+{
+ "state": "Goias",
+ "min_ha": 25.0,
+ "fields": 158332,
+ "sd_s2": 0.739,
+ "sd_modis": 0.6364,
+ "change_scale": 1.1611,
+ "change_scale_from": "state",
+ "comparable_fields": 1033443,
+ "changing_share_large": {
+  "modis": 18.72,
+  "s2": 23.55,
+  "s2_scaled": 18.67
+ },
+ "changing_share_all": {
+  "modis": 14.68,
+  "s2": 23.78,
+  "s2_scaled": 18.51
+ },
+ "exact_agreement_all": {
+  "s2": 75.47,
+  "s2_scaled": 79.34
+ },
+ "by_band": {
+  "under 6.25 ha": {
+   "fields": 625825,
+   "modis": 13.36,
+   "s2": 24.15,
+   "s2_scaled": 18.65
+  },
+  "6.25 to 25 ha": {
+   "fields": 248602,
+   "modis": 15.37,
+   "s2": 22.9,
+   "s2_scaled": 17.96
+  },
+  "25 to 100 ha": {
+   "fields": 135278,
+   "modis": 18.58,
+   "s2": 23.66,
+   "s2_scaled": 18.81
+  },
+  "over 100 ha": {
+   "fields": 23738,
+   "modis": 20.04,
+   "s2": 23.79,
+   "s2_scaled": 18.69
+  }
+ }
+}
