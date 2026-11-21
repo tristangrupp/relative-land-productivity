@@ -232,6 +232,16 @@ Agreed on 18 November 2026 at the user's request with the water infrastructure s
   (about 1 hour); failed tiles re-queue, so a pause costs it only wall-clock time. Watch free
   physical memory as well as commit. grupp-8a stops (not suspends) its fetchers and prediction
   jobs for the build, since a suspended process still holds its commit.
+- Since 21 November 2026 Fields of the Land pauses through a file, `H:\FTL_FTW\production\PAUSE`
+  (its commit 9f47f80): tiles in flight finish and no new ones start; deleting the file resumes
+  it. It runs 5 workers now. Still message it "build starts" and "upload ended"; it manages
+  the file itself.
+- Before blaming a neighbor for slow downloads, run `netsh wlan show interfaces`. At 18:14 on
+  20 November 2026 the Wi-Fi dropped from 5 GHz 802.11ax (480 Mbps) to 2.4 GHz 802.11n
+  (72.2 Mbps) with nothing in any log, and Sentinel-2 extraction fell from about 12 Maranhão
+  tiles per hour to 4 or 5. The link returned to 5 GHz about 10:40 on 21 November, and the
+  rate rose to 16 to 20 per hour. Fields of the Land measured 85 Mbit/s across all four
+  download jobs on the healthy link, about 18 percent of it.
 - The GPU is in use by Fields of the Land inference (about 3 GB, low duty). Ask that session
   before starting any heavy GPU job.
 

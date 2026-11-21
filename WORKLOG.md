@@ -907,3 +907,8 @@ DECISIONS_V2.md, S2_MATO_GROSSO.md. Methods: methods/METHODS.md. Site contract: 
 - docs/index.html: the label and a button .crumb-info holding the tooltip #pocTip; it opens on hover and keyboard focus. Cache buster style.css v=20.
 - docs/style.css: the header crumbs are now a flex row. The title and view name shrink with an ellipsis on narrow screens, so DATA POC and its marker stay visible; before, a 1,148 px wide window cut the DEMO label off.
 - Checked on the local server in Chrome at 1,148 px: label, marker and tooltip show.
+
+### 21 November 2026, 13:45: Maranhão extraction slowdown explained
+
+- Maranhão gained 4 or 5 tiles per hour from about 19:00 on 20 November to 10:00 on 21 November, against about 12 before. Fields of the Land found the cause: at 18:14 on 20 November the Wi-Fi moved from 5 GHz 802.11ax (480 Mbps) to 2.4 GHz 802.11n (72.2 Mbps). It returned to 5 GHz about 10:40 on 21 November, and Maranhão has gained 16 to 20 tiles per hour since. `netsh wlan show interfaces` at 13:45 shows 5 GHz, 802.11ax, receive 721 Mbps, transmit 480 Mbps.
+- Fields of the Land was warned at 13:30 that the Maranhão build starts near 15:30, and confirmed it pauses for the whole build and upload, now through its PAUSE file. Recorded in AGENTS.md.
