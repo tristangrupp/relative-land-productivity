@@ -233,8 +233,8 @@ Agreed on 18 November 2026 at the user's request with the water infrastructure s
   physical memory as well as commit. grupp-8a stops (not suspends) its fetchers and prediction
   jobs for the build, since a suspended process still holds its commit.
 - Since 21 November 2026 Fields of the Land pauses through a file, `H:\FTL_FTW\production\PAUSE`
-  (its commit 9f47f80): tiles in flight finish and no new ones start; deleting the file resumes
-  it. It runs 5 workers now. Still message it "build starts" and "upload ended"; it manages
+  (its commit 9f47f80). While the file exists, tiles in flight finish and no new ones start.
+  Deleting the file resumes the run. It runs 5 workers now. Still message it "build starts" and "upload ended"; it manages
   the file itself.
 - Before blaming a neighbor for slow downloads, run `netsh wlan show interfaces`. At 18:14 on
   20 November 2026 the Wi-Fi dropped from 5 GHz 802.11ax (480 Mbps) to 2.4 GHz 802.11n
