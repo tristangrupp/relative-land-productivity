@@ -1,0 +1,50 @@
+{
+ "state": "Tocantins",
+ "min_ha": 25.0,
+ "fields": 55863,
+ "sd_s2": 0.7015,
+ "sd_modis": 0.5981,
+ "change_scale": 1.1729,
+ "change_scale_from": "state",
+ "comparable_fields": 407468,
+ "changing_share_large": {
+  "modis": 16.14,
+  "s2": 20.81,
+  "s2_scaled": 15.77
+ },
+ "changing_share_all": {
+  "modis": 12.93,
+  "s2": 23.6,
+  "s2_scaled": 17.75
+ },
+ "exact_agreement_all": {
+  "s2": 76.12,
+  "s2_scaled": 80.57
+ },
+ "by_band": {
+  "under 6.25 ha": {
+   "fields": 228939,
+   "modis": 11.47,
+   "s2": 24.85,
+   "s2_scaled": 18.78
+  },
+  "6.25 to 25 ha": {
+   "fields": 107814,
+   "modis": 13.52,
+   "s2": 22.46,
+   "s2_scaled": 16.65
+  },
+  "25 to 100 ha": {
+   "fields": 59749,
+   "modis": 16.31,
+   "s2": 21.14,
+   "s2_scaled": 15.94
+  },
+  "over 100 ha": {
+   "fields": 10966,
+   "modis": 19.29,
+   "s2": 21.95,
+   "s2_scaled": 16.74
+  }
+ }
+}

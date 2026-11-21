@@ -1,0 +1,50 @@
+{
+ "state": "Maranhao",
+ "min_ha": 25.0,
+ "fields": 15505,
+ "sd_s2": 0.8322,
+ "sd_modis": 0.7018,
+ "change_scale": 1.1859,
+ "change_scale_from": "state",
+ "comparable_fields": 427524,
+ "changing_share_large": {
+  "modis": 20.9,
+  "s2": 26.19,
+  "s2_scaled": 19.84
+ },
+ "changing_share_all": {
+  "modis": 19.73,
+  "s2": 30.89,
+  "s2_scaled": 23.81
+ },
+ "exact_agreement_all": {
+  "s2": 64.98,
+  "s2_scaled": 69.97
+ },
+ "by_band": {
+  "under 6.25 ha": {
+   "fields": 275038,
+   "modis": 20.08,
+   "s2": 33.98,
+   "s2_scaled": 26.57
+  },
+  "6.25 to 25 ha": {
+   "fields": 91119,
+   "modis": 18.84,
+   "s2": 26.65,
+   "s2_scaled": 19.69
+  },
+  "25 to 100 ha": {
+   "fields": 48192,
+   "modis": 19.34,
+   "s2": 23.95,
+   "s2_scaled": 17.96
+  },
+  "over 100 ha": {
+   "fields": 13175,
+   "modis": 20.13,
+   "s2": 21.29,
+   "s2_scaled": 16.02
+  }
+ }
+}

@@ -97,5 +97,27 @@
    "s2_scaled": 18.67
   },
   "swapped": "2026-11-19T23:20:51"
+ },
+ "Tocantins": {
+  "source": "s2",
+  "change_scale": 1.1729,
+  "noise_fields": 55863,
+  "changing_share_large": {
+   "modis": 16.14,
+   "s2": 20.81,
+   "s2_scaled": 15.77
+  },
+  "swapped": "2026-11-20T06:48:59"
+ },
+ "Maranhao": {
+  "source": "s2",
+  "change_scale": 1.1859,
+  "noise_fields": 15505,
+  "changing_share_large": {
+   "modis": 20.9,
+   "s2": 26.19,
+   "s2_scaled": 19.84
+  },
+  "swapped": "2026-11-21T15:56:57"
  }
 }
