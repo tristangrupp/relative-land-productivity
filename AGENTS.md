@@ -237,7 +237,7 @@ Agreed on 18 November 2026 at the user's request with the water infrastructure s
   Deleting the file resumes the run. It runs 5 workers now. Still message it "build starts" and "upload ended"; it manages
   the file itself.
 - What "free physical" means here: `Win32_OperatingSystem.FreePhysicalMemory` equals Available
-  memory, which is the free and zero page list plus the standby cache. At 11:15 on 22 November
+  memory, which is the free and zero page list plus the standby cache. At about 10:49 on 22 November
   2026 it read 25.1 GB while the free and zero list held 0.0 GB and standby 24.7 GB. A low
   reading is normal, because parquet writes and viewer reads fill standby and Windows returns
   it on demand. Plan steps against commit charge, read from
