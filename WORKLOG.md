@@ -924,3 +924,11 @@ DECISIONS_V2.md, S2_MATO_GROSSO.md. Methods: methods/METHODS.md. Site contract: 
 - Memory: free physical memory bottomed at 5.2 GB during the copy of the tiles from WSL to F:. vmmemWSL kept 20 to 27 GB of Windows memory while WSL used under 1 GB inside; dropping caches and compacting did not return it. Only `wsl --shutdown` or a `.wslconfig` cap does, and that waits for the user.
 - The Fields of the Land run was reaped for memory between 15:55 and 16:02, about 85 tile-minutes lost. The most likely cause is this swap's steps before the tile build (assemble, metrics, relative, compare, decisions), whose memory peak was never measured. Before tier 3: record the minimum free physical memory per step, and treat the whole swap, not only the tile build, as the window in which Fields of the Land pauses.
 - `docs/about.html` updated. Next: the 15 remaining states and the Federal District (tier 3 extraction running since 16:04).
+
+### 21 November 2026, 19:25: paused for a shutdown
+
+- The user is shutting the computer down for about 20 minutes. Tier 3 extraction (run_chain 26740, s03g 12984) was stopped at 19:24 with `taskkill /T`. 109 of 3,276 tier 3 tiles had finished (TILE_DONE count in `run_tier3.log`).
+- Nothing is lost beyond the months in flight: s03g resumes at tile-month granularity and writes each tile parquet through a temporary file and `os.replace`, so an interrupted write leaves the previous file intact.
+- Nothing else of this project was running. The Maranhão swap had finished at 18:30 and is committed (76a434a).
+- Resume, hidden, with the WMI pattern in AGENTS.md: `run_chain.py "pipeline/s03g_s2_fetch_reduce.py run --tier 3 --workers 4 --threads 2 --min-days 2"`, log `F:\relative-land-productivity-data\extracted\s2\run_tier3.log`, err `run_tier3.err`. No `wait_pid` step is needed now.
+- The hourly check cron lives in the Claude session and ends with it; recreate it after the restart.
