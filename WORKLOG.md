@@ -932,3 +932,10 @@ DECISIONS_V2.md, S2_MATO_GROSSO.md. Methods: methods/METHODS.md. Site contract: 
 - Nothing else of this project was running. The Maranhão swap had finished at 18:30 and is committed (76a434a).
 - Resume, hidden, with the WMI pattern in AGENTS.md: `run_chain.py "pipeline/s03g_s2_fetch_reduce.py run --tier 3 --workers 4 --threads 2 --min-days 2"`, log `F:\relative-land-productivity-data\extracted\s2\run_tier3.log`, err `run_tier3.err`. No `wait_pid` step is needed now.
 - The hourly check cron lives in the Claude session and ends with it; recreate it after the restart.
+
+### 22 November 2026, 10:36: tier 3 extraction resumed after the shutdown
+
+- The computer rebooted at 10:31. Wi-Fi is on 5 GHz 802.11ax.
+- The first relaunch at 10:34 used the resume command from the 19:25 entry, which runs s03g through `run_chain.py` under the wci_tools venv. It stopped in 5 s with "ModuleNotFoundError: No module named 'odc'". s03g needs the ftwtools Python (`C:\Users\grupp\miniconda3\envs\ftwtools\python.exe`), as its docstring states; the 19:25 entry left that out.
+- Relaunched hidden at 10:35: `launch_detached.py run_tier3.log run_tier3.err -- <ftwtools python> pipeline/s03g_s2_fetch_reduce.py run --tier 3 --workers 4 --threads 2 --min-days 2`. It skipped the finished tiles and is fetching again.
+- The hourly check cron was recreated in the new Claude session (grupp-f5). Water infrastructure is grupp-a2, running 15_point_requests.py (up to about 34 GB) and the viewer on 8830.
