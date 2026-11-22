@@ -236,6 +236,17 @@ Agreed on 18 November 2026 at the user's request with the water infrastructure s
   (its commit 9f47f80). While the file exists, tiles in flight finish and no new ones start.
   Deleting the file resumes the run. It runs 5 workers now. Still message it "build starts" and "upload ended"; it manages
   the file itself.
+- What "free physical" means here: `Win32_OperatingSystem.FreePhysicalMemory` equals Available
+  memory, which is the free and zero page list plus the standby cache. At 11:15 on 22 November
+  2026 it read 25.1 GB while the free and zero list held 0.0 GB and standby 24.7 GB. A low
+  reading is normal, because parquet writes and viewer reads fill standby and Windows returns
+  it on demand. Plan steps against commit charge, read from
+  `Win32_PerfFormattedData_PerfOS_Memory` (CommittedBytes, CommitLimit). Since the reboot on
+  22 November the commit limit is 103.8 GB, down from 119.8, because the pagefile shrank. Fields
+  of the Land writes its PAUSE file when Available falls below 10 GB or commit passes 85
+  percent of the limit, and logs the split every 60 seconds.
+- The water infrastructure session (grupp-a2 since the 22 November reboot) agreed to announce
+  any step over about 10 GB before it starts.
 - Before blaming a neighbor for slow downloads, run `netsh wlan show interfaces`. At 18:14 on
   20 November 2026 the Wi-Fi dropped from 5 GHz 802.11ax (480 Mbps) to 2.4 GHz 802.11n
   (72.2 Mbps) with nothing in any log, and Sentinel-2 extraction fell from about 12 Maranhão
