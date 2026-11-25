@@ -112,7 +112,7 @@ SIMPLIFY_DEG = 0.0001
 LOG = os.path.join(C.TILES, "tiles_log.jsonl")
 ATTRS = ["fid", "area_ha", "crop_2020", "crop_2024", "prod_2020", "prod_2024", "change", "change_class",
          "vigor_2020", "vigor_2024", "decision", "decision_computed", "area_decision", "area_level", "eco_id",
-         "n_obs_2020", "n_obs_2024", "muni_code", "confidence", "source",
+         "n_obs_2020", "n_obs_2024", "muni_code", "confidence", "source", "car_context",
          "native_share_1km", "native_share_250m", "native_share_1km_large", "largest_patch_ha_1km",
          "regrowth_share_in", "regrowth_share_1km"]
 INT_ATTRS = {"fid", "crop_2020", "crop_2024", "vigor_2020", "vigor_2024", "n_obs_2020", "n_obs_2024", "muni_code", "eco_id",

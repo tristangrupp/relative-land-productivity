@@ -39,6 +39,7 @@ Python: E:\\Water\\water intelligence\\wci_tools\\.venv\\Scripts\\python.exe. Pe
 steps stay under 3 GB per state; s07_decisions.py national holds about 6 GB.
 """
 import argparse
+import ctypes
 import json
 import os
 import shutil
@@ -46,6 +47,8 @@ import subprocess
 import sys
 import time
 from datetime import datetime
+
+import psutil
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import s04_common as C  # noqa: E402
@@ -56,7 +59,11 @@ S2_EXTRACTED = os.path.join(C.EXTRACTED, "s2")
 SOURCES_JSON = os.path.join(C.ANALYSIS, "sources.json")
 MODIS_COPY = os.path.join(C.ANALYSIS, "source=modis")
 RUN_ORDER = ["Mato_Grosso", "Para", "Rondonia", "Acre", "Amazonas", "Roraima", "Amapa",
-             "Mato_Grosso_Do_Sul", "Goias", "Tocantins", "Maranhao"]
+             "Mato_Grosso_Do_Sul", "Goias", "Tocantins", "Maranhao",
+             # tier 3, switched as one batch on 25 November 2026 with one tile build
+             "Minas_Gerais", "Bahia", "Rio_Grande_do_Sul", "Sao_Paulo", "Parana", "Santa_Catarina",
+             "Pernambuco", "Ceara", "Paraiba", "Espirito_Santo", "Piaui", "Rio_Grande_Do_Norte",
+             "Alagoas", "Rio_de_Janeiro", "Sergipe", "Distrito_Federal"]
 STEPS = ["assemble", "metrics", "relative", "compare", "swap", "decisions", "tiles", "upload"]
 
 
@@ -75,14 +82,70 @@ class Runner:
             fh.write(line + "\n")
 
     def run(self, script, *args):
+        """Run one step and record its memory: the lowest Available memory and the highest commit
+        charge on the machine while the step ran, and the step's own peak resident memory (the
+        process and its children; WSL memory for tippecanoe shows only in the machine figures).
+        Added 25 November 2026 because the Maranhao swap steps before the tile build were never
+        measured, and the Fields of the Land run was reaped during them."""
         cmd = [PY, os.path.join(HERE, script), *[str(a) for a in args]]
         t0 = time.time()
-        self.note(run=" ".join(cmd[1:]))
+        self.note(run=" ".join(cmd[1:]), **memory_now())
+        low_avail, high_commit, peak_rss = float("inf"), 0.0, 0.0
         with open(self.log_path, "a", encoding="utf-8") as fh:
-            r = subprocess.run(cmd, stdout=fh, stderr=subprocess.STDOUT, cwd=C.REPO)
-        self.note(done=script, returncode=r.returncode, seconds=round(time.time() - t0))
-        if r.returncode != 0:
+            p = subprocess.Popen(cmd, stdout=fh, stderr=subprocess.STDOUT, cwd=C.REPO,
+                                 creationflags=CREATE_NO_WINDOW)
+            while True:
+                m = memory_now()
+                low_avail = min(low_avail, m["available_gb"])
+                high_commit = max(high_commit, m["commit_gb"])
+                peak_rss = max(peak_rss, tree_rss_gb(p.pid))
+                if p.poll() is not None:
+                    break
+                time.sleep(MEMORY_POLL_S)
+        self.note(done=script, returncode=p.returncode, seconds=round(time.time() - t0),
+                  min_available_gb=round(low_avail, 1), max_commit_gb=round(high_commit, 1),
+                  commit_limit_gb=m["commit_limit_gb"], peak_rss_gb=round(peak_rss, 2))
+        if p.returncode != 0:
             sys.exit(f"{script} failed, see {self.log_path}")
+
+
+MEMORY_POLL_S = 5
+CREATE_NO_WINDOW = 0x08000000
+
+
+class _MemoryStatusEx(ctypes.Structure):
+    _fields_ = [("dwLength", ctypes.c_ulong), ("dwMemoryLoad", ctypes.c_ulong),
+                ("ullTotalPhys", ctypes.c_ulonglong), ("ullAvailPhys", ctypes.c_ulonglong),
+                ("ullTotalPageFile", ctypes.c_ulonglong), ("ullAvailPageFile", ctypes.c_ulonglong),
+                ("ullTotalVirtual", ctypes.c_ulonglong), ("ullAvailVirtual", ctypes.c_ulonglong),
+                ("ullAvailExtendedVirtual", ctypes.c_ulonglong)]
+
+
+def memory_now():
+    """Available memory (free plus standby), commit charge and commit limit, in GB. On Windows the
+    page file fields of GlobalMemoryStatusEx are the commit limit and the commit still available."""
+    s = _MemoryStatusEx()
+    s.dwLength = ctypes.sizeof(s)
+    ctypes.windll.kernel32.GlobalMemoryStatusEx(ctypes.byref(s))
+    gb = 1024 ** 3
+    return {"available_gb": round(s.ullAvailPhys / gb, 1),
+            "commit_gb": round((s.ullTotalPageFile - s.ullAvailPageFile) / gb, 1),
+            "commit_limit_gb": round(s.ullTotalPageFile / gb, 1)}
+
+
+def tree_rss_gb(pid):
+    try:
+        p = psutil.Process(pid)
+        procs = [p] + p.children(recursive=True)
+    except psutil.Error:
+        return 0.0
+    total = 0
+    for q in procs:
+        try:
+            total += q.memory_info().rss
+        except psutil.Error:
+            pass
+    return total / 1024 ** 3
 
 
 def load_sources():

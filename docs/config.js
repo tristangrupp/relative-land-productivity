@@ -83,6 +83,7 @@ export const ATTR = {
 	area_decision: 'area_decision',
 	area_level: 'area_level',
 	source: 'source',
+	car_context: 'car_context',
 	native_share_1km: 'native_share_1km',
 	native_share_250m: 'native_share_250m',
 	native_share_1km_large: 'native_share_1km_large',
@@ -312,44 +313,66 @@ export const VIGOR_CHANGE = [
     (20 November 2026) is a recently converted field whose outline may be a segmentation failure:
     a dark green-gray at full opacity, deltaE 13.8 or more from every other class under the same
     simulations. A class with `showComputed` shows decision_computed in the field card as
-    "Computed, not trusted". */
+    "Computed, not trusted".
+    Property context (METHODS.md 7.7, 25 November 2026): `optionsDeficit` replaces `options` for a
+    field whose registered rural property has less native vegetation than the Forest Code requires
+    (car_context deficit or deficit_tipped), `optionsSurplus` for a property with more than it requires
+    (surplus). Classes without them keep `options`. The context changes no class, color, legend row
+    or tooltip row; the field card states it in plain words (CAR_CONTEXT). */
+/** Field card text for car_context (METHODS.md 7.7). Shown only in the field card details. */
+export const CAR_CONTEXT = {
+	deficit_tipped: 'Less native vegetation than the Forest Code requires; with large native vegetation nearby, restoration is suggested over improving yields',
+	deficit: 'Less native vegetation than the Forest Code requires',
+	surplus: 'More native vegetation than the Forest Code requires',
+	neither: 'Registered; no clear deficit or surplus of native vegetation',
+	no_parcel: 'No active registered property covers the field'
+};
+
 export const DECISIONS = [
 	{ key: 'restore', label: 'Restore', color: '#008300',
 		note: 'The field lies in an area where crops and pasture are both less green than the same uses across Brazil and both fell further behind since 2020, or it declined in a pasture area that is falling behind Brazil. Restoring the land is the recommended treatment.',
-		options: ['Assisted natural regeneration where native vegetation is returning', 'Improve yields if the land stays in production'] },
+		options: ['Assisted natural regeneration where native vegetation is returning', 'Improve yields if the land stays in production'],
+		optionsDeficit: ['Assisted natural regeneration where native vegetation is returning'] },
 	{ key: 'assisted_regen', label: 'Assisted natural regeneration', color: '#2e9e82',
 		note: 'Below nearby fields of the same crop and declining (or in a restore area), and native vegetation is already returning inside the field: at least 10 percent of its pixels were crop or pasture in 2020 and native vegetation in 2024. Protect and help the regrowth rather than plant.',
 		options: ['Active restoration if the regrowth stalls', 'Improve yields on the rest of the field if it stays in production'] },
 	{ key: 'restore_candidate', label: 'Restore candidate: next to native vegetation', color: '#285c23',
 		note: 'Below nearby fields of the same crop and not gaining, and next to large native vegetation: at least 30 percent of the land within 1 km is native vegetation in patches of 50 ha or more. Restoring would join a larger block of nature.',
-		options: ['Improve yields if the land stays in production', 'Assisted natural regeneration if native vegetation starts to return'] },
+		options: ['Improve yields if the land stays in production', 'Assisted natural regeneration if native vegetation starts to return'],
+		optionsDeficit: ['Assisted natural regeneration if native vegetation starts to return', 'Improve yields if the land stays in production'] },
 	{ key: 'converted_below', label: 'Recently converted, below peers', color: '#7cc24e', opacity: 0.5,
 		note: 'Native vegetation in 2020, crop or pasture in 2024, and already less green than the same use elsewhere in the ecoregion. The clearing is not paying off, which makes this a strong case for restoring.',
 		options: ['Restore or let native vegetation return', 'Improve the new use if it stays'] },
 	{ key: 'converted_ok', label: 'Recently converted, at or above peers', color: '#d7f28c', opacity: 0.5,
 		note: 'Native vegetation in 2020, crop or pasture in 2024, and at least as green as the same use elsewhere in the ecoregion. The new use produces; the open question is the clearing itself.',
-		options: ['Keep the new use and stop further clearing', 'Restore if the clearing broke the law or a commitment'] },
+		options: ['Keep the new use and stop further clearing', 'Restore if the clearing broke the law or a commitment'],
+		optionsDeficit: ['Keep the new use and stop further clearing', 'Restore if the clearing broke the law or a commitment', 'Restore part of the property'] },
 	{ key: 'converted_misdetect', label: 'Possible mis-detection', color: '#364036', showComputed: true,
 		note: 'Counted as recently converted, but the outline is 50 ha or more and among the largest 1 percent of fields of its land use in the state, and a quarter or more of the land inside it is still native vegetation in 2024 (MapBiomas). The field model may have drawn one outline around native vegetation, roads and several fields. The computed call is in the field card.',
 		options: ['Check the outline against satellite imagery before acting', 'Treat as recently converted land if the clearing is confirmed'] },
 	{ key: 'convert_cropland', label: 'Productive pasture on good cropland: conversion to crops possible', color: '#164e63',
 		note: 'Inside the Amazon biome, a pasture at least as green as nearby pasture, in an area where crops do as well as across Brazil but pasture lags. Conversion here means crops on this already cleared pasture, not new clearing.',
-		options: ['Convert this pasture to crops', 'Intensify the pasture (rotation, reform)', 'Keep as it is'] },
+		options: ['Convert this pasture to crops', 'Intensify the pasture (rotation, reform)', 'Keep as it is'],
+		optionsDeficit: ['Convert this pasture to crops', 'Intensify the pasture (rotation, reform)', 'Keep as it is', 'Restore part of the property'] },
 	{ key: 'improve_pasture', label: 'Improve pasture', color: '#67b7d1',
 		note: 'Inside the Amazon biome, a pasture less green than nearby pasture, in an area where crops do as well as across Brazil but pasture lags. Recover the pasture before any change of use.',
-		options: ['Reform or fertilize the pasture', 'Rotate grazing', 'Restore if the pasture keeps falling behind'] },
+		options: ['Reform or fertilize the pasture', 'Rotate grazing', 'Restore if the pasture keeps falling behind'],
+		optionsDeficit: ['Reform or fertilize the pasture', 'Restore if the pasture keeps falling behind', 'Rotate grazing'] },
 	{ key: 'convert_pasture', label: 'Improve or convert pasture', color: '#0e7490',
 		note: 'Outside the Amazon biome, a pasture in an area where crops do as well as across Brazil but pasture lags behind. Recover the pasture (reform, fertilize, rotate grazing) or move the land into crops.',
-		options: ['Reform or fertilize the pasture', 'Convert to crops', 'Integrated crop and livestock'] },
+		options: ['Reform or fertilize the pasture', 'Convert to crops', 'Integrated crop and livestock'],
+		optionsDeficit: ['Reform or fertilize the pasture', 'Convert to crops', 'Integrated crop and livestock', 'Restore if the pasture keeps falling behind'] },
 	{ key: 'switch_paid_off', label: 'Switch paid off', color: '#2a78d6', opacity: 0.5,
 		note: 'The crop changed since 2020, and in 2024 the field is at least as green as nearby fields of the new crop. Keep the new crop.',
 		options: ['Keep the new crop', 'Intensify the new crop'] },
 	{ key: 'switch_failed', label: 'Switch failed', color: '#6250d6', opacity: 0.5,
 		note: 'The crop changed since 2020, and in 2024 the field is less green than nearby fields of the new crop. Reconsider the switch or how the new crop is managed.',
-		options: ['Return to the former crop', 'Improve how the new crop is managed'] },
+		options: ['Return to the former crop', 'Improve how the new crop is managed'],
+		optionsDeficit: ['Return to the former crop', 'Improve how the new crop is managed', 'Restore if the land keeps falling behind'] },
 	{ key: 'improve_spare', label: 'Improve yields: spares land elsewhere', color: '#eda100',
 		note: 'Same crop in both years, below nearby fields of the same crop and not gaining, and little large native vegetation within 1 km. Raising yields here can spare land elsewhere.',
-		options: ['Improve management (inputs, sowing date, variety, soil)', 'Switch crop if the area\u2019s crop lags Brazil (see the area call)'] },
+		options: ['Improve management (inputs, sowing date, variety, soil)', 'Switch crop if the area\u2019s crop lags Brazil (see the area call)'],
+		optionsDeficit: ['Improve management (inputs, sowing date, variety, soil)', 'Switch crop if the area’s crop lags Brazil (see the area call)', 'Restore if native vegetation is near'] },
 	{ key: 'improve_yields', label: 'Improve yields', color: '#f7d58a',
 		note: 'Same crop in both years: fell behind nearby fields while at or above them, or below them but gaining. Look first at management: inputs, sowing date, variety, field condition.',
 		options: ['Improve management', 'Keep watching the trend'] },
@@ -361,7 +384,8 @@ export const DECISIONS = [
 		options: ['Keep as it is'] },
 	{ key: 'abandon', label: 'Abandon or change use', color: '#e34948',
 		note: 'Below nearby fields in both years, falling further, and close to bare soil in 2024. The land may suit another use or restoration better than the present one.',
-		options: ['Restore', 'Another use suited to the land'] },
+		options: ['Restore', 'Another use suited to the land'],
+		optionsSurplus: ['Another use suited to the land', 'Restore'] },
 	{ key: 'abandoned_outline', label: 'Abandoned since 2020', color: '#898781', opacity: 0.5,
 		note: 'Cropped or grazed in 2020 and not in 2024; drawn on the 2020 outline. Check whether native vegetation is coming back; if it is not, restore it.',
 		options: ['Assisted natural regeneration if native vegetation is coming back', 'Active restoration if it is not'] },

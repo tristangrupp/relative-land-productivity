@@ -13,9 +13,9 @@
  */
 
 import {
-	CONFIG, ATTR, SUMMARY_ATTR, VIEWS, CROPS, VIGOR, VIGOR_CHANGE, DECISIONS, AREA_DECISIONS,
+	CONFIG, ATTR, SUMMARY_ATTR, VIEWS, CROPS, VIGOR, VIGOR_CHANGE, DECISIONS, CAR_CONTEXT, AREA_DECISIONS,
 	CHANGE_CLASSES, STATES, NODATA_COLOR, CONFIDENCE, ECO_TREND, SOURCES, CLASS_GROUPS, WALKTHROUGH
-} from './config.js?v=21';
+} from './config.js?v=22';
 
 const $ = (id) => document.getElementById(id);
 const NA = 'n/a';
@@ -816,7 +816,10 @@ function renderPick() {
 	const decKey = derivedKey(VIEWS.find((x) => x.id === 'decision'), p) || p[ATTR.decision];
 	rows.push(['Recommended treatment', decisionName(decKey)]);
 	const dOpt = decisionByKey[decKey];
-	if (dOpt && dOpt.options && dOpt.options.length) rows.push(['Other options', dOpt.options.join('; ')]);
+	const ctx = p[ATTR.car_context];
+	const opts = dOpt && ((ctx === 'deficit' || ctx === 'deficit_tipped') && dOpt.optionsDeficit ? dOpt.optionsDeficit
+		: ctx === 'surplus' && dOpt.optionsSurplus ? dOpt.optionsSurplus : dOpt.options);
+	if (opts && opts.length) rows.push(['Other options', opts.join('; ')]);
 	if (dOpt && dOpt.showComputed && p[ATTR.decision_computed] != null) {
 		rows.push(['Computed, not trusted', decisionName(p[ATTR.decision_computed])]);
 	}
@@ -825,6 +828,7 @@ function renderPick() {
 	if (eco) rows.push(['Ecoregion', eco]);
 	rows.push(['Confidence', confidenceName(p[ATTR.confidence])]);
 	rows.push(['Satellite', sourceName(p[ATTR.source])]);
+	if (ctx != null && CAR_CONTEXT[ctx]) rows.push(['Registered property (CAR)', CAR_CONTEXT[ctx]]);
 	if (has(ATTR.native_share_1km)) {
 		rows.push(['Native vegetation within 1 km / 250 m', `${share100(p[ATTR.native_share_1km])} / ${share100(p[ATTR.native_share_250m])}`]);
 		rows.push(['Native within 1 km, patches of 50 ha or more', share100(p[ATTR.native_share_1km_large])]);

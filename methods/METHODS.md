@@ -459,10 +459,19 @@ changing share 14.4 percent under 6.25 ha, 28.9 over 100 ha). The area tier uses
 seasonal integral calibrated to the MODIS scale per peer class and year (S2_MATO_GROSSO.md),
 falling back to MODIS for a class with no calibration.
 
-### 7.7 Proposed: CAR parcels and the Forest Code in the recommendations
+### 7.7 CAR parcels and the Forest Code in the recommendations
 
-Status: proposed by the CAR agent on 14 November 2026 for the orchestrator to apply. Not yet
-in `s07_decisions.py`. Indicators: `pipeline/s10_car_forest_code.py`, report
+Status: proposed by the CAR agent on 14 November 2026; applied in `s07_decisions.py` on
+25 November 2026 at the user's go ("go ahead on methods 7.7"), as written below. The code reads
+the per-field table in `load_car` and applies rule 1 in `field_call`, after every other field
+rule and before the low-confidence and possible mis-detection rules, so a tipped field that is
+low confidence shows "Too small to judge yet" with restore candidate as its computed call. The
+published column is `car_context`, one of `deficit_tipped` (rule 1 changed the call),
+`deficit`, `surplus`, `neither` and `no_parcel`. Option sets live in `docs/config.js`
+(`optionsDeficit`, `optionsSurplus`); where the table below lists an option set equal to the
+default, the default list is kept. The field card states the context in one plain line
+("Registered property (CAR)"). Abandoned 2020 outlines have no context. Before this date the
+status read "proposed, not yet in `s07_decisions.py`". Indicators: `pipeline/s10_car_forest_code.py`, report
 `pipeline/CAR_FOREST_CODE.md`, per-field table
 `F:\relative-land-productivity-data\analysis\car\state=<State>.parquet`.
 

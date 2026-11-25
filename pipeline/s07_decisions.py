@@ -164,6 +164,21 @@ MISDETECT_MIN_HA = 50.0
 MISDETECT_NATIVE_T = 0.25
 SOURCES_JSON = os.path.join(C.ANALYSIS, "sources.json")
 S2_ROOT = os.path.join(C.ANALYSIS, "source=s2")
+# CAR parcels and the Forest Code (METHODS.md 7.7, applied 25 November 2026). Indicators per field
+# from s10_car_forest_code.py. A usable deficit: an active or pending (AT, PE) rural property (IRU)
+# that covers at least half of the field, at most two parcels on the field, over 4 fiscal modules,
+# and a legal reserve deficit of at least CAR_DEFICIT_T of the property. A surplus: the same parcel
+# conditions, any property size, and native vegetation at least CAR_SURPLUS_T above the required
+# share. The parcel code (car_cod) is never read here, so it cannot reach a published table.
+CAR_DIR = os.path.join(C.ANALYSIS, "car")
+CAR_COLS = ["fid", "car_status", "car_type", "car_overlap_share", "car_overlap_count", "small_property",
+            "lr_deficit_share", "native_share_property", "lr_required_share"]
+CAR_DEFICIT_T = 0.05
+CAR_SURPLUS_T = 0.10
+CAR_MIN_SHARE = 0.5
+CAR_MAX_PARCELS = 2
+CAR_TIP_NATIVE_T = NATIVE_T / 2   # rule 1: large native patches within 1 km, half the restore candidate threshold
+CAR_CONTEXT = ["deficit_tipped", "deficit", "surplus", "neither", "no_parcel"]
 
 AREA = ["restore_area", "good_land_underused", "system_misfit", "area_declining", "area_fine", "none"]
 DECISIONS = ["restore", "assisted_regen", "restore_candidate", "converted_below", "converted_ok", "converted_misdetect", "convert_cropland", "improve_pasture",
@@ -502,6 +517,30 @@ def load_native(state, fid):
     return n
 
 
+def load_car(state, fid):
+    """Property context per field (METHODS.md 7.7): 'deficit' (usable deficit), 'surplus', 'neither'
+    (a usable parcel without either, or one that fails the parcel conditions), or 'no_parcel' (no
+    registered parcel, or only a canceled or suspended one). Returns the context before rule 1."""
+    p = os.path.join(CAR_DIR, f"state={state}.parquet")
+    if not os.path.exists(p):
+        return np.full(len(fid), "no_parcel", dtype=object)
+    c = read(p, CAR_COLS).drop_duplicates("fid").set_index("fid").reindex(fid)
+    status = c["car_status"].astype(object).fillna("").values
+    active = np.isin(status, ["AT", "PE"])
+    usable = (active & (c["car_type"].astype(object).fillna("").values == "IRU")
+              & (c["car_overlap_share"].fillna(0).values >= CAR_MIN_SHARE)
+              & (c["car_overlap_count"].fillna(99).values <= CAR_MAX_PARCELS))
+    small = c["small_property"].astype("boolean").fillna(False).values.astype(bool)  # no parcel: not small
+    deficit_share = c["lr_deficit_share"].values.astype(np.float64)
+    surplus = usable & ((c["native_share_property"].values - c["lr_required_share"].values) >= CAR_SURPLUS_T)
+    deficit = usable & ~small & (deficit_share >= CAR_DEFICIT_T)
+    out = np.full(len(fid), "neither", dtype=object)
+    out[~active] = "no_parcel"
+    out[surplus] = "surplus"
+    out[deficit] = "deficit"
+    return out
+
+
 # ----------------------------------------------------------------------------- national reference
 
 def national(states, levels=(5, 6)):
@@ -799,10 +838,14 @@ def eco_lookup():
     return cls.set_index(["eco_id", "peer_cls"])["scale_c_change"]
 
 
-def field_call(cc, dec_v1, r24, r_eco24, crop24, area, pasture_only, biome, native_large, regrow_in, conf_low, misdetect=None):
-    """Returns (decision, decision_computed): the second is the call before the low-confidence and
-    possible mis-detection rules. misdetect: boolean per field, the size and native vegetation test of
-    misdetect_mask; a recently converted field that passes it becomes converted_misdetect."""
+def field_call(cc, dec_v1, r24, r_eco24, crop24, area, pasture_only, biome, native_large, regrow_in, conf_low, misdetect=None,
+               car=None):
+    """Returns (decision, decision_computed, car_context): decision_computed is the call before the
+    low-confidence and possible mis-detection rules. misdetect: boolean per field, the size and native
+    vegetation test of misdetect_mask; a recently converted field that passes it becomes
+    converted_misdetect. car: the property context of load_car; rule 1 of METHODS.md 7.7 turns an
+    improve_spare field with a usable deficit and at least CAR_TIP_NATIVE_T of large native patches
+    within 1 km into restore_candidate, and its context becomes deficit_tipped."""
     n = len(cc)
     out = np.full(n, "none", dtype=object)
     level_below = r24 < -FIELD_LEVEL
@@ -845,12 +888,17 @@ def field_call(cc, dec_v1, r24, r_eco24, crop24, area, pasture_only, biome, nati
     out[nc & ~np.isfinite(r_eco24)] = "none"
     # bare-soil rule of version 1
     out[dec_v1 == "abandon"] = "abandon"
+    # rule 1 of METHODS.md 7.7: the property owes native vegetation and large native patches are near
+    car_ctx = np.full(n, "no_parcel", dtype=object) if car is None else car.copy()
+    tip = (out == "improve_spare") & (car_ctx == "deficit") & (np.nan_to_num(native_large, nan=0.0) >= CAR_TIP_NATIVE_T)
+    out[tip] = "restore_candidate"
+    car_ctx[tip] = "deficit_tipped"
     computed = out.copy()
     out[conf_low & (out != "none")] = "low_confidence"
     # possible mis-detection wins over low confidence: the outline itself is in doubt
     if misdetect is not None:
         out[misdetect & np.isin(computed, ["converted_below", "converted_ok"])] = "converted_misdetect"
-    return out, computed
+    return out, computed, car_ctx
 
 
 def misdetect_mask(area_ha, crop24, native_in_2024):
@@ -895,13 +943,14 @@ def fields_state(state, a, a5, eco_cls):
     shp = load_shape(state, fid)
     area_ha = tab.column("area_ha").to_numpy(zero_copy_only=False).astype(np.float64)
     mis, mis_area_t = misdetect_mask(area_ha, crop24, shp["native_in_2024"].values)
-    dec, dec_c = field_call(cc, dec_v1, r24, r_eco24, crop24, area, pasture_only, bio,
-                            nat["native_share_1km_large"].values.astype(np.float32),
-                            nat["regrowth_share_in"].values.astype(np.float32), conf_low, misdetect=mis)
+    dec, dec_c, car_ctx = field_call(cc, dec_v1, r24, r_eco24, crop24, area, pasture_only, bio,
+                                     nat["native_share_1km_large"].values.astype(np.float32),
+                                     nat["regrowth_share_in"].values.astype(np.float32), conf_low, misdetect=mis,
+                                     car=load_car(state, fid))
     sc = eco_cls.reindex(pd.MultiIndex.from_arrays([e["eco_id"].values.astype(np.int64), peer24])).values
     tr = trend(sc)
     drop = ("decision", "decision_v1", "decision_computed", "area_decision", "area_level", "eco_id", "eco_trend",
-            "biome", "source") + tuple(NATIVE_COLS)
+            "biome", "source", "car_context") + tuple(NATIVE_COLS)
     keep = [c for c in df_cols if c not in drop]
     cols = {}
     for c in keep:
@@ -909,6 +958,7 @@ def fields_state(state, a, a5, eco_cls):
         if c == "change_class":
             cols["decision"] = pa.array(pd.Categorical(dec, categories=DECISIONS))
             cols["decision_computed"] = pa.array(pd.Categorical(dec_c, categories=DECISIONS))
+            cols["car_context"] = pa.array(pd.Categorical(car_ctx, categories=CAR_CONTEXT))
             cols["area_decision"] = pa.array(pd.Categorical(area, categories=AREA))
             cols["area_level"] = pa.array(area_level)
             cols["decision_v1"] = pa.array(pd.Categorical(dec_v1, categories=DECISIONS_V1))
@@ -923,6 +973,7 @@ def fields_state(state, a, a5, eco_cls):
     meta[b"s07_decisions"] = json.dumps({"state": state, "source": src, "level_t": LEVEL_T, "change_t": CHANGE_T, "eco_t": ECO_T,
                                          "area_resolution": 6, "pasture_only_crop_share": PASTURE_ONLY_CROP_SHARE,
                                          "native_t": NATIVE_T,
+                                         "car_deficit_t": CAR_DEFICIT_T, "car_surplus_t": CAR_SURPLUS_T, "car_tip_native_t": CAR_TIP_NATIVE_T,
                                          "misdetect_area_q": MISDETECT_AREA_Q, "misdetect_min_ha": MISDETECT_MIN_HA, "misdetect_native_t": MISDETECT_NATIVE_T, "written": datetime.now().isoformat(timespec="seconds")}).encode()
     out = out.replace_schema_metadata(meta)
     pq.write_table(out, p + ".part", compression="zstd", row_group_size=100_000)
@@ -970,6 +1021,7 @@ def fields_state(state, a, a5, eco_cls):
     counts["decision"] = {k: int(v) for k, v in pd.Series(dec).value_counts().items()}
     counts["decision_computed"] = {k: int(v) for k, v in pd.Series(dec_c).value_counts().items()}
     counts["decision_v1"] = {k: int(v) for k, v in pd.Series(dec_v1).value_counts().items()}
+    counts["car_context"] = {k: int(v) for k, v in pd.Series(car_ctx).value_counts().items()}
     counts["area_decision"] = {k: int(v) for k, v in pd.Series(area).value_counts().items()}
     counts["area_decision_abandoned"] = ab_area
     counts["area_level"] = {str(int(k)): int(v) for k, v in pd.Series(area_level).value_counts().items()}
@@ -978,7 +1030,8 @@ def fields_state(state, a, a5, eco_cls):
     with open(cp, "w") as fh:
         json.dump(counts, fh, indent=1)
     slim = pd.DataFrame({"fid": fid, "state": state, "cell": cell, "cell6": cell6, "eco_id": e["eco_id"].values.astype(np.int32),
-                         "decision": dec, "decision_computed": dec_c, "decision_v1": dec_v1, "area_decision": area,
+                         "decision": dec, "decision_computed": dec_c, "decision_v1": dec_v1, "car_context": car_ctx,
+                         "area_decision": area,
                          "area_level": area_level, "pasture_only": pasture_only, "change_class": cc, "crop_2024": crop24,
                          "biome": bio, "source": src, "confidence_low": conf_low, "r_eco_nan": ~np.isfinite(r_eco24),
                          "r_adj_2024": r24, "area_ha": area_ha.astype(np.float32), "misdetect_area_t": mis_area_t,
@@ -1024,6 +1077,11 @@ def report(states):
                                   "misdetect": int((df["decision"] == "converted_misdetect").sum()),
                                   "misdetect_low_confidence": int(((df["decision"] == "converted_misdetect") & df["confidence_low"]).sum()),
                                   "by_state": df[df["decision"] == "converted_misdetect"]["uf"].value_counts().to_dict()}
+    if "car_context" in df.columns:
+        ctx = df["car_context"].astype(str)
+        nat["car_context"] = ctx.value_counts().reindex(CAR_CONTEXT, fill_value=0).to_dict()
+        nat["car_tipped_to_restore_candidate"] = int((ctx == "deficit_tipped").sum())
+        nat["car_tipped_shown"] = int(((ctx == "deficit_tipped") & (df["decision"] == "restore_candidate")).sum())
     nat["recently_converted_unmeasured_to_none"] = int(((df["change_class"] == "newly_cropped") & df["r_eco_nan"]).sum())
     po = (df["decision_computed"] == "restore") & (df["area_decision"] == "area_declining")
     nat["restore_pasture_only_declining_computed"] = int(po.sum())
