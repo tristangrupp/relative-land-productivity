@@ -91,6 +91,23 @@ NEIGHBORS_OF = {
     "Goias": ["Mato_Grosso", "Mato_Grosso_Do_Sul", "Minas_Gerais", "Bahia", "Tocantins", "Distrito_Federal"],
     "Tocantins": ["Para", "Mato_Grosso", "Goias", "Bahia", "Piaui", "Maranhao"],
     "Maranhao": ["Para", "Tocantins", "Piaui"],
+    # tier 3, added 25 November 2026 after the Minas Gerais compare step stopped with KeyError
+    "Minas_Gerais": ["Bahia", "Goias", "Distrito_Federal", "Mato_Grosso_Do_Sul", "Sao_Paulo", "Rio_de_Janeiro", "Espirito_Santo"],
+    "Bahia": ["Sergipe", "Alagoas", "Pernambuco", "Piaui", "Tocantins", "Goias", "Minas_Gerais", "Espirito_Santo"],
+    "Rio_Grande_do_Sul": ["Santa_Catarina"],
+    "Sao_Paulo": ["Minas_Gerais", "Rio_de_Janeiro", "Parana", "Mato_Grosso_Do_Sul"],
+    "Parana": ["Sao_Paulo", "Mato_Grosso_Do_Sul", "Santa_Catarina"],
+    "Santa_Catarina": ["Parana", "Rio_Grande_do_Sul"],
+    "Pernambuco": ["Paraiba", "Ceara", "Piaui", "Bahia", "Alagoas"],
+    "Ceara": ["Piaui", "Rio_Grande_Do_Norte", "Paraiba", "Pernambuco"],
+    "Paraiba": ["Rio_Grande_Do_Norte", "Ceara", "Pernambuco"],
+    "Espirito_Santo": ["Bahia", "Minas_Gerais", "Rio_de_Janeiro"],
+    "Piaui": ["Maranhao", "Ceara", "Pernambuco", "Bahia", "Tocantins"],
+    "Rio_Grande_Do_Norte": ["Ceara", "Paraiba"],
+    "Alagoas": ["Pernambuco", "Bahia", "Sergipe"],
+    "Rio_de_Janeiro": ["Minas_Gerais", "Espirito_Santo", "Sao_Paulo"],
+    "Sergipe": ["Bahia", "Alagoas"],
+    "Distrito_Federal": ["Goias", "Minas_Gerais"],
 }
 CC_ORDER = ["large_decline", "decline", "stable", "gain", "large_gain", "crop_switched", "newly_cropped", "no_data"]
 NOISE_MIN_HA = 25.0
@@ -413,7 +430,7 @@ def fields(state, s2=None, cal=None, a=None, mo=None):
     n = len(cc)
     bio = DV.load_biome(state, s2["fid"].values) if os.path.exists(os.path.join(DV.OUT, "biome", f"{state}.parquet")) \
         else np.zeros(n, dtype=np.int8)
-    _, dec = DV.field_call(cc, s2["decision_v1"].astype(str).values, s2["r_adj_2024"].values, r_eco,
+    _, dec, _ = DV.field_call(cc, s2["decision_v1"].astype(str).values, s2["r_adj_2024"].values, r_eco,
                            s2["crop_2024"].values, area_s2, np.zeros(n, bool), bio, np.full(n, np.nan, np.float32), np.full(n, np.nan, np.float32),
                            np.zeros(n, bool))
     s2 = s2.copy()
