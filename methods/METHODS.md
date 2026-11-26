@@ -607,6 +607,8 @@ Limits. Within-field NDVI heterogeneity would be a third signal, but the Sentine
 keeps only the field mean per month, so it is not used. MapBiomas confuses native grassland
 (class 12) with pasture in the south, so some flags in Rio Grande do Sul may be map confusion
 inside a correct outline. The check does not look at fields that were not recently converted.
+Grassland counts as native in every state, the Pampa included (DECISIONS.md C24, 26 November
+2026): in Rio Grande do Sul, 341 of the 345 flagged fields were grassland in 2020.
 
 ### 7.4 Superseded 2026-11-13: version 1 decision table
 

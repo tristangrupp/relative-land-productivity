@@ -187,8 +187,8 @@ DECISIONS_V2.md, S2_MATO_GROSSO.md. Methods: methods/METHODS.md. Site contract: 
    tiles until the next tile build (the Maranhão swap). The thresholds (99th percentile, 50 ha,
    25 percent native inside) are agent choices awaiting the user's review (DECISIONS.md C22).
    Still open on 26 November; the tiles publish it since 21 November.
-11. (26 November 2026) Open for the user: a `.wslconfig` memory cap for WSL, Rio Grande do Sul
-   grassland, and the Pará pilot ideas (MERIT APP and others).
+11. (26 November 2026) Open for the user: a `.wslconfig` memory cap for WSL and the Pará pilot
+   ideas (MERIT APP and others). Rio Grande do Sul grassland answered 26 November (DECISIONS.md C24).
 
 ## How to resume after a context reset
 
@@ -965,3 +965,8 @@ DECISIONS_V2.md, S2_MATO_GROSSO.md. Methods: methods/METHODS.md. Site contract: 
 - The relaunched upload finished with returncode 0: `s05_upload.py --tiles --check` 00:18 to 00:52 (2,015 s), then `--fields` 00:52 to 01:41 (2,954 s). Peak resident 0.15 GB, Available at least 36.0 GB. grupp-a2 and Fields of the Land were told when it ended; grupp-a2 released hold_heavy.
 - Peer report, not checked here: Fields of the Land said the tier 3 s03g parent (pid 9376) was still resident at 5.9 GB about 14:15, after RUN_END at 11:47.
 - Site: the low-confidence note, the walkthrough step on satellites, the attribution (Sentinel-2 L2A, Copernicus) and the About page now say every state uses Sentinel-2. The About page gives the new low-confidence count and the tile sizes (9.2 GB and 110 MB).
+
+### 26 November 2026, 02:30: grassland stays native
+
+- In Rio Grande do Sul, 105,588 fields (604,707 ha) are recently converted. 87,403 were grassland (MapBiomas 12) in 2020; 73,417 (487,987 ha) went from grassland to mosaic of uses (21), 68,175 of them in the Pampa. 341 of the state's 345 possible mis-detection flags were grassland in 2020. The agent proposed not calling grassland to mosaic or pasture in the Pampa a conversion.
+- User: "treat grassland as native". Grassland stays native everywhere, so those fields stay recently converted and the mis-detection check is unchanged (DECISIONS.md C24). No rerun needed.
