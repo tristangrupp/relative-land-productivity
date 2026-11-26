@@ -1,0 +1,50 @@
+{
+ "state": "Rio_Grande_do_Sul",
+ "min_ha": 25.0,
+ "fields": 63362,
+ "sd_s2": 1.1246,
+ "sd_modis": 0.9322,
+ "change_scale": 1.2064,
+ "change_scale_from": "state",
+ "comparable_fields": 1854038,
+ "changing_share_large": {
+  "modis": 29.8,
+  "s2": 38.24,
+  "s2_scaled": 30.01
+ },
+ "changing_share_all": {
+  "modis": 30.77,
+  "s2": 37.26,
+  "s2_scaled": 29.26
+ },
+ "exact_agreement_all": {
+  "s2": 51.89,
+  "s2_scaled": 56.66
+ },
+ "by_band": {
+  "under 6.25 ha": {
+   "fields": 1605820,
+   "modis": 30.79,
+   "s2": 36.95,
+   "s2_scaled": 28.99
+  },
+  "6.25 to 25 ha": {
+   "fields": 184522,
+   "modis": 30.89,
+   "s2": 39.6,
+   "s2_scaled": 31.34
+  },
+  "25 to 100 ha": {
+   "fields": 57000,
+   "modis": 30.22,
+   "s2": 38.63,
+   "s2_scaled": 30.35
+  },
+  "over 100 ha": {
+   "fields": 6696,
+   "modis": 27.11,
+   "s2": 35.59,
+   "s2_scaled": 27.82
+  }
+ }
+}

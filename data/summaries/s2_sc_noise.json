@@ -1,0 +1,50 @@
+{
+ "state": "Santa_Catarina",
+ "min_ha": 25.0,
+ "fields": 8508,
+ "sd_s2": 0.8798,
+ "sd_modis": 0.7175,
+ "change_scale": 1.2262,
+ "change_scale_from": "state",
+ "comparable_fields": 1153261,
+ "changing_share_large": {
+  "modis": 23.94,
+  "s2": 32.38,
+  "s2_scaled": 25.59
+ },
+ "changing_share_all": {
+  "modis": 28.99,
+  "s2": 34.86,
+  "s2_scaled": 27.19
+ },
+ "exact_agreement_all": {
+  "s2": 54.64,
+  "s2_scaled": 59.55
+ },
+ "by_band": {
+  "under 6.25 ha": {
+   "fields": 1079735,
+   "modis": 29.12,
+   "s2": 34.85,
+   "s2_scaled": 27.14
+  },
+  "6.25 to 25 ha": {
+   "fields": 64741,
+   "modis": 27.55,
+   "s2": 35.44,
+   "s2_scaled": 28.28
+  },
+  "25 to 100 ha": {
+   "fields": 8339,
+   "modis": 24.27,
+   "s2": 32.56,
+   "s2_scaled": 25.81
+  },
+  "over 100 ha": {
+   "fields": 446,
+   "modis": 18.83,
+   "s2": 30.49,
+   "s2_scaled": 23.32
+  }
+ }
+}

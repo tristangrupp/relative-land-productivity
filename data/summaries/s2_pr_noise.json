@@ -1,0 +1,50 @@
+{
+ "state": "Parana",
+ "min_ha": 25.0,
+ "fields": 77944,
+ "sd_s2": 0.9533,
+ "sd_modis": 0.8058,
+ "change_scale": 1.1831,
+ "change_scale_from": "state",
+ "comparable_fields": 1575635,
+ "changing_share_large": {
+  "modis": 24.68,
+  "s2": 32.37,
+  "s2_scaled": 25.85
+ },
+ "changing_share_all": {
+  "modis": 28.06,
+  "s2": 36.17,
+  "s2_scaled": 29.33
+ },
+ "exact_agreement_all": {
+  "s2": 56.46,
+  "s2_scaled": 60.84
+ },
+ "by_band": {
+  "under 6.25 ha": {
+   "fields": 1278372,
+   "modis": 28.45,
+   "s2": 36.35,
+   "s2_scaled": 29.47
+  },
+  "6.25 to 25 ha": {
+   "fields": 219110,
+   "modis": 27.01,
+   "s2": 36.44,
+   "s2_scaled": 29.76
+  },
+  "25 to 100 ha": {
+   "fields": 70219,
+   "modis": 25.15,
+   "s2": 32.92,
+   "s2_scaled": 26.38
+  },
+  "over 100 ha": {
+   "fields": 7934,
+   "modis": 20.59,
+   "s2": 27.64,
+   "s2_scaled": 21.3
+  }
+ }
+}

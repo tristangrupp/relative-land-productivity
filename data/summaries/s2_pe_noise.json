@@ -1,0 +1,50 @@
+{
+ "state": "Pernambuco",
+ "min_ha": 25.0,
+ "fields": 7431,
+ "sd_s2": 0.6458,
+ "sd_modis": 0.6829,
+ "change_scale": 0.9457,
+ "change_scale_from": "state",
+ "comparable_fields": 680839,
+ "changing_share_large": {
+  "modis": 19.08,
+  "s2": 13.94,
+  "s2_scaled": 16.23
+ },
+ "changing_share_all": {
+  "modis": 20.43,
+  "s2": 28.28,
+  "s2_scaled": 30.69
+ },
+ "exact_agreement_all": {
+  "s2": 64.83,
+  "s2_scaled": 63.14
+ },
+ "by_band": {
+  "under 6.25 ha": {
+   "fields": 620289,
+   "modis": 20.51,
+   "s2": 29.07,
+   "s2_scaled": 31.49
+  },
+  "6.25 to 25 ha": {
+   "fields": 49287,
+   "modis": 19.94,
+   "s2": 21.37,
+   "s2_scaled": 23.72
+  },
+  "25 to 100 ha": {
+   "fields": 10007,
+   "modis": 18.71,
+   "s2": 15.52,
+   "s2_scaled": 17.94
+  },
+  "over 100 ha": {
+   "fields": 1256,
+   "modis": 14.33,
+   "s2": 10.03,
+   "s2_scaled": 11.7
+  }
+ }
+}

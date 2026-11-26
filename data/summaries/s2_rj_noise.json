@@ -1,0 +1,50 @@
+{
+ "state": "Rio_de_Janeiro",
+ "min_ha": 25.0,
+ "fields": 11439,
+ "sd_s2": 0.4579,
+ "sd_modis": 0.4212,
+ "change_scale": 1.0873,
+ "change_scale_from": "state",
+ "comparable_fields": 236190,
+ "changing_share_large": {
+  "modis": 6.74,
+  "s2": 6.67,
+  "s2_scaled": 5.31
+ },
+ "changing_share_all": {
+  "modis": 17.13,
+  "s2": 26.6,
+  "s2_scaled": 23.49
+ },
+ "exact_agreement_all": {
+  "s2": 68.36,
+  "s2_scaled": 70.63
+ },
+ "by_band": {
+  "under 6.25 ha": {
+   "fields": 193380,
+   "modis": 18.47,
+   "s2": 29.48,
+   "s2_scaled": 26.17
+  },
+  "6.25 to 25 ha": {
+   "fields": 31354,
+   "modis": 12.68,
+   "s2": 16.16,
+   "s2_scaled": 13.6
+  },
+  "25 to 100 ha": {
+   "fields": 9832,
+   "modis": 7.31,
+   "s2": 7.51,
+   "s2_scaled": 5.99
+  },
+  "over 100 ha": {
+   "fields": 1624,
+   "modis": 3.51,
+   "s2": 1.79,
+   "s2_scaled": 1.29
+  }
+ }
+}

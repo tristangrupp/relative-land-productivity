@@ -1,0 +1,50 @@
+{
+ "state": "Piaui",
+ "min_ha": 25.0,
+ "fields": 7638,
+ "sd_s2": 0.7912,
+ "sd_modis": 0.7629,
+ "change_scale": 1.0372,
+ "change_scale_from": "state",
+ "comparable_fields": 376810,
+ "changing_share_large": {
+  "modis": 26.04,
+  "s2": 25.9,
+  "s2_scaled": 24.76
+ },
+ "changing_share_all": {
+  "modis": 15.52,
+  "s2": 25.14,
+  "s2_scaled": 23.67
+ },
+ "exact_agreement_all": {
+  "s2": 69.61,
+  "s2_scaled": 70.72
+ },
+ "by_band": {
+  "under 6.25 ha": {
+   "fields": 342127,
+   "modis": 15.18,
+   "s2": 25.62,
+   "s2_scaled": 24.13
+  },
+  "6.25 to 25 ha": {
+   "fields": 26033,
+   "modis": 16.07,
+   "s2": 18.05,
+   "s2_scaled": 16.77
+  },
+  "25 to 100 ha": {
+   "fields": 5045,
+   "modis": 19.15,
+   "s2": 19.41,
+   "s2_scaled": 18.33
+  },
+  "over 100 ha": {
+   "fields": 3605,
+   "modis": 38.2,
+   "s2": 38.56,
+   "s2_scaled": 37.17
+  }
+ }
+}

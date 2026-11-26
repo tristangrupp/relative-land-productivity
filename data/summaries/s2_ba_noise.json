@@ -1,0 +1,50 @@
+{
+ "state": "Bahia",
+ "min_ha": 25.0,
+ "fields": 65219,
+ "sd_s2": 0.7761,
+ "sd_modis": 0.7906,
+ "change_scale": 0.9816,
+ "change_scale_from": "state",
+ "comparable_fields": 1949594,
+ "changing_share_large": {
+  "modis": 24.69,
+  "s2": 23.71,
+  "s2_scaled": 24.41
+ },
+ "changing_share_all": {
+  "modis": 21.65,
+  "s2": 29.58,
+  "s2_scaled": 30.37
+ },
+ "exact_agreement_all": {
+  "s2": 65.48,
+  "s2_scaled": 64.95
+ },
+ "by_band": {
+  "under 6.25 ha": {
+   "fields": 1609295,
+   "modis": 21.51,
+   "s2": 30.81,
+   "s2_scaled": 31.61
+  },
+  "6.25 to 25 ha": {
+   "fields": 243635,
+   "modis": 21.93,
+   "s2": 24.37,
+   "s2_scaled": 25.12
+  },
+  "25 to 100 ha": {
+   "fields": 75540,
+   "modis": 22.17,
+   "s2": 21.76,
+   "s2_scaled": 22.51
+  },
+  "over 100 ha": {
+   "fields": 21124,
+   "modis": 26.87,
+   "s2": 24.02,
+   "s2_scaled": 24.74
+  }
+ }
+}

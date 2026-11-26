@@ -1,0 +1,50 @@
+{
+ "state": "Ceara",
+ "min_ha": 25.0,
+ "fields": 4694,
+ "sd_s2": 0.6244,
+ "sd_modis": 0.7147,
+ "change_scale": 0.8736,
+ "change_scale_from": "state",
+ "comparable_fields": 480750,
+ "changing_share_large": {
+  "modis": 18.88,
+  "s2": 14.78,
+  "s2_scaled": 19.58
+ },
+ "changing_share_all": {
+  "modis": 22.81,
+  "s2": 29.21,
+  "s2_scaled": 35.07
+ },
+ "exact_agreement_all": {
+  "s2": 61.85,
+  "s2_scaled": 57.79
+ },
+ "by_band": {
+  "under 6.25 ha": {
+   "fields": 439370,
+   "modis": 22.88,
+   "s2": 30.06,
+   "s2_scaled": 35.95
+  },
+  "6.25 to 25 ha": {
+   "fields": 33725,
+   "modis": 22.35,
+   "s2": 21.0,
+   "s2_scaled": 26.66
+  },
+  "25 to 100 ha": {
+   "fields": 6854,
+   "modis": 21.17,
+   "s2": 16.6,
+   "s2_scaled": 21.8
+  },
+  "over 100 ha": {
+   "fields": 801,
+   "modis": 17.48,
+   "s2": 12.73,
+   "s2_scaled": 17.1
+  }
+ }
+}

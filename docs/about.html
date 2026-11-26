@@ -36,7 +36,7 @@
 
   <h2>What this release holds</h2>
   <p>The release covers 24,554,482 Trazo4 fields across all 27 states, totaling 190.7 million hectares. The agricultural years run from 1 September 2019 to 31 August 2020 and from 1 September 2023 to 31 August 2024. The map also shows 748,022 fields from 2020 as abandoned because MapBiomas shows neither crop nor pasture there in 2024. The original tiles were built on 12 November 2026.</p>
-  <p>Most states use MODIS MOD13Q1, a 16-day greenness index (NDVI) at 250 m. A MODIS pixel is larger than 78 percent of Brazil’s fields, so readings from many fields include neighboring land. Mato Grosso switched to 30 m Sentinel-2 on 14 November 2026. Pará, Rondônia and Acre switched on 17 November, Amazonas, Roraima and Amapá on 18 November, Mato Grosso do Sul on 19 November, and Goiás and Tocantins on 20 November, and Maranhão on 21 November. With those eleven states on Sentinel-2, 17,302,378 fields (70.5 percent) have low confidence, and the decision view marks them “too small to judge yet.” Another 112,636 fields receive no suggestion. In Amapá, 59.6 percent of fields lacked enough clear MODIS images; on Sentinel-2, 1.2 percent do. The field card and tooltip show the satellite used. Next are the other 15 states and the Federal District.</p>
+  <p>Every state now uses 30 m Sentinel-2 monthly greenness (NDVI). The map began on MODIS MOD13Q1, a 16-day greenness index at 250 m. A MODIS pixel is larger than 78 percent of Brazil’s fields, so readings from many fields included neighboring land. States moved to Sentinel-2 one at a time: Mato Grosso on 14 November 2026, Pará, Rondônia and Acre on 17 November, Amazonas, Roraima and Amapá on 18 November, Mato Grosso do Sul on 19 November, Goiás and Tocantins on 20 November, and Maranhão on 21 November. The other 15 states and the Federal District moved on 25 November. On Sentinel-2, 9,091,492 fields (37.0 percent) have low confidence, and the decision view marks them “too small to judge yet.” With eleven states on Sentinel-2, that figure was 17,302,378 (70.5 percent). Another 54,962 fields receive no suggestion. In Amapá, 59.6 percent of fields lacked enough clear MODIS images; on Sentinel-2, 1.2 percent do.</p>
   <p>Pasture scores use NDVI alone. The MapBiomas pasture vigor data was unavailable as a public GeoTIFF.</p>
   <p>The weather model explains little of the variation (median R squared of 0.15 across 134 crop and state pairs). Adjusted soybean scores have weak correlations with IBGE municipal yields (Spearman 0.06 to 0.18). See the methods page for details.</p>
 
@@ -60,7 +60,7 @@
   <h2>Code and data</h2>
   <p>Find the site, pipeline and methods at
   <a href="https://github.com/tristangrupp/relative-land-productivity">github.com/tristangrupp/relative-land-productivity</a>.
-  Download the field tiles (9.0 GB), summary tiles (53 MB) and statistics from
+  Download the field tiles (9.2 GB), summary tiles (110 MB) and statistics from
   <code>s3://wri-datalab-sandbox/trazofields/trazo4/relative-land-productivity/tiles/</code>. The map uses PMTiles and JSON. See <code>docs/DATA_CONTRACT.md</code> for the attributes.</p>
 </main>
 </body>

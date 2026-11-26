@@ -1,0 +1,10 @@
+crop,year,metric,n_muni,pearson_modis,pearson_s2,spearman_modis,spearman_s2
+maize,2020,integral,28,-0.0439,-0.4356,-0.1539,-0.1058
+maize,2020,prod,28,-0.0552,-0.2974,-0.3462,-0.2926
+maize,2020,r_adj,28,-0.1546,-0.2956,-0.3959,-0.2701
+maize,2024,integral,27,0.3058,-0.1400,0.2562,-0.1053
+maize,2024,prod,27,-0.0850,-0.1403,-0.0831,-0.0711
+maize,2024,r_adj,27,-0.1281,-0.0814,-0.0928,-0.0699
+maize,change,integral,26,-0.4309,-0.3202,-0.3833,-0.3180
+maize,change,prod,26,-0.1836,-0.2236,0.0096,-0.0140
+maize,change,r_adj,26,-0.1498,-0.2690,0.0325,-0.0044

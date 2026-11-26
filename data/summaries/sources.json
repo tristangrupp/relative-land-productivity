@@ -119,5 +119,181 @@
    "s2_scaled": 19.84
   },
   "swapped": "2026-11-21T15:56:57"
+ },
+ "Minas_Gerais": {
+  "source": "s2",
+  "change_scale": 1.0585,
+  "noise_fields": 174485,
+  "changing_share_large": {
+   "modis": 19.67,
+   "s2": 21.51,
+   "s2_scaled": 19.82
+  },
+  "swapped": "2026-11-25T14:29:22"
+ },
+ "Bahia": {
+  "source": "s2",
+  "change_scale": 0.9816,
+  "noise_fields": 65219,
+  "changing_share_large": {
+   "modis": 24.69,
+   "s2": 23.71,
+   "s2_scaled": 24.41
+  },
+  "swapped": "2026-11-25T14:37:53"
+ },
+ "Rio_Grande_do_Sul": {
+  "source": "s2",
+  "change_scale": 1.2064,
+  "noise_fields": 63362,
+  "changing_share_large": {
+   "modis": 29.8,
+   "s2": 38.24,
+   "s2_scaled": 30.01
+  },
+  "swapped": "2026-11-25T14:46:43"
+ },
+ "Sao_Paulo": {
+  "source": "s2",
+  "change_scale": 1.0578,
+  "noise_fields": 95376,
+  "changing_share_large": {
+   "modis": 35.92,
+   "s2": 38.15,
+   "s2_scaled": 36.09
+  },
+  "swapped": "2026-11-25T14:54:03"
+ },
+ "Parana": {
+  "source": "s2",
+  "change_scale": 1.1831,
+  "noise_fields": 77944,
+  "changing_share_large": {
+   "modis": 24.68,
+   "s2": 32.37,
+   "s2_scaled": 25.85
+  },
+  "swapped": "2026-11-25T15:00:36"
+ },
+ "Santa_Catarina": {
+  "source": "s2",
+  "change_scale": 1.2262,
+  "noise_fields": 8508,
+  "changing_share_large": {
+   "modis": 23.94,
+   "s2": 32.38,
+   "s2_scaled": 25.59
+  },
+  "swapped": "2026-11-25T15:05:39"
+ },
+ "Pernambuco": {
+  "source": "s2",
+  "change_scale": 0.9457,
+  "noise_fields": 7431,
+  "changing_share_large": {
+   "modis": 19.08,
+   "s2": 13.94,
+   "s2_scaled": 16.23
+  },
+  "swapped": "2026-11-25T15:08:51"
+ },
+ "Ceara": {
+  "source": "s2",
+  "change_scale": 0.8736,
+  "noise_fields": 4694,
+  "changing_share_large": {
+   "modis": 18.88,
+   "s2": 14.78,
+   "s2_scaled": 19.58
+  },
+  "swapped": "2026-11-25T15:11:27"
+ },
+ "Paraiba": {
+  "source": "s2",
+  "change_scale": 0.8313,
+  "noise_fields": 2635,
+  "changing_share_large": {
+   "modis": 15.98,
+   "s2": 8.43,
+   "s2_scaled": 14.69
+  },
+  "swapped": "2026-11-25T15:13:43"
+ },
+ "Espirito_Santo": {
+  "source": "s2",
+  "change_scale": 0.964,
+  "noise_fields": 12452,
+  "changing_share_large": {
+   "modis": 12.91,
+   "s2": 11.78,
+   "s2_scaled": 12.67
+  },
+  "swapped": "2026-11-25T15:16:15"
+ },
+ "Piaui": {
+  "source": "s2",
+  "change_scale": 1.0372,
+  "noise_fields": 7638,
+  "changing_share_large": {
+   "modis": 26.04,
+   "s2": 25.9,
+   "s2_scaled": 24.76
+  },
+  "swapped": "2026-11-25T15:18:31"
+ },
+ "Rio_Grande_Do_Norte": {
+  "source": "s2",
+  "change_scale": 0.7835,
+  "noise_fields": 2840,
+  "changing_share_large": {
+   "modis": 20.11,
+   "s2": 13.59,
+   "s2_scaled": 20.6
+  },
+  "swapped": "2026-11-25T15:20:02"
+ },
+ "Alagoas": {
+  "source": "s2",
+  "change_scale": 0.9393,
+  "noise_fields": 4009,
+  "changing_share_large": {
+   "modis": 19.71,
+   "s2": 16.76,
+   "s2_scaled": 19.01
+  },
+  "swapped": "2026-11-25T15:21:38"
+ },
+ "Rio_de_Janeiro": {
+  "source": "s2",
+  "change_scale": 1.0873,
+  "noise_fields": 11439,
+  "changing_share_large": {
+   "modis": 6.74,
+   "s2": 6.67,
+   "s2_scaled": 5.31
+  },
+  "swapped": "2026-11-25T15:23:30"
+ },
+ "Sergipe": {
+  "source": "s2",
+  "change_scale": 0.9751,
+  "noise_fields": 2187,
+  "changing_share_large": {
+   "modis": 20.94,
+   "s2": 17.65,
+   "s2_scaled": 18.34
+  },
+  "swapped": "2026-11-25T15:24:56"
+ },
+ "Distrito_Federal": {
+  "source": "s2",
+  "change_scale": 0.9798,
+  "noise_fields": 1277,
+  "changing_share_large": {
+   "modis": 30.31,
+   "s2": 31.01,
+   "s2_scaled": 32.11
+  },
+  "swapped": "2026-11-25T15:25:57"
  }
 }

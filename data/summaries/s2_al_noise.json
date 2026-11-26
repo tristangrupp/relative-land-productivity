@@ -1,0 +1,50 @@
+{
+ "state": "Alagoas",
+ "min_ha": 25.0,
+ "fields": 4009,
+ "sd_s2": 0.6752,
+ "sd_modis": 0.7188,
+ "change_scale": 0.9393,
+ "change_scale_from": "state",
+ "comparable_fields": 262419,
+ "changing_share_large": {
+  "modis": 19.71,
+  "s2": 16.76,
+  "s2_scaled": 19.01
+ },
+ "changing_share_all": {
+  "modis": 22.36,
+  "s2": 32.01,
+  "s2_scaled": 34.74
+ },
+ "exact_agreement_all": {
+  "s2": 62.16,
+  "s2_scaled": 60.21
+ },
+ "by_band": {
+  "under 6.25 ha": {
+   "fields": 219662,
+   "modis": 22.18,
+   "s2": 32.97,
+   "s2_scaled": 35.75
+  },
+  "6.25 to 25 ha": {
+   "fields": 34720,
+   "modis": 23.8,
+   "s2": 28.86,
+   "s2_scaled": 31.41
+  },
+  "25 to 100 ha": {
+   "fields": 7110,
+   "modis": 22.08,
+   "s2": 20.75,
+   "s2_scaled": 22.87
+  },
+  "over 100 ha": {
+   "fields": 927,
+   "modis": 14.35,
+   "s2": 9.17,
+   "s2_scaled": 11.11
+  }
+ }
+}

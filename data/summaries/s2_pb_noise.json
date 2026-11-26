@@ -1,0 +1,50 @@
+{
+ "state": "Paraiba",
+ "min_ha": 25.0,
+ "fields": 2635,
+ "sd_s2": 0.5309,
+ "sd_modis": 0.6387,
+ "change_scale": 0.8313,
+ "change_scale_from": "state",
+ "comparable_fields": 392624,
+ "changing_share_large": {
+  "modis": 15.98,
+  "s2": 8.43,
+  "s2_scaled": 14.69
+ },
+ "changing_share_all": {
+  "modis": 19.18,
+  "s2": 24.41,
+  "s2_scaled": 32.07
+ },
+ "exact_agreement_all": {
+  "s2": 68.2,
+  "s2_scaled": 62.7
+ },
+ "by_band": {
+  "under 6.25 ha": {
+   "fields": 363012,
+   "modis": 19.21,
+   "s2": 24.88,
+   "s2_scaled": 32.61
+  },
+  "6.25 to 25 ha": {
+   "fields": 24953,
+   "modis": 18.99,
+   "s2": 19.62,
+   "s2_scaled": 26.48
+  },
+  "25 to 100 ha": {
+   "fields": 4198,
+   "modis": 18.03,
+   "s2": 13.79,
+   "s2_scaled": 20.99
+  },
+  "over 100 ha": {
+   "fields": 461,
+   "modis": 19.31,
+   "s2": 8.89,
+   "s2_scaled": 14.32
+  }
+ }
+}

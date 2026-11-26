@@ -1,0 +1,50 @@
+{
+ "state": "Distrito_Federal",
+ "min_ha": 25.0,
+ "fields": 1277,
+ "sd_s2": 0.9557,
+ "sd_modis": 0.9754,
+ "change_scale": 0.9798,
+ "change_scale_from": "state",
+ "comparable_fields": 25870,
+ "changing_share_large": {
+  "modis": 30.31,
+  "s2": 31.01,
+  "s2_scaled": 32.11
+ },
+ "changing_share_all": {
+  "modis": 15.11,
+  "s2": 27.72,
+  "s2_scaled": 28.56
+ },
+ "exact_agreement_all": {
+  "s2": 67.57,
+  "s2_scaled": 66.95
+ },
+ "by_band": {
+  "under 6.25 ha": {
+   "fields": 22163,
+   "modis": 13.93,
+   "s2": 28.19,
+   "s2_scaled": 29.02
+  },
+  "6.25 to 25 ha": {
+   "fields": 2325,
+   "modis": 16.99,
+   "s2": 20.39,
+   "s2_scaled": 21.2
+  },
+  "25 to 100 ha": {
+   "fields": 1105,
+   "modis": 29.68,
+   "s2": 32.4,
+   "s2_scaled": 33.39
+  },
+  "over 100 ha": {
+   "fields": 277,
+   "modis": 35.74,
+   "s2": 33.21,
+   "s2_scaled": 34.66
+  }
+ }
+}

@@ -15,7 +15,7 @@
 import {
 	CONFIG, ATTR, SUMMARY_ATTR, VIEWS, CROPS, VIGOR, VIGOR_CHANGE, DECISIONS, CAR_CONTEXT, AREA_DECISIONS,
 	CHANGE_CLASSES, STATES, NODATA_COLOR, CONFIDENCE, ECO_TREND, SOURCES, CLASS_GROUPS, WALKTHROUGH
-} from './config.js?v=22';
+} from './config.js?v=23';
 
 const $ = (id) => document.getElementById(id);
 const NA = 'n/a';
@@ -246,7 +246,7 @@ async function initMap() {
 			layout: { visibility: state.satellite ? 'visible' : 'none' } }, before);
 		map.addSource('summary', {
 			type: 'vector', url: 'pmtiles://' + absolute(SRC.SUMMARY_PMTILES),
-			attribution: 'Trazo4 fields (WRI), MapBiomas Collection 10, MODIS MOD13Q1'
+			attribution: 'Trazo4 fields (WRI), MapBiomas Collection 10, Sentinel-2 L2A (Copernicus), MODIS MOD13Q1'
 		});
 		/* The PMTiles header gives minzoom 9 and maxzoom 13; MapLibre overzooms the zoom 13
 		   tiles for every zoom above that, because no layer below sets a maxzoom. */
@@ -604,7 +604,7 @@ function renderLegend() {
 
 /** Legend rows of a CLASS_GROUPS entry: one row with the summed count and a + button, or, once
     expanded, that row with a minus button followed by its members. Rows are matched by label,
-    since the items carry no key. */
+    since the items have no key. */
 function groupItems(items, v) {
 	const classes = (state.summaryVisible ? v.summary && v.summary.classes : v.classes) || [];
 	const keyOf = new Map(classes.map((c) => [c.label, c.key]));

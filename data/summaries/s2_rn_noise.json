@@ -1,0 +1,50 @@
+{
+ "state": "Rio_Grande_Do_Norte",
+ "min_ha": 25.0,
+ "fields": 2840,
+ "sd_s2": 0.5324,
+ "sd_modis": 0.6795,
+ "change_scale": 0.7835,
+ "change_scale_from": "state",
+ "comparable_fields": 250271,
+ "changing_share_large": {
+  "modis": 20.11,
+  "s2": 13.59,
+  "s2_scaled": 20.6
+ },
+ "changing_share_all": {
+  "modis": 23.05,
+  "s2": 26.56,
+  "s2_scaled": 36.55
+ },
+ "exact_agreement_all": {
+  "s2": 64.09,
+  "s2_scaled": 57.18
+ },
+ "by_band": {
+  "under 6.25 ha": {
+   "fields": 224526,
+   "modis": 22.98,
+   "s2": 27.05,
+   "s2_scaled": 37.13
+  },
+  "6.25 to 25 ha": {
+   "fields": 20735,
+   "modis": 24.39,
+   "s2": 23.86,
+   "s2_scaled": 33.28
+  },
+  "25 to 100 ha": {
+   "fields": 4359,
+   "modis": 21.22,
+   "s2": 17.11,
+   "s2_scaled": 24.91
+  },
+  "over 100 ha": {
+   "fields": 651,
+   "modis": 15.98,
+   "s2": 8.76,
+   "s2_scaled": 17.05
+  }
+ }
+}

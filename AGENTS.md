@@ -258,9 +258,10 @@ Agreed on 18 November 2026 at the user's request with the water infrastructure s
 
 ## Caveats every output should state where relevant
 
-- MODIS at 250 m: most fields are low confidence (smaller than one pixel or few clear
-  composites) and show "too small to judge yet" until their state switches to Sentinel-2.
-- Mato Grosso uses Sentinel-2 since 14 November 2026, with change thresholds scaled by 1.22.
+- Every state uses Sentinel-2 since 25 November 2026 (Mato Grosso since 14 November); MODIS
+  is no longer on the map. Each state's change thresholds are scaled by its own k (0.78 to
+  1.42, WORKLOG.md). 37.0 percent of fields are low confidence: under 0.45 ha or too few clear
+  images.
 - The restore versus improve yields split rests on two years of greenness and on the
   MapBiomas maps of 2020 and 2024.
 - Wet-season cloud removes about a fifth of Pará's fields (no data).

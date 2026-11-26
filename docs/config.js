@@ -390,8 +390,8 @@ export const DECISIONS = [
 		note: 'Cropped or grazed in 2020 and not in 2024; drawn on the 2020 outline. Check whether native vegetation is coming back; if it is not, restore it.',
 		options: ['Assisted natural regeneration if native vegetation is coming back', 'Active restoration if it is not'] },
 	{ key: 'low_confidence', label: 'Low confidence: too small to judge yet', color: '#cfd8e3', showComputed: true,
-		note: 'The field is smaller than the satellite pixel (under 6.25 ha for MODIS, under 0.45 ha for Sentinel-2) or had too few clear images, so its greenness mixes with its neighbors. The computed call is shown in the field card but not trusted. Sentinel-2 at 30 m replaces MODIS state by state.',
-		options: ['Wait for the Sentinel-2 update of the state'] },
+		note: 'The field is smaller than the satellite pixel (under 6.25 ha for MODIS, under 0.45 ha for Sentinel-2) or had too few clear images, so its greenness mixes with its neighbors. The computed call is shown in the field card but not trusted. Every state uses Sentinel-2 since 25 November 2026.',
+		options: ['Check the field on the ground or in high-resolution imagery before acting'] },
 	{ key: 'none', label: 'No data', color: GRAY_NEUTRAL,
 		note: 'Too few clear satellite images in one of the years to compare, or a recently converted field with no 2024 measurement.',
 		options: [] }
@@ -620,8 +620,8 @@ export const WALKTHROUGH = {
 			view: 'change', camera: { center: [-52.5, -13.5], zoom: 4 }, satellite: false, state: ''
 		},
 		{
-			title: 'Two satellites',
-			text: 'Most states use MODIS at 250 m. Mato Grosso, Pará, Rondônia and Acre use Sentinel-2 at 30 m. Here the Araguaia River separates Pará (left, Sentinel-2) from Tocantins (right, MODIS). Light gray marks fields too small to judge, under 6.25 ha for MODIS or 0.45 ha for Sentinel-2.',
+			title: 'Sentinel-2 at 30 m',
+			text: 'Every state uses Sentinel-2 at 30 m since 25 November 2026. The map began on MODIS at 250 m, where 70 percent of fields were too small to judge. Here, along the Araguaia River between Pará and Tocantins, light gray marks the fields still too small to judge: under 0.45 ha, or with too few clear images. Nationally that is 37.0 percent of fields.',
 			view: 'decision', camera: { center: [-49.1, -7.3], zoom: 9.4 }, satellite: false, state: ''
 		},
 		{

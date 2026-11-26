@@ -1,0 +1,50 @@
+{
+ "state": "Minas_Gerais",
+ "min_ha": 25.0,
+ "fields": 174485,
+ "sd_s2": 0.6637,
+ "sd_modis": 0.6271,
+ "change_scale": 1.0585,
+ "change_scale_from": "state",
+ "comparable_fields": 3480028,
+ "changing_share_large": {
+  "modis": 19.67,
+  "s2": 21.51,
+  "s2_scaled": 19.82
+ },
+ "changing_share_all": {
+  "modis": 15.96,
+  "s2": 25.71,
+  "s2_scaled": 23.64
+ },
+ "exact_agreement_all": {
+  "s2": 70.81,
+  "s2_scaled": 72.36
+ },
+ "by_band": {
+  "under 6.25 ha": {
+   "fields": 2809906,
+   "modis": 15.45,
+   "s2": 26.55,
+   "s2_scaled": 24.41
+  },
+  "6.25 to 25 ha": {
+   "fields": 490706,
+   "modis": 17.56,
+   "s2": 22.45,
+   "s2_scaled": 20.64
+  },
+  "25 to 100 ha": {
+   "fields": 162421,
+   "modis": 20.04,
+   "s2": 22.0,
+   "s2_scaled": 20.29
+  },
+  "over 100 ha": {
+   "fields": 16995,
+   "modis": 15.12,
+   "s2": 15.93,
+   "s2_scaled": 14.38
+  }
+ }
+}

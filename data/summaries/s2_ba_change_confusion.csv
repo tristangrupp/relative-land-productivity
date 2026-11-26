@@ -1,0 +1,9 @@
+modis,large_decline,decline,stable,gain,large_gain,crop_switched,newly_cropped,no_data
+large_decline,11091,10106,14793,1772,750,0,0,31
+decline,19677,49397,96631,6204,1709,0,0,105
+stable,38586,144965,1152653,159767,31549,0,0,718
+gain,2147,6464,95609,53464,17226,0,0,94
+large_gain,758,1736,13255,9291,9994,0,0,29
+crop_switched,0,0,0,0,0,189466,0,0
+newly_cropped,0,0,0,0,0,0,170478,0
+no_data,1823,4090,19583,4315,1646,0,0,523

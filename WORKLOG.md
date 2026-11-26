@@ -154,12 +154,18 @@ DECISIONS_V2.md, S2_MATO_GROSSO.md. Methods: methods/METHODS.md. Site contract: 
 - Sentinel-2 extraction (pid 36992) and the MODIS long-series download (pid 44620) keep
   running and fill the network link: uploads ran at about 1 MB/s on 14 Nov afternoon.
 
+## Current state, 26 November 2026
+
+- Every state and the Federal District use Sentinel-2 (25 November). MODIS is no longer live
+  on the map; the MODIS tables stay in `analysis\source=modis\` for `--revert`.
+- METHODS.md 7.7 (CAR and Forest Code) is applied (DECISIONS.md C23); `car_context` shows in
+  the field card only.
+- Low confidence: 9,091,492 fields, 37.0 percent.
+- Tiles and field GeoParquet for every unit are on S3 (upload finished 01:41, 26 November).
+
 ## Open items
 
-1. Swap each further state to Sentinel-2 with `pipeline/s09_swap_state_to_s2.py --state
-   <State>` in run order (Pará next) as its extraction completes; each run rebuilds the field
-   tiles (about 50 minutes) and uploads them. The GeoParquet upload of decisions round 2 may
-   still be pending (last log entry).
+1. Closed 25 November 2026: every state is on Sentinel-2.
 2. Longer productivity time series: MODIS 2016 to 2019 and 2021 to 2023 downloading; then
    extract, reduce and use it in the improve yields or restore choice (METHODS.md 7.5 item 7).
 3. Sentinel-2 timing: tell the user if the extraction approaches three weeks. A Sentinel-2
@@ -180,6 +186,9 @@ DECISIONS_V2.md, S2_MATO_GROSSO.md. Methods: methods/METHODS.md. Site contract: 
 10. (20 November 2026) Possible mis-detection is in the decision tables but not in the published
    tiles until the next tile build (the Maranhão swap). The thresholds (99th percentile, 50 ha,
    25 percent native inside) are agent choices awaiting the user's review (DECISIONS.md C22).
+   Still open on 26 November; the tiles publish it since 21 November.
+11. (26 November 2026) Open for the user: a `.wslconfig` memory cap for WSL, Rio Grande do Sul
+   grassland, and the Pará pilot ideas (MERIT APP and others).
 
 ## How to resume after a context reset
 
@@ -939,3 +948,20 @@ DECISIONS_V2.md, S2_MATO_GROSSO.md. Methods: methods/METHODS.md. Site contract: 
 - The first relaunch at 10:34 used the resume command from the 19:25 entry, which runs s03g through `run_chain.py` under the wci_tools venv. It stopped in 5 s with "ModuleNotFoundError: No module named 'odc'". s03g needs the ftwtools Python (`C:\Users\grupp\miniconda3\envs\ftwtools\python.exe`), as its docstring states; the 19:25 entry left that out.
 - Relaunched hidden at 10:35: `launch_detached.py run_tier3.log run_tier3.err -- <ftwtools python> pipeline/s03g_s2_fetch_reduce.py run --tier 3 --workers 4 --threads 2 --min-days 2`. It skipped the finished tiles and is fetching again.
 - The hourly check cron was recreated in the new Claude session (grupp-f5). Water infrastructure is grupp-a2, running 15_point_requests.py (up to about 34 GB) and the viewer on 8830.
+
+### 25 November 2026, 16:30: every state on Sentinel-2, and METHODS 7.7 applied
+
+- The user said "yeah switch to snetinel-2 now that all of brazil is updated to it." The tier 3 extraction had finished (RUN_END 11:47). The hourly check cron (a7c2c790) was deleted at the same time.
+- The user said "go ahead on methods 7.7" (DECISIONS.md C23). The `.wslconfig` cap, the C22 thresholds, Rio Grande do Sul grassland and the Pará pilot ideas stay open.
+- METHODS 7.7 is in `s07_decisions.py` (commit 29313d2). `load_car` reads the CAR indicators by fid and never reads `car_cod`. Rule 1 turns `improve_spare` into `restore_candidate` on a property with a usable legal reserve deficit and large native vegetation on 15 percent or more of the 1 km band. Each field gets `car_context` (deficit_tipped, deficit, surplus, neither, no_parcel), shown only in the field card with its own option order.
+- `s09_swap_state_to_s2.py` now logs memory per step: least Available memory, highest commit, the commit limit and the peak resident memory of the step's process tree, every 5 s.
+- Chain 1 stopped on the Minas Gerais compare with `KeyError: 'Minas_Gerais'`: `NEIGHBORS_OF` in `s08_s2_compare.py` had no tier 3 entries. Chain b stopped at the same step with "too many values to unpack": s08 calls `field_call`, which now returns three values. Both fixed (e463578); chain c ran 14:29 to 15:26 with exit 0 for all 16 units.
+- Change scale k per unit: Minas Gerais 1.0585, Bahia 0.9816, Rio Grande do Sul 1.2064, São Paulo 1.0578, Paraná 1.1831, Santa Catarina 1.2262, Pernambuco 0.9457, Ceará 0.8736, Paraíba 0.8313, Espírito Santo 0.964, Piauí 1.0372, Rio Grande do Norte 0.7835, Alagoas 0.9393, Rio de Janeiro 1.0873, Sergipe 0.9751, Federal District 0.9798. A k below 1 means Sentinel-2 change varies less than MODIS change in that state.
+- Memory: the Minas Gerais assemble step peaked at 16.2 GB resident while the water infrastructure session (grupp-a2) ran a 32 GB job. Commit reached 103.5 of 105.2 GB and Available memory fell to 0.8 GB. grupp-a2 stopped its job at our request and commit fell to 45 GB. Afterwards the largest steps were Rio Grande do Sul 11.06 GB and São Paulo 9.19 GB resident, and commit stayed at or below 51.5 GB.
+- National decisions at 15:31 (peak 9.57 GB resident, commit 53.2 GB), 21 November in brackets: 24,554,482 fields, all on Sentinel-2. Restore 137,360 (63,273); assisted natural regeneration 10,583 (3,134); restore candidate 1,113,538 (493,703); improve yields elsewhere (`improve_spare`) 2,428,680; low confidence 9,091,492, 37.0 percent (17,302,378, 70.5 percent); no suggestion 54,962 (112,636); possible mis-detection 2,505.
+- `car_context`: deficit_tipped 103,835 (80,075 of them shown as restore candidate), deficit 2,646,452, surplus 5,814,555, neither 12,565,237, no_parcel 3,424,403.
+- Tiles: `fields.pmtiles` 9,176,423,195 bytes, built in 3,186 s, finished 16:24 (commit at most 68.4 GB, Available at least 13.4 GB). `summary.pmtiles` 110,154,240 bytes, 144,909 cells. `stats.json` lists all 27 units.
+- The upload stopped at 16:26 with exit 2: the mfr-datalab SSO session had expired. The user logged in again; the upload relaunched hidden at 00:18 on 26 November (log `analysis\source=s2\logs\upload_tier3_2026-11-25.log`).
+- The relaunched upload finished with returncode 0: `s05_upload.py --tiles --check` 00:18 to 00:52 (2,015 s), then `--fields` 00:52 to 01:41 (2,954 s). Peak resident 0.15 GB, Available at least 36.0 GB. grupp-a2 and Fields of the Land were told when it ended; grupp-a2 released hold_heavy.
+- Peer report, not checked here: Fields of the Land said the tier 3 s03g parent (pid 9376) was still resident at 5.9 GB about 14:15, after RUN_END at 11:47.
+- Site: the low-confidence note, the walkthrough step on satellites, the attribution (Sentinel-2 L2A, Copernicus) and the About page now say every state uses Sentinel-2. The About page gives the new low-confidence count and the tile sizes (9.2 GB and 110 MB).

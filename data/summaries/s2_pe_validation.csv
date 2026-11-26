@@ -1,0 +1,10 @@
+crop,year,metric,n_muni,pearson_modis,pearson_s2,spearman_modis,spearman_s2
+sugarcane,2020,integral,60,-0.1698,-0.0683,-0.0931,-0.0395
+sugarcane,2020,prod,60,0.2983,0.1481,0.2310,0.1565
+sugarcane,2020,r_adj,60,0.3076,0.1217,0.2267,0.1569
+sugarcane,2024,integral,54,0.0214,-0.0059,0.1289,0.2546
+sugarcane,2024,prod,54,0.1168,-0.0085,0.2441,0.1505
+sugarcane,2024,r_adj,54,0.1126,-0.0084,0.2222,0.1361
+sugarcane,change,integral,53,-0.2714,-0.2459,-0.2162,-0.1420
+sugarcane,change,prod,53,-0.1112,-0.2586,-0.0817,-0.0228
+sugarcane,change,r_adj,53,-0.1495,-0.2703,-0.0925,-0.0340

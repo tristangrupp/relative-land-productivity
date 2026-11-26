@@ -1,0 +1,50 @@
+{
+ "state": "Sergipe",
+ "min_ha": 25.0,
+ "fields": 2187,
+ "sd_s2": 0.6973,
+ "sd_modis": 0.7152,
+ "change_scale": 0.9751,
+ "change_scale_from": "state",
+ "comparable_fields": 187067,
+ "changing_share_large": {
+  "modis": 20.94,
+  "s2": 17.65,
+  "s2_scaled": 18.34
+ },
+ "changing_share_all": {
+  "modis": 27.27,
+  "s2": 32.53,
+  "s2_scaled": 33.66
+ },
+ "exact_agreement_all": {
+  "s2": 58.04,
+  "s2_scaled": 57.31
+ },
+ "by_band": {
+  "under 6.25 ha": {
+   "fields": 156152,
+   "modis": 27.49,
+   "s2": 34.09,
+   "s2_scaled": 35.25
+  },
+  "6.25 to 25 ha": {
+   "fields": 23978,
+   "modis": 27.05,
+   "s2": 26.41,
+   "s2_scaled": 27.49
+  },
+  "25 to 100 ha": {
+   "fields": 6068,
+   "modis": 23.83,
+   "s2": 19.58,
+   "s2_scaled": 20.45
+  },
+  "over 100 ha": {
+   "fields": 869,
+   "modis": 17.95,
+   "s2": 11.05,
+   "s2_scaled": 12.08
+  }
+ }
+}

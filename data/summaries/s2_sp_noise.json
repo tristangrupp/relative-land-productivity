@@ -1,0 +1,50 @@
+{
+ "state": "Sao_Paulo",
+ "min_ha": 25.0,
+ "fields": 95376,
+ "sd_s2": 1.062,
+ "sd_modis": 1.004,
+ "change_scale": 1.0578,
+ "change_scale_from": "state",
+ "comparable_fields": 1622385,
+ "changing_share_large": {
+  "modis": 35.92,
+  "s2": 38.15,
+  "s2_scaled": 36.09
+ },
+ "changing_share_all": {
+  "modis": 30.14,
+  "s2": 36.26,
+  "s2_scaled": 34.06
+ },
+ "exact_agreement_all": {
+  "s2": 62.4,
+  "s2_scaled": 63.73
+ },
+ "by_band": {
+  "under 6.25 ha": {
+   "fields": 1130977,
+   "modis": 27.9,
+   "s2": 34.66,
+   "s2_scaled": 32.43
+  },
+  "6.25 to 25 ha": {
+   "fields": 395843,
+   "modis": 35.15,
+   "s2": 40.39,
+   "s2_scaled": 38.22
+  },
+  "25 to 100 ha": {
+   "fields": 91373,
+   "modis": 36.4,
+   "s2": 38.68,
+   "s2_scaled": 36.6
+  },
+  "over 100 ha": {
+   "fields": 4192,
+   "modis": 24.71,
+   "s2": 26.41,
+   "s2_scaled": 24.59
+  }
+ }
+}
